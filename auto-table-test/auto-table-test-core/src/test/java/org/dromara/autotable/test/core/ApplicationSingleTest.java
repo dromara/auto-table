@@ -6,7 +6,10 @@ import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.constants.DatabaseDialect;
+import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.strategy.h2.data.H2DefaultTypeEnum;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -15,6 +18,7 @@ import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApplicationSingleTest {
@@ -49,6 +53,8 @@ public class ApplicationSingleTest {
         AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
                 TestH2.class
         });
+        // 自定义java类型与数据库类型映射关系
+        JavaTypeToDatabaseTypeConverter.addTypeMapping(DatabaseDialect.H2, Date.class, H2DefaultTypeEnum.TIMESTAMP);
         // 开始
         AutoTableBootstrap.start();
     }
