@@ -7,6 +7,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 
+/**
+ * 测试执行监听器
+ */
 public class AutoTableTestExecutionListener implements TestExecutionListener {
 
     @Override

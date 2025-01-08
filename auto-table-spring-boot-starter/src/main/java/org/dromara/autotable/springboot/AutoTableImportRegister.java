@@ -10,8 +10,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * 获取注解的basePackages
- * {@link EnableAutoTable}和{@link EnableAutoTableTest}都会激活该类，其中{@link EnableAutoTableTest}是用于单元测试的，因此优先级要高于{@link EnableAutoTable}
+ * <p> 获取注解的 basePackagesFromAnno、classesFromAnno 属性
+ * <p> {@link EnableAutoTable}和{@link EnableAutoTableTest}都会激活该类，其中{@link EnableAutoTableTest}是用于单元测试的，因此在执行顺序上优先级要高于{@link EnableAutoTable}
  * @author don
  */
 public class AutoTableImportRegister implements ImportBeanDefinitionRegistrar {
@@ -28,8 +28,8 @@ public class AutoTableImportRegister implements ImportBeanDefinitionRegistrar {
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 
-        // 当取到basePackages，则不再继续执行，发生的场景是单元测试和启动类都指定了basePackages，优先以单元测试的为准
-        if (basePackagesFromAnno != null) {
+        // 当取到basePackages或者classesFromAnno，则不再继续执行，发生的场景是单元测试和启动类都指定了basePackages，优先以单元测试的为准
+        if (basePackagesFromAnno != null || classesFromAnno != null) {
             return;
         }
 
