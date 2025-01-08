@@ -1,6 +1,9 @@
 package org.dromara.autotable.core;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
+import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunStateCallback;
@@ -17,8 +20,6 @@ import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -149,7 +150,16 @@ public class AutoTableGlobalConfig {
     };
 
     /**
-     * 修改表回调
+     * 执行结束回调
+     */
+    @Setter
+    @Getter
+    private static AutoTableReadyCallback autoTableReadyCallback = (classes) -> {
+
+    };
+
+    /**
+     * 执行结束回调
      */
     @Setter
     @Getter

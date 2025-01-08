@@ -68,6 +68,8 @@ public class AutoTableBootstrap {
         Set<Class<?>> packClasses = ClassScanner.scan(packs, includeAnnotations, ignoreAnnotations);
         classes.addAll(packClasses);
 
+        AutoTableGlobalConfig.getAutoTableReadyCallback().ready(classes);
+
         // 获取对应的数据源，根据不同数据库方言，执行不同的处理
         IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.getDatasourceHandler();
         datasourceHandler.handleAnalysis(classes, (databaseDialect, entityClasses) -> {

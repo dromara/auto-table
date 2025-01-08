@@ -4,6 +4,7 @@ import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableOrmFrameAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
+import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunStateCallback;
@@ -50,6 +51,7 @@ public class AutoTableAutoConfig {
             ObjectProvider<ModifyTableFinishCallback> modifyTableFinishCallback,
             ObjectProvider<RunStateCallback> runStateCallback,
             ObjectProvider<ValidateFinishCallback> validateFinishCallback,
+            ObjectProvider<AutoTableReadyCallback> autoTableReadyCallback,
             ObjectProvider<AutoTableFinishCallback> autoTableFinishCallbacks,
 
             ObjectProvider<JavaTypeToDatabaseTypeConverter> javaTypeToDatabaseTypeConverter) {
@@ -103,7 +105,9 @@ public class AutoTableAutoConfig {
         runStateCallback.ifAvailable(AutoTableGlobalConfig::setRunStateCallback);
         // 假如有自定义的验证表回调，就使用自定义的验证表回调
         validateFinishCallback.ifAvailable(AutoTableGlobalConfig::setValidateFinishCallback);
-        // 假如有自定义的全局执行前后回调，就使用自定义的全局执行前后回调
+        // 假如有自定义的全局执行前回调，就使用自定义的全局执行前回调
+        autoTableReadyCallback.ifAvailable(AutoTableGlobalConfig::setAutoTableReadyCallback);
+        // 假如有自定义的全局执行后回调，就使用自定义的全局执行后回调
         autoTableFinishCallbacks.ifAvailable(AutoTableGlobalConfig::setAutoTableFinishCallback);
 
         // 假如有自定义的java到数据库的转换器，就使用自定义的java到数据库的转换器
