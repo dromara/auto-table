@@ -15,6 +15,7 @@
         <module>auto-table-test-core</module>
         <module>auto-table-test-spring-boot</module>
         <module>auto-table-test-dynamicdatasource</module>
+        <module>auto-table-test-solon-plugin</module>
         <module>auto-table-test-spring-boot-dynamicdatasource</module>
     </modules>
 
