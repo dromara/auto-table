@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.dromara.autotable</groupId>
         <artifactId>auto-table</artifactId>
-        <version>2.1.2</version>
+        <version>2.1.2.1</version>
     </parent>
 
     <artifactId>auto-table-core</artifactId>
