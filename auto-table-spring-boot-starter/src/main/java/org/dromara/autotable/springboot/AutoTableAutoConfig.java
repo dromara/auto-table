@@ -25,12 +25,14 @@ import org.dromara.autotable.springboot.properties.AutoTableProperties;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 /**
  * @author don
  */
 @AutoConfigureAfter({DataSourceAutoConfiguration.class})
+@ConditionalOnMissingBean(AutoTableAutoConfig.class)
 public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(

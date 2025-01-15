@@ -3,28 +3,18 @@ package org.dromara.autotable.springboot;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 /**
  * @author don
  */
 @AutoConfigureAfter({AutoTableAutoConfig.class})
+@ConditionalOnMissingBean(AutoTableTest.class)
 public class AutoTableRunner implements CommandLineRunner {
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         // 启动AutoTable
-        if (!isTestEnvironment()) {
-            AutoTableBootstrap.start();
-        }
-    }
-
-    public boolean isTestEnvironment() {
-        try {
-            // 尝试加载JUnit测试类
-            Class.forName("org.junit.jupiter.api.Test");
-            return true; // 如果找到则表示在测试环境中
-        } catch (ClassNotFoundException e) {
-            return false; // 否则是正常启动环境
-        }
+        AutoTableBootstrap.start();
     }
 }

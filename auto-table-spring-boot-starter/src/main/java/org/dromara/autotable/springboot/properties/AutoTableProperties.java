@@ -3,6 +3,7 @@ package org.dromara.autotable.springboot.properties;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
 import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -10,6 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Data
 @ConfigurationProperties("auto-table")
+@ConditionalOnMissingBean(AutoTableProperties.class)
 public class AutoTableProperties {
 
     public static final String ENABLE_KEY = "auto-table.enable";
