@@ -228,8 +228,8 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
             // 默认值不同
             boolean isDefaultDiff = isDefaultDiff(columnMetadata, schemaColumns);
             // 自增不同
-            boolean isAutoIncrement = columnMetadata.isAutoIncrement() != schemaColumns.autoIncrement();
-            if (isTypeDiff || isNotnullDiff || isDefaultDiff || isAutoIncrement) {
+            boolean isAutoIncrementDiff = columnMetadata.isAutoIncrement() != schemaColumns.autoIncrement();
+            if (isTypeDiff || isNotnullDiff || isDefaultDiff || isAutoIncrementDiff) {
                 h2CompareTableInfo.addModifyColumn(columnMetadata);
                 // 只要修改了字段，则必须重新设置新的注释
                 h2CompareTableInfo.addColumnComment(columnName, columnComment);

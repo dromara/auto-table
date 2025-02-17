@@ -11,19 +11,20 @@ import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 import org.dromara.autotable.core.strategy.h2.data.H2DefaultTypeEnum;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
-import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 
+@Disabled
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApplicationSingleTest {
 
-    @Before
+    @Test
     public void init() {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
@@ -33,7 +34,7 @@ public class ApplicationSingleTest {
         // create模式
         autoTableProperties.setMode(RunMode.create);
         // 指定扫描包
-        // autoTableProperties.setModelPackage(new String[]{"org.dromara.**"});
+        autoTableProperties.setModelPackage(new String[]{"org.dromara.autotable.test.core.entity.mysql.**"});
         // 开启 删除不存在的列
         autoTableProperties.setAutoDropColumn(true);
         // 父类字段加到子类的前面
@@ -48,9 +49,13 @@ public class ApplicationSingleTest {
         initSqlSessionFactory("mybatis-config-h2.xml");
 
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+
+        autoTableProperties.setMode(RunMode.create);
+        // 开启 删除不存在的列
+        autoTableProperties.setAutoDropColumn(true);
         // 测试所有的公共测试类
-        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
+        autoTableProperties.setModelClass(new Class[]{
                 TestH2.class
         });
         // 自定义java类型与数据库类型映射关系

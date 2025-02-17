@@ -42,7 +42,7 @@ public class ColumnMetadata {
     protected boolean primary;
 
     /**
-     * 主键是否自增
+     * 是否自增
      */
     protected boolean autoIncrement;
 

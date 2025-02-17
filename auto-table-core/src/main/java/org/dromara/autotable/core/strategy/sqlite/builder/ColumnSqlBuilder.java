@@ -23,6 +23,7 @@ public class ColumnSqlBuilder {
      * "card_number" text(30) NOT NULL -- 身份证号码
      */
     public static String buildSql(ColumnMetadata columnMetadata, boolean isSinglePrimaryKey, boolean addComma) {
+        // sqlite 只能主键自动递增
         boolean isAutoIncrement = isSinglePrimaryKey && columnMetadata.isPrimary() && columnMetadata.isAutoIncrement();
         return StringConnectHelper.newInstance("{columnName} {typeAndLength} {null} {default} {primaryKey}{comma}{columnComment}")
                 .replace("{columnName}", columnMetadata.getName())

@@ -1,6 +1,7 @@
 package org.dromara.autotable.core.utils;
 
 import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.AutoIncrement;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.ColumnComment;
 import org.dromara.autotable.annotation.ColumnDefault;
@@ -110,7 +111,7 @@ public class TableBeanUtils {
 
         AutoTableOrmFrameAdapter autoTableOrmFrameAdapter = AutoTableGlobalConfig.getAutoTableOrmFrameAdapter();
         String adapterTableComment = autoTableOrmFrameAdapter.getTableComment(clazz);
-        if(adapterTableComment != null) {
+        if (adapterTableComment != null) {
             return replaceSingleQuote(adapterTableComment);
         }
 
@@ -129,6 +130,12 @@ public class TableBeanUtils {
     }
 
     public static boolean isAutoIncrement(Field field, Class<?> clazz) {
+
+        AutoIncrement autoIncrement = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoIncrement.class);
+        if (autoIncrement != null) {
+            return autoIncrement.value();
+        }
+
         PrimaryKey isPrimary = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
         if (isPrimary != null) {
             return isPrimary.autoIncrement();
@@ -166,7 +173,7 @@ public class TableBeanUtils {
 
         AutoTableOrmFrameAdapter autoTableOrmFrameAdapter = AutoTableGlobalConfig.getAutoTableOrmFrameAdapter();
         String adapterColumnComment = autoTableOrmFrameAdapter.getColumnComment(field, clazz);
-        if(adapterColumnComment != null) {
+        if (adapterColumnComment != null) {
             return replaceSingleQuote(adapterColumnComment);
         }
 
