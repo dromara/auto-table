@@ -27,10 +27,7 @@ public class DamengCreateTableSqlBuilder {
         // 构建索引语句
         String indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
 
-        // 构建注释语句
-        String commentSql = buildCommentStatements(tableMetadata);
-
-        return String.join("\n", createTableSql, indexSql, commentSql);
+        return String.join("\n", createTableSql, indexSql);
     }
 
     private static String buildCreateTableStatement(DefaultTableMetadata metadata) {
