@@ -71,9 +71,9 @@ public interface DmTablesMapper {
      */
     @Results({
             @Result(column = "INDEX_NAME", property = "indexName"),
-            @Result(column = "UNIQUENESS", property = "unique"),
+            @Result(column = "UNIQUENESS", property = "uniqueness"),
             @Result(column = "COLUMNS", property = "columns"),
-            @Result(column = "INDEX_TYPE", property = "type")
+            @Result(column = "INDEX_TYPE", property = "indexType")
     })
     @Select({
             "SELECT ind.INDEX_NAME,",
