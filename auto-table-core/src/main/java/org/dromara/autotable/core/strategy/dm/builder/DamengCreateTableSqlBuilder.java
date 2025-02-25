@@ -90,7 +90,7 @@ public class DamengCreateTableSqlBuilder {
             if (StringUtils.hasText(column.getComment())) {
                 comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';",
                         qualifiedTableName,
-                        column.getName(),
+                        "\"" + column.getName() + "\"",
                         column.getComment()));
             }
         });

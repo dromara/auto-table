@@ -121,8 +121,7 @@ public class ColumnSqlBuilder {
      * 处理保留字列名
      */
     private static String wrapColumnName(String columnName) {
-        return RESERVED_WORDS.contains(columnName.toUpperCase()) ?
-                "\"" + columnName + "\"" : columnName;
+        return "\"" + columnName + "\"";
     }
 
     /**

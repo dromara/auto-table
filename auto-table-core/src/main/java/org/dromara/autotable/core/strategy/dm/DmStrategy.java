@@ -40,7 +40,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
 
     public static String withSchemaName(String schema, String... names) {
         String name = String.join(".", names);
-        return StringUtils.hasText(schema) ? schema + "." + name : name;
+        return StringUtils.hasText(schema) ? schema + "." + "\"" + name + "\"" : "\"" + name + "\"";
     }
 
     @Override
