@@ -7,7 +7,7 @@ import org.dromara.autotable.core.utils.StringUtils;
  * 达梦字段元信息（精简版）
  */
 @Data
-public class DamengDbColumn {
+public class DmDbColumn {
     /**
      * 是否主键（根据系统表查询结果计算）
      */

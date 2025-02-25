@@ -19,10 +19,10 @@ import java.sql.SQLException;
  * 达梦表元数据构建器
  */
 @Slf4j
-public class DamengTableMetadataBuilder extends DefaultTableMetadataBuilder {
+public class DmTableMetadataBuilder extends DefaultTableMetadataBuilder {
 
-    public DamengTableMetadataBuilder() {
-        super(new DamengColumnMetadataBuilder(), new IndexMetadataBuilder());
+    public DmTableMetadataBuilder() {
+        super(new DmColumnMetadataBuilder(), new IndexMetadataBuilder());
     }
 
     @Override

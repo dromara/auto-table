@@ -11,15 +11,15 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
-import org.dromara.autotable.core.strategy.dm.builder.DamengCreateTableSqlBuilder;
-import org.dromara.autotable.core.strategy.dm.builder.DamengModifyTableSqlBuilder;
-import org.dromara.autotable.core.strategy.dm.builder.DamengTableMetadataBuilder;
-import org.dromara.autotable.core.strategy.dm.data.DamengCompareTableInfo;
-import org.dromara.autotable.core.strategy.dm.data.DamengDefaultTypeEnum;
-import org.dromara.autotable.core.strategy.dm.data.dbdata.DamengDbColumn;
-import org.dromara.autotable.core.strategy.dm.data.dbdata.DamengDbIndex;
-import org.dromara.autotable.core.strategy.dm.data.dbdata.DamengDbPrimary;
-import org.dromara.autotable.core.strategy.dm.mapper.DamengTablesMapper;
+import org.dromara.autotable.core.strategy.dm.builder.DmCreateTableSqlBuilder;
+import org.dromara.autotable.core.strategy.dm.builder.DmModifyTableSqlBuilder;
+import org.dromara.autotable.core.strategy.dm.builder.DmTableMetadataBuilder;
+import org.dromara.autotable.core.strategy.dm.data.DmCompareTableInfo;
+import org.dromara.autotable.core.strategy.dm.data.DmDefaultTypeEnum;
+import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbColumn;
+import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbIndex;
+import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbPrimary;
+import org.dromara.autotable.core.strategy.dm.mapper.DmTablesMapper;
 import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * 达梦数据库策略实现
  */
-public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompareTableInfo, DamengTablesMapper> {
+public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTableInfo, DmTablesMapper> {
 
     public static String withSchemaName(String schema, String... names) {
         String name = String.join(".", names);
@@ -51,34 +51,34 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            put(String.class, DamengDefaultTypeEnum.VARCHAR2);
-            put(Character.class, DamengDefaultTypeEnum.CHAR);
-            put(char.class, DamengDefaultTypeEnum.CHAR);
+            put(String.class, DmDefaultTypeEnum.VARCHAR2);
+            put(Character.class, DmDefaultTypeEnum.CHAR);
+            put(char.class, DmDefaultTypeEnum.CHAR);
 
-            put(Short.class, DamengDefaultTypeEnum.SMALLINT);
-            put(short.class, DamengDefaultTypeEnum.SMALLINT);
-            put(int.class, DamengDefaultTypeEnum.INTEGER);
-            put(Integer.class, DamengDefaultTypeEnum.INTEGER);
-            put(Long.class, DamengDefaultTypeEnum.BIGINT);
-            put(long.class, DamengDefaultTypeEnum.BIGINT);
-            put(BigInteger.class, DamengDefaultTypeEnum.BIGINT);
+            put(Short.class, DmDefaultTypeEnum.SMALLINT);
+            put(short.class, DmDefaultTypeEnum.SMALLINT);
+            put(int.class, DmDefaultTypeEnum.INTEGER);
+            put(Integer.class, DmDefaultTypeEnum.INTEGER);
+            put(Long.class, DmDefaultTypeEnum.BIGINT);
+            put(long.class, DmDefaultTypeEnum.BIGINT);
+            put(BigInteger.class, DmDefaultTypeEnum.BIGINT);
 
-            put(Boolean.class, DamengDefaultTypeEnum.BOOLEAN);
-            put(boolean.class, DamengDefaultTypeEnum.BOOLEAN);
+            put(Boolean.class, DmDefaultTypeEnum.BOOLEAN);
+            put(boolean.class, DmDefaultTypeEnum.BOOLEAN);
 
-            put(Float.class, DamengDefaultTypeEnum.FLOAT);
-            put(float.class, DamengDefaultTypeEnum.FLOAT);
-            put(Double.class, DamengDefaultTypeEnum.DOUBLE);
-            put(double.class, DamengDefaultTypeEnum.DOUBLE);
-            put(BigDecimal.class, DamengDefaultTypeEnum.DECIMAL);
+            put(Float.class, DmDefaultTypeEnum.FLOAT);
+            put(float.class, DmDefaultTypeEnum.FLOAT);
+            put(Double.class, DmDefaultTypeEnum.DOUBLE);
+            put(double.class, DmDefaultTypeEnum.DOUBLE);
+            put(BigDecimal.class, DmDefaultTypeEnum.DECIMAL);
 
-            put(Date.class, DamengDefaultTypeEnum.TIMESTAMP);
-            put(java.sql.Date.class, DamengDefaultTypeEnum.DATE);
-            put(java.sql.Timestamp.class, DamengDefaultTypeEnum.TIMESTAMP);
-            put(LocalDateTime.class, DamengDefaultTypeEnum.TIMESTAMP);
-            put(LocalDate.class, DamengDefaultTypeEnum.DATE);
-            put(LocalTime.class, DamengDefaultTypeEnum.TIME);
-            put(java.sql.Time.class, DamengDefaultTypeEnum.TIME);
+            put(Date.class, DmDefaultTypeEnum.TIMESTAMP);
+            put(java.sql.Date.class, DmDefaultTypeEnum.DATE);
+            put(java.sql.Timestamp.class, DmDefaultTypeEnum.TIMESTAMP);
+            put(LocalDateTime.class, DmDefaultTypeEnum.TIMESTAMP);
+            put(LocalDate.class, DmDefaultTypeEnum.DATE);
+            put(LocalTime.class, DmDefaultTypeEnum.TIME);
+            put(java.sql.Time.class, DmDefaultTypeEnum.TIME);
         }};
     }
 
@@ -89,21 +89,21 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
 
     @Override
     public @NonNull DefaultTableMetadata analyseClass(Class<?> beanClass) {
-        return new DamengTableMetadataBuilder().build(beanClass);
+        return new DmTableMetadataBuilder().build(beanClass);
     }
 
     @Override
     public List<String> createTable(DefaultTableMetadata tableMetadata) {
-        String sql = DamengCreateTableSqlBuilder.buildSql(tableMetadata);
+        String sql = DmCreateTableSqlBuilder.buildSql(tableMetadata);
         return Collections.singletonList(sql);
     }
 
     @Override
-    public @NonNull DamengCompareTableInfo compareTable(DefaultTableMetadata tableMetadata) {
+    public @NonNull DmCompareTableInfo compareTable(DefaultTableMetadata tableMetadata) {
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
 
-        DamengCompareTableInfo compareInfo = new DamengCompareTableInfo(tableName, schema);
+        DmCompareTableInfo compareInfo = new DmCompareTableInfo(tableName, schema);
 
         // 比较表基本信息
         compareTableInfo(tableMetadata, compareInfo);
@@ -130,7 +130,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
         }
     }
 
-    private void compareTableInfo(DefaultTableMetadata metadata, DamengCompareTableInfo compareInfo) {
+    private void compareTableInfo(DefaultTableMetadata metadata, DmCompareTableInfo compareInfo) {
         String tableComment = executeReturn(mapper ->
                 mapper.selectTableComment(metadata.getSchema(), metadata.getTableName()));
         if (!Objects.equals(tableComment, metadata.getComment())) {
@@ -138,20 +138,20 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
         }
     }
 
-    private void compareColumnInfo(DefaultTableMetadata metadata, DamengCompareTableInfo compareInfo) {
+    private void compareColumnInfo(DefaultTableMetadata metadata, DmCompareTableInfo compareInfo) {
         String schema = metadata.getSchema();
         String tableName = metadata.getTableName();
 
         // 获取数据库字段信息
-        List<DamengDbColumn> dbColumns = executeReturn(mapper ->
+        List<DmDbColumn> dbColumns = executeReturn(mapper ->
                 mapper.selectTableColumns(schema, tableName));
-        Map<String, DamengDbColumn> columnMap = dbColumns.stream()
-                .collect(Collectors.toMap(DamengDbColumn::getName, Function.identity()));
+        Map<String, DmDbColumn> columnMap = dbColumns.stream()
+                .collect(Collectors.toMap(DmDbColumn::getName, Function.identity()));
 
         // 处理字段差异
         for (ColumnMetadata column : metadata.getColumnMetadataList()) {
             String colName = column.getName();
-            DamengDbColumn dbColumn = columnMap.remove(colName);
+            DmDbColumn dbColumn = columnMap.remove(colName);
 
             if (dbColumn == null) {
                 // 新增字段
@@ -180,7 +180,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
         handlePrimaryKeyChange(metadata, compareInfo, schema, tableName);
     }
 
-    private boolean isColumnDefinitionChanged(ColumnMetadata newCol, DamengDbColumn oldCol) {
+    private boolean isColumnDefinitionChanged(ColumnMetadata newCol, DmDbColumn oldCol) {
         // 类型检查
         String newType = newCol.getType().getDefaultFullType().toUpperCase();
         String oldType = oldCol.getType().toUpperCase();
@@ -219,10 +219,10 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
         return dbDefault.replace("'", "");
     }
 
-    private void handlePrimaryKeyChange(DefaultTableMetadata metadata, DamengCompareTableInfo compareInfo,
+    private void handlePrimaryKeyChange(DefaultTableMetadata metadata, DmCompareTableInfo compareInfo,
                                         String schema, String tableName) {
         // 获取数据库主键信息
-        DamengDbPrimary dbPrimary = executeReturn(mapper ->
+        DmDbPrimary dbPrimary = executeReturn(mapper ->
                 mapper.selectPrimaryKey(schema, tableName));
         Set<String> dbPkColumns = dbPrimary != null ?
                 new HashSet<>(Arrays.asList(dbPrimary.getColumns().split(","))) : Collections.emptySet();
@@ -246,20 +246,20 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
         }
     }
 
-    private void compareIndexInfo(DefaultTableMetadata metadata, DamengCompareTableInfo compareInfo) {
+    private void compareIndexInfo(DefaultTableMetadata metadata, DmCompareTableInfo compareInfo) {
         String schema = metadata.getSchema();
         String tableName = metadata.getTableName();
 
         // 获取数据库索引信息
-        List<DamengDbIndex> dbIndexes = executeReturn(mapper ->
+        List<DmDbIndex> dbIndexes = executeReturn(mapper ->
                 mapper.selectTableIndexes(schema, tableName));
-        Map<String, DamengDbIndex> indexMap = dbIndexes.stream()
-                .collect(Collectors.toMap(DamengDbIndex::getIndexName, Function.identity()));
+        Map<String, DmDbIndex> indexMap = dbIndexes.stream()
+                .collect(Collectors.toMap(DmDbIndex::getIndexName, Function.identity()));
 
         // 处理索引差异
         for (IndexMetadata newIndex : metadata.getIndexMetadataList()) {
             String indexName = newIndex.getName();
-            DamengDbIndex dbIndex = indexMap.remove(indexName);
+            DmDbIndex dbIndex = indexMap.remove(indexName);
 
             if (dbIndex == null) {
                 compareInfo.addNewIndex(newIndex);
@@ -278,7 +278,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
         }
     }
 
-    private boolean isIndexChanged(IndexMetadata newIndex, DamengDbIndex oldIndex) {
+    private boolean isIndexChanged(IndexMetadata newIndex, DmDbIndex oldIndex) {
         // 检查索引类型
         if (!newIndex.getType().name().equals(oldIndex.getIndexType())) {
             return true;
@@ -291,8 +291,8 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DamengCompare
     }
 
     @Override
-    public List<String> modifyTable(DamengCompareTableInfo compareInfo) {
-        String sql = DamengModifyTableSqlBuilder.buildSql(compareInfo);
+    public List<String> modifyTable(DmCompareTableInfo compareInfo) {
+        String sql = DmModifyTableSqlBuilder.buildSql(compareInfo);
         return Collections.singletonList(sql);
     }
 }

@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
 
 /**
  * 达梦建表SQL生成器
+ * @author freddy
  */
-public class DamengCreateTableSqlBuilder {
+public class DmCreateTableSqlBuilder {
 
     public static String buildSql(DefaultTableMetadata tableMetadata) {
         String schema = tableMetadata.getSchema();

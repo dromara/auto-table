@@ -7,7 +7,7 @@ package org.dromara.autotable.core.strategy.dm.builder;
 
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.dm.DmStrategy;
-import org.dromara.autotable.core.strategy.dm.data.DamengCompareTableInfo;
+import org.dromara.autotable.core.strategy.dm.data.DmCompareTableInfo;
 import org.dromara.autotable.core.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 /**
  * 达梦表修改SQL生成器
  */
-public class DamengModifyTableSqlBuilder {
+public class DmModifyTableSqlBuilder {
 
-    public static String buildSql(DamengCompareTableInfo compareInfo) {
+    public static String buildSql(DmCompareTableInfo compareInfo) {
         List<String> sqlList = new ArrayList<>();
         String qualifiedTableName = DmStrategy.withSchemaName(compareInfo.getSchema(), compareInfo.getName());
 
@@ -80,7 +80,7 @@ public class DamengModifyTableSqlBuilder {
         }
 
         // 新建索引
-        sqlList.add(DamengCreateTableSqlBuilder.buildIndexStatements(
+        sqlList.add(DmCreateTableSqlBuilder.buildIndexStatements(
                 compareInfo.getSchema(),
                 compareInfo.getName(),
                 compareInfo.getIndexMetadataList()));
@@ -91,7 +91,7 @@ public class DamengModifyTableSqlBuilder {
         return String.join("\n", sqlList);
     }
 
-    private static String buildCommentStatements(DamengCompareTableInfo compareInfo) {
+    private static String buildCommentStatements(DmCompareTableInfo compareInfo) {
         List<String> comments = new ArrayList<>();
         String qualifiedTableName = DmStrategy.withSchemaName(compareInfo.getSchema(), compareInfo.getName());
 

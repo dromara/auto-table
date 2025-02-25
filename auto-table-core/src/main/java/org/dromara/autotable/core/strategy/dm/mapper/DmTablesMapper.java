@@ -8,9 +8,9 @@ package org.dromara.autotable.core.strategy.dm.mapper;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
-import org.dromara.autotable.core.strategy.dm.data.dbdata.DamengDbColumn;
-import org.dromara.autotable.core.strategy.dm.data.dbdata.DamengDbIndex;
-import org.dromara.autotable.core.strategy.dm.data.dbdata.DamengDbPrimary;
+import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbColumn;
+import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbIndex;
+import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbPrimary;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * 达梦数据库系统表查询Mapper
  */
-public interface DamengTablesMapper {
+public interface DmTablesMapper {
 
     /**
      * 查询表注释
@@ -46,7 +46,7 @@ public interface DamengTablesMapper {
             "LEFT JOIN USER_COL_COMMENTS com ON c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME",
             "WHERE c.TABLE_NAME = #{tableName}"
     })
-    List<DamengDbColumn> selectTableColumns(String schema, String tableName);
+    List<DmDbColumn> selectTableColumns(String schema, String tableName);
 
     /**
      * 查询主键信息
@@ -64,7 +64,7 @@ public interface DamengTablesMapper {
             "  AND cons.CONSTRAINT_TYPE = 'P'",
             "GROUP BY cons.CONSTRAINT_NAME"
     })
-    DamengDbPrimary selectPrimaryKey(String schema, String tableName);
+    DmDbPrimary selectPrimaryKey(String schema, String tableName);
 
     /**
      * 查询索引信息
@@ -86,7 +86,7 @@ public interface DamengTablesMapper {
             "  AND ind.INDEX_TYPE != 'LOB'", // 排除LOB索引
             "GROUP BY ind.INDEX_NAME, ind.UNIQUENESS, ind.INDEX_TYPE"
     })
-    List<DamengDbIndex> selectTableIndexes(String schema, String tableName);
+    List<DmDbIndex> selectTableIndexes(String schema, String tableName);
 
     /**
      * 查询外键信息（按需实现）

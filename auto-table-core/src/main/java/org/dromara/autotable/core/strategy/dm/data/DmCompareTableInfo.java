@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  */
 @Getter
 @Setter
-public class DamengCompareTableInfo extends CompareTableInfo {
+public class DmCompareTableInfo extends CompareTableInfo {
 
     /**
      * 注释: 有值说明需要改
@@ -82,7 +82,7 @@ public class DamengCompareTableInfo extends CompareTableInfo {
      */
     private Map<String, String> storageParams = new HashMap<>();
 
-    public DamengCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public DmCompareTableInfo(@NonNull String name, @NonNull String schema) {
         super(name, schema);
     }
 

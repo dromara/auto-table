@@ -11,7 +11,7 @@ import lombok.Data;
  * 达梦索引元信息
  */
 @Data
-public class DamengDbIndex {
+public class DmDbIndex {
     /**
      * 索引名称
      */

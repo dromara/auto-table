@@ -6,9 +6,10 @@ import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 
 /**
  * 达梦数据库字段类型枚举
+ * @author freddy
  */
 @Getter
-public enum DamengDefaultTypeEnum implements DefaultTypeEnumInterface {
+public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
     // 数值类型
     SERIAL(DmTypeConstant.SERIAL, null, null),
     INTEGER(DmTypeConstant.INTEGER, null, null),
@@ -50,7 +51,7 @@ public enum DamengDefaultTypeEnum implements DefaultTypeEnumInterface {
     private final Integer defaultLength;
     private final Integer defaultDecimalLength;
 
-    DamengDefaultTypeEnum(String typeName, Integer defaultLength, Integer defaultDecimalLength) {
+    DmDefaultTypeEnum(String typeName, Integer defaultLength, Integer defaultDecimalLength) {
         this.typeName = typeName;
         this.defaultLength = defaultLength;
         this.defaultDecimalLength = defaultDecimalLength;
@@ -61,10 +62,12 @@ public enum DamengDefaultTypeEnum implements DefaultTypeEnumInterface {
      */
     public static String convertNumberType(int precision, int scale) {
         if (scale == 0) {
-            if (precision <= 9)
+            if (precision <= 9) {
                 return DmTypeConstant.INTEGER;
-            if (precision <= 18)
+            }
+            if (precision <= 18) {
                 return DmTypeConstant.BIGINT;
+            }
         }
         return String.format("%s(%d,%d)", DmTypeConstant.NUMBER, precision, scale);
     }

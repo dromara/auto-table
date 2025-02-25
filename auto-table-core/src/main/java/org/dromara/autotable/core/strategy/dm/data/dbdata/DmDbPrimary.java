@@ -11,7 +11,7 @@ import lombok.Data;
  * 达梦主键元信息
  */
 @Data
-public class DamengDbPrimary {
+public class DmDbPrimary {
     /**
      * 主键约束名称
      */
