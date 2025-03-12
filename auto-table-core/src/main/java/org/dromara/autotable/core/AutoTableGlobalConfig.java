@@ -40,6 +40,13 @@ public class AutoTableGlobalConfig {
     private static PropertyConfig autoTableProperties = new PropertyConfig();
 
     /**
+     * class扫描器
+     */
+    @Setter
+    @Getter
+    private static AutoTableClassScanner autoTableClassScanner = new AutoTableClassScanner() {};
+
+    /**
      * 数据源处理器
      */
     @Setter
@@ -59,7 +66,7 @@ public class AutoTableGlobalConfig {
      */
     @Setter
     @Getter
-    private static AutoTableOrmFrameAdapter autoTableOrmFrameAdapter = new AutoTableOrmFrameAdapter() {
+    private static AutoTableMetadataAdapter autoTableMetadataAdapter = new AutoTableMetadataAdapter() {
     };
 
     /**

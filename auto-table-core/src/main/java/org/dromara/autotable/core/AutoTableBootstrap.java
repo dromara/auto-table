@@ -1,8 +1,6 @@
 package org.dromara.autotable.core;
 
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.Ignore;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
@@ -10,12 +8,9 @@ import org.dromara.autotable.core.strategy.h2.H2Strategy;
 import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
-import org.dromara.autotable.core.utils.ClassScanner;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,21 +46,11 @@ public class AutoTableBootstrap {
         AutoTableGlobalConfig.addStrategy(new SqliteStrategy());
         AutoTableGlobalConfig.addStrategy(new H2Strategy());
 
-        // 从包package中获取所有的Class
-        Set<Class<? extends Annotation>> includeAnnotations = new HashSet<>(
-                Collections.singletonList(AutoTable.class)
-        );
-        // 添加自定义的注解
-        includeAnnotations.addAll(AutoTableGlobalConfig.getAutoTableOrmFrameAdapter().scannerAnnotations());
-        Set<Class<? extends Annotation>> ignoreAnnotations = new HashSet<>(Collections.singleton(Ignore.class));
-        // 经过自定义的拦截器，修改最终影响自动建表的注解
-        AutoTableGlobalConfig.getAutoTableAnnotationInterceptor().intercept(includeAnnotations, ignoreAnnotations);
-
         // 扫描所有的类，过滤出指定注解的实体
         Class<?>[] modelClass = autoTableProperties.getModelClass();
         Set<Class<?>> classes = new HashSet<>(Arrays.asList(modelClass));
         String[] packs = getModelPackage(autoTableProperties);
-        Set<Class<?>> packClasses = ClassScanner.scan(packs, includeAnnotations, ignoreAnnotations);
+        Set<Class<?>> packClasses = AutoTableGlobalConfig.getAutoTableClassScanner().scan(packs);
         classes.addAll(packClasses);
 
         AutoTableGlobalConfig.getAutoTableReadyCallback().ready(classes);
@@ -76,7 +61,7 @@ public class AutoTableBootstrap {
 
             // 同一个数据源下，检查重名的表
             Map<String, List<Class<?>>> repeatCheckMap = entityClasses.stream()
-                    .collect(Collectors.groupingBy(entity -> TableBeanUtils.getTableSchema(entity) + "." + TableBeanUtils.getTableName(entity)));
+                    .collect(Collectors.groupingBy(entity -> TableMetadataHandler.getTableSchema(entity) + "." + TableMetadataHandler.getTableName(entity)));
             for (Map.Entry<String, List<Class<?>>> repeatCheckItem : repeatCheckMap.entrySet()) {
                 int sameTableNameCount = repeatCheckItem.getValue().size();
                 if (sameTableNameCount > 1) {

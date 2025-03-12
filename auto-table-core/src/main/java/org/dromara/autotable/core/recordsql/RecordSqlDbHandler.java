@@ -11,7 +11,7 @@ import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -33,7 +33,7 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         // 优先使用自定义的表名，没有则根据统一的风格定义表名
         String tableName = recordSqlConfig.getTableName();
         if (StringUtils.noText(tableName)) {
-            tableName = TableBeanUtils.getTableName(AutoTableExecuteSqlLog.class);
+            tableName = TableMetadataHandler.getTableName(AutoTableExecuteSqlLog.class);
         }
 
         // 判断表是否存在，不存在则创建
@@ -75,11 +75,11 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         Class<AutoTableExecuteSqlLog> sqlLogClass = AutoTableExecuteSqlLog.class;
         // 筛选列
         List<Field> columnFields = Arrays.stream(sqlLogClass.getDeclaredFields())
-                .filter(field -> TableBeanUtils.isIncludeField(field, sqlLogClass))
+                .filter(field -> TableMetadataHandler.isIncludeField(field, sqlLogClass))
                 .collect(Collectors.toList());
         // 根据统一的风格定义列名
         List<String> columns = columnFields.stream()
-                .map(field -> TableBeanUtils.getRealColumnName(sqlLogClass, field))
+                .map(field -> TableMetadataHandler.getColumnName(sqlLogClass, field))
                 .collect(Collectors.toList());
         // 获取每一列的值
         List<Object> values = columnFields.stream().map(field -> {

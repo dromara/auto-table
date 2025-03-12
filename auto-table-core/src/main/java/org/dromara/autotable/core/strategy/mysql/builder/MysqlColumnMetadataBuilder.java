@@ -90,7 +90,7 @@ public class MysqlColumnMetadataBuilder extends ColumnMetadataBuilder {
             Class<?> enumType = field.getType();
             if (enumType.isEnum()) {
                 // 调用第三方框架获取枚举的可选值
-                List<String> values = AutoTableGlobalConfig.getAutoTableOrmFrameAdapter().getEnumValues(enumType);
+                List<String> values = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnEnumValues(enumType);
                 if (values.isEmpty()) {
                     values = Arrays.stream(enumType.getEnumConstants()).map(Object::toString).collect(Collectors.toList());
                 }

@@ -22,8 +22,13 @@ import org.apache.ibatis.solon.integration.MybatisAdapterManager;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
-import org.dromara.autotable.core.AutoTableOrmFrameAdapter;
-import org.dromara.autotable.core.callback.*;
+import org.dromara.autotable.core.AutoTableMetadataAdapter;
+import org.dromara.autotable.core.callback.AutoTableFinishCallback;
+import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CreateTableFinishCallback;
+import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
+import org.dromara.autotable.core.callback.RunStateCallback;
+import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
@@ -33,6 +38,7 @@ import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
 import org.dromara.autotable.core.interceptor.ModifyTableInterceptor;
 import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.AutoTableClassScanner;
 import org.dromara.autotable.solon.adapter.CustomAnnotationFinder;
 import org.dromara.autotable.solon.adapter.SolonDataSourceHandler;
 import org.dromara.autotable.solon.annotation.EnableAutoTable;
@@ -70,8 +76,10 @@ public class AutoTablePlugin implements Plugin {
 
         // 配置 自定义的IStrategy
         context.subBeansOfType(IStrategy.class, AutoTableGlobalConfig::addStrategy);
+        // 配置 class扫描器
+        context.subBeansOfType(AutoTableClassScanner.class, AutoTableGlobalConfig::setAutoTableClassScanner);
         // 配置 ORM框架适配器
-        context.subBeansOfType(AutoTableOrmFrameAdapter.class, AutoTableGlobalConfig::setAutoTableOrmFrameAdapter);
+        context.subBeansOfType(AutoTableMetadataAdapter.class, AutoTableGlobalConfig::setAutoTableMetadataAdapter);
         // 配置 数据库类型转换
         context.subBeansOfType(JavaTypeToDatabaseTypeConverter.class, AutoTableGlobalConfig::setJavaTypeToDatabaseTypeConverter);
         // 配置 自定义记录sql的方式

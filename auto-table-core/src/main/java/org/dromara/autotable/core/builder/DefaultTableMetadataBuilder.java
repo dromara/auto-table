@@ -4,7 +4,7 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.BeanClassUtil;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -43,15 +43,15 @@ public class DefaultTableMetadataBuilder {
     }
 
     protected String getTableComment(Class<?> clazz) {
-        return TableBeanUtils.getTableComment(clazz);
+        return TableMetadataHandler.getTableComment(clazz);
     }
 
     protected String getTableSchema(Class<?> clazz) {
-        return TableBeanUtils.getTableSchema(clazz);
+        return TableMetadataHandler.getTableSchema(clazz);
     }
 
     protected String getTableName(Class<?> clazz) {
-        return TableBeanUtils.getTableName(clazz);
+        return TableMetadataHandler.getTableName(clazz);
     }
 
     protected void fillIndexMetadataList(Class<?> clazz, DefaultTableMetadata tableMetadata, List<Field> fields) {

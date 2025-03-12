@@ -10,7 +10,7 @@ import org.dromara.autotable.core.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.core.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.core.utils.BeanClassUtil;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -24,8 +24,8 @@ public class MysqlTableMetadataBuilder {
 
     public static MysqlTableMetadata build(Class<?> clazz) {
 
-        String tableName = TableBeanUtils.getTableName(clazz);
-        String tableComment = TableBeanUtils.getTableComment(clazz);
+        String tableName = TableMetadataHandler.getTableName(clazz);
+        String tableComment = TableMetadataHandler.getTableComment(clazz);
         MysqlTableMetadata mysqlTableMetadata = new MysqlTableMetadata(clazz, tableName, tableComment);
 
         // 设置表字符集
