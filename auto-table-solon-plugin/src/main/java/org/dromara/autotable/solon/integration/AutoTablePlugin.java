@@ -72,7 +72,7 @@ public class AutoTablePlugin implements Plugin {
         AutoTableGlobalConfig.setAutoTableProperties(autoTableProperties.toConfig());
 
         // 资源加载完成后启动AutoTable
-        context.lifecycle(-1, ()-> resourceLoadFinish(context));
+        context.lifecycle(-100, ()-> resourceLoadFinish(context));
 
         // 配置 自定义的IStrategy
         context.subBeansOfType(IStrategy.class, AutoTableGlobalConfig::addStrategy);
