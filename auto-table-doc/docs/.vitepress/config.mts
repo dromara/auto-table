@@ -71,6 +71,7 @@ export default defineConfig({
                         {text: '多数据源', link: '/指南/高级/多数据源'},
                         {text: '拦截器', link: '/指南/高级/拦截器'},
                         {text: '事件回调', link: '/指南/高级/事件回调'},
+                        {text: '类型映射', link: '/指南/高级/类型映射'},
                     ]
                 },
                 {
