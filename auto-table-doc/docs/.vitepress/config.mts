@@ -71,14 +71,13 @@ export default defineConfig({
                         {text: '多数据源', link: '/指南/高级/多数据源'},
                         {text: '拦截器', link: '/指南/高级/拦截器'},
                         {text: '事件回调', link: '/指南/高级/事件回调'},
-                        {text: '类型映射', link: '/指南/高级/类型映射'},
                     ]
                 },
                 {
                     text: '自定义',
                     items: [
                         {text: 'SQL记录', link: '/指南/自定义/SQL记录'},
-                        {text: '类型转换器', link: '/指南/自定义/类型转换器'},
+                        {text: '类型映射', link: '/指南/自定义/类型映射'},
                         {text: '数据库策略', link: '/指南/自定义/数据库策略'},
                     ]
                 },
