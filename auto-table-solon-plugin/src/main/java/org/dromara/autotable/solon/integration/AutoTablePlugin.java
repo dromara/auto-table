@@ -126,8 +126,9 @@ public class AutoTablePlugin implements Plugin {
         this.getAndSetBeans(context, CreateTableFinishCallback.class, AutoTableGlobalConfig::setCreateTableFinishCallbacks);
         // ModifyTableFinishCallback
         this.getAndSetBeans(context, ModifyTableFinishCallback.class, AutoTableGlobalConfig::setModifyTableFinishCallbacks);
-        // RunStateCallback
+        // RunBeforeCallback
         this.getAndSetBeans(context, RunBeforeCallback.class, AutoTableGlobalConfig::setRunBeforeCallbacks);
+        // RunAfterCallback
         this.getAndSetBeans(context, RunAfterCallback.class, AutoTableGlobalConfig::setRunAfterCallbacks);
         // 加载完成回调
         this.getAndSetBeans(context, AutoTableReadyCallback.class, AutoTableGlobalConfig::setAutoTableReadyCallbacks);
