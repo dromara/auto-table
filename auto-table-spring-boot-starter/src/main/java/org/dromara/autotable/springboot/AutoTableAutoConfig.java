@@ -1,13 +1,15 @@
 package org.dromara.autotable.springboot;
 
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
+import org.dromara.autotable.core.AutoTableClassScanner;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
-import org.dromara.autotable.core.callback.RunStateCallback;
+import org.dromara.autotable.core.callback.RunAfterCallback;
+import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
@@ -21,13 +23,14 @@ import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import org.dromara.autotable.core.AutoTableClassScanner;
 import org.dromara.autotable.springboot.properties.AutoTableProperties;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+
+import java.util.stream.Collectors;
 
 /**
  * @author don
@@ -53,7 +56,8 @@ public class AutoTableAutoConfig {
             /* 回调事件 */
             ObjectProvider<CreateTableFinishCallback> createTableFinishCallback,
             ObjectProvider<ModifyTableFinishCallback> modifyTableFinishCallback,
-            ObjectProvider<RunStateCallback> runStateCallback,
+            ObjectProvider<RunBeforeCallback> runBeforeCallbacks,
+            ObjectProvider<RunAfterCallback> runAfterCallbacks,
             ObjectProvider<ValidateFinishCallback> validateFinishCallback,
             ObjectProvider<AutoTableReadyCallback> autoTableReadyCallback,
             ObjectProvider<AutoTableFinishCallback> autoTableFinishCallbacks,
@@ -95,27 +99,29 @@ public class AutoTableAutoConfig {
 
         /* 拦截器 */
         // 配置自定义的注解拦截器
-        autoTableAnnotationInterceptor.ifAvailable(AutoTableGlobalConfig::setAutoTableAnnotationInterceptor);
+        AutoTableGlobalConfig.setAutoTableAnnotationInterceptors(autoTableAnnotationInterceptor.orderedStream().collect(Collectors.toList()));
         // 配置自定义的创建表拦截器
-        buildTableMetadataInterceptor.ifAvailable(AutoTableGlobalConfig::setBuildTableMetadataInterceptor);
+        AutoTableGlobalConfig.setBuildTableMetadataInterceptors(buildTableMetadataInterceptor.orderedStream().collect(Collectors.toList()));
         // 配置自定义的创建表拦截器
-        createTableInterceptor.ifAvailable(AutoTableGlobalConfig::setCreateTableInterceptor);
+        AutoTableGlobalConfig.setCreateTableInterceptors(createTableInterceptor.orderedStream().collect(Collectors.toList()));
         // 配置自定义的修改表拦截器
-        modifyTableInterceptor.ifAvailable(AutoTableGlobalConfig::setModifyTableInterceptor);
+        AutoTableGlobalConfig.setModifyTableInterceptors(modifyTableInterceptor.orderedStream().collect(Collectors.toList()));
 
         /* 回调事件 */
         // 配置自定义的创建表回调
-        createTableFinishCallback.ifAvailable(AutoTableGlobalConfig::setCreateTableFinishCallback);
+        AutoTableGlobalConfig.setCreateTableFinishCallbacks(createTableFinishCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的修改表回调
-        modifyTableFinishCallback.ifAvailable(AutoTableGlobalConfig::setModifyTableFinishCallback);
-        // 配置自定义的单个表执行前后回调
-        runStateCallback.ifAvailable(AutoTableGlobalConfig::setRunStateCallback);
+        AutoTableGlobalConfig.setModifyTableFinishCallbacks(modifyTableFinishCallback.orderedStream().collect(Collectors.toList()));
+        // 配置自定义的单个表执行前回调
+        AutoTableGlobalConfig.setRunBeforeCallbacks(runBeforeCallbacks.orderedStream().collect(Collectors.toList()));
+        // 配置自定义的单个表执行后回调
+        AutoTableGlobalConfig.setRunAfterCallbacks(runAfterCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的验证表回调
-        validateFinishCallback.ifAvailable(AutoTableGlobalConfig::setValidateFinishCallback);
+        AutoTableGlobalConfig.setValidateFinishCallbacks(validateFinishCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的全局执行前回调
-        autoTableReadyCallback.ifAvailable(AutoTableGlobalConfig::setAutoTableReadyCallback);
+        AutoTableGlobalConfig.setAutoTableReadyCallbacks(autoTableReadyCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的全局执行后回调
-        autoTableFinishCallbacks.ifAvailable(AutoTableGlobalConfig::setAutoTableFinishCallback);
+        AutoTableGlobalConfig.setAutoTableFinishCallbacks(autoTableFinishCallbacks.orderedStream().collect(Collectors.toList()));
 
         // 配置自定义的java到数据库的转换器
         javaTypeToDatabaseTypeConverter.ifAvailable(AutoTableGlobalConfig::setJavaTypeToDatabaseTypeConverter);

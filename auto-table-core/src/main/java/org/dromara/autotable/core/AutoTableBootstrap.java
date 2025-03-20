@@ -53,7 +53,7 @@ public class AutoTableBootstrap {
         Set<Class<?>> packClasses = AutoTableGlobalConfig.getAutoTableClassScanner().scan(packs);
         classes.addAll(packClasses);
 
-        AutoTableGlobalConfig.getAutoTableReadyCallback().ready(classes);
+        AutoTableGlobalConfig.getAutoTableReadyCallbacks().forEach(fn -> fn.ready(classes));
 
         // 获取对应的数据源，根据不同数据库方言，执行不同的处理
         IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.getDatasourceHandler();
@@ -81,7 +81,7 @@ public class AutoTableBootstrap {
                 log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
             }
         });
-        AutoTableGlobalConfig.getAutoTableFinishCallback().finish(classes);
+        AutoTableGlobalConfig.getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
         log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
     }
 

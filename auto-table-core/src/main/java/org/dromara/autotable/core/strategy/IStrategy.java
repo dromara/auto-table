@@ -77,13 +77,13 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     default void start(Class<?> entityClass) {
 
-        AutoTableGlobalConfig.getRunStateCallback().before(entityClass);
+        AutoTableGlobalConfig.getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
         TABLE_META tableMetadata = this.analyseClass(entityClass);
 
         this.start(tableMetadata);
 
-        AutoTableGlobalConfig.getRunStateCallback().after(entityClass);
+        AutoTableGlobalConfig.getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
     }
 
     /**
@@ -93,7 +93,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     default void start(TABLE_META tableMetadata) {
         // 拦截表信息，供用户自定义修改
-        AutoTableGlobalConfig.getBuildTableMetadataInterceptor().intercept(this.databaseDialect(), tableMetadata);
+        AutoTableGlobalConfig.getBuildTableMetadataInterceptors().forEach(fn -> fn.intercept(this.databaseDialect(), tableMetadata));
 
         RunMode runMode = AutoTableGlobalConfig.getAutoTableProperties().getMode();
 
@@ -127,7 +127,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         // 检查数据库数据模型与实体是否一致
         boolean tableNotExist = this.checkTableNotExist(schema, tableName);
         if (tableNotExist) {
-            AutoTableGlobalConfig.getValidateFinishCallback().validateFinish(false, this.databaseDialect(), null);
+            AutoTableGlobalConfig.getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(false, this.databaseDialect(), null));
             throw new RuntimeException(String.format("启动失败，%s中不存在表%s", this.databaseDialect(), tableMetadata.getTableName()));
         }
 
@@ -135,10 +135,10 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         COMPARE_TABLE_INFO compareTableInfo = this.compareTable(tableMetadata);
         if (compareTableInfo.needModify()) {
             log.warn("{}表结构不一致：\n{}", tableMetadata.getTableName(), compareTableInfo.validateFailedMessage());
-            AutoTableGlobalConfig.getValidateFinishCallback().validateFinish(false, this.databaseDialect(), compareTableInfo);
+            AutoTableGlobalConfig.getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(false, this.databaseDialect(), compareTableInfo));
             throw new RuntimeException(String.format("启动失败，%s数据表%s与实体不匹配", this.databaseDialect(), tableMetadata.getTableName()));
         }
-        AutoTableGlobalConfig.getValidateFinishCallback().validateFinish(true, this.databaseDialect(), compareTableInfo);
+        AutoTableGlobalConfig.getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(true, this.databaseDialect(), compareTableInfo));
     }
 
     /**
@@ -189,10 +189,10 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         if (compareTableInfo.needModify()) {
             // 修改表信息
             log.info("修改表：{}", (StringUtils.hasText(schema) ? schema + "." : "") + tableName);
-            AutoTableGlobalConfig.getModifyTableInterceptor().beforeModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo);
+            AutoTableGlobalConfig.getModifyTableInterceptors().forEach(fn -> fn.beforeModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo));
             List<String> sqlList = this.modifyTable(compareTableInfo);
             this.executeSql(tableMetadata, sqlList);
-            AutoTableGlobalConfig.getModifyTableFinishCallback().afterModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo);
+            AutoTableGlobalConfig.getModifyTableFinishCallbacks().forEach(fn -> fn.afterModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo));
         }
     }
 
@@ -207,10 +207,10 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         String tableName = tableMetadata.getTableName();
         log.info("创建表：{}", (StringUtils.hasText(schema) ? schema + "." : "") + tableName);
 
-        AutoTableGlobalConfig.getCreateTableInterceptor().beforeCreateTable(this.databaseDialect(), tableMetadata);
+        AutoTableGlobalConfig.getCreateTableInterceptors().forEach(fn -> fn.beforeCreateTable(this.databaseDialect(), tableMetadata));
         List<String> sqlList = this.createTable(tableMetadata);
         this.executeSql(tableMetadata, sqlList);
-        AutoTableGlobalConfig.getCreateTableFinishCallback().afterCreateTable(this.databaseDialect(), tableMetadata);
+        AutoTableGlobalConfig.getCreateTableFinishCallbacks().forEach(fn -> fn.afterCreateTable(this.databaseDialect(), tableMetadata));
     }
 
     /**
