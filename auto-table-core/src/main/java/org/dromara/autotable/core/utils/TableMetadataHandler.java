@@ -165,6 +165,11 @@ public class TableMetadataHandler {
             return true;
         }
 
+        // 自增默认为非null
+        if (isAutoIncrement(field, clazz)) {
+            return true;
+        }
+
         ColumnNotNull column = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnNotNull.class);
         if (column != null) {
             return column.value();

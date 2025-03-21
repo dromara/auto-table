@@ -11,6 +11,7 @@ import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 import org.dromara.autotable.core.strategy.h2.data.H2DefaultTypeEnum;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
+import org.dromara.autotable.test.core.entity.pgsql.TestNoColumnComment;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
@@ -60,6 +61,23 @@ public class ApplicationSingleTest {
         });
         // 自定义java类型与数据库类型映射关系
         JavaTypeToDatabaseTypeConverter.addTypeMapping(DatabaseDialect.H2, Date.class, H2DefaultTypeEnum.TIMESTAMP);
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
+    public void testPgsqlCreate() {
+
+        initSqlSessionFactory("mybatis-config-pgsql.xml");
+
+        /* 修改表的逻辑 */
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+
+        autoTableProperties.setMode(RunMode.update);
+        // 测试所有的公共测试类
+        autoTableProperties.setModelClass(new Class[]{
+                TestNoColumnComment.class
+        });
         // 开始
         AutoTableBootstrap.start();
     }
