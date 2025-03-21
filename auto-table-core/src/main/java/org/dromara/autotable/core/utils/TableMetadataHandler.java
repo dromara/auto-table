@@ -265,7 +265,7 @@ public class TableMetadataHandler {
             return columnDefault;
         }
         AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
+        if (autoColumn != null && (autoColumn.defaultValueType() != DefaultValueEnum.UNDEFINED || StringUtils.hasText(autoColumn.comment()))) {
             return new ColumnDefault() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
