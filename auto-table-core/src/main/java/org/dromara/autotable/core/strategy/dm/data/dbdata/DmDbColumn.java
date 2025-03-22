@@ -1,7 +1,6 @@
 package org.dromara.autotable.core.strategy.dm.data.dbdata;
 
 import lombok.Data;
-import org.dromara.autotable.core.utils.StringUtils;
 
 /**
  * 达梦字段元信息（精简版）
@@ -45,40 +44,5 @@ public class DmDbColumn {
      */
     private String comment;
 
-    /**
-     * 获取完整类型定义
-     */
-    public String getDataTypeFormat() {
-        switch (this.type.toUpperCase()) {
-            case "VARCHAR2":
-            case "VARCHAR":
-                return type + "(" + length + ")";
-            case "NUMBER":
-                if (precision != null && scale != null) {
-                    return scale == 0 ?
-                            "NUMBER(" + precision + ")" :
-                            "NUMBER(" + precision + "," + scale + ")";
-                }
-                return "NUMBER";
-            case "CHAR":
-                return length != null ? "CHAR(" + length + ")" : "CHAR";
-            case "DECIMAL":
-                return "DECIMAL(" + precision + "," + scale + ")";
-            case "FLOAT":
-            case "DOUBLE":
-                return precision != null ? type + "(" + precision + ")" : type;
-            case "SERIAL": // 自增列特殊处理
-                return "SERIAL";
-            default:
-                return type;
-        }
-    }
 
-    /**
-     * 判断是否为自增列
-     */
-    public boolean isAutoIncrement() {
-        return "SERIAL".equalsIgnoreCase(type) ||
-                (StringUtils.hasText(defaultValue) && defaultValue.contains("NEXTVAL"));
-    }
 }
