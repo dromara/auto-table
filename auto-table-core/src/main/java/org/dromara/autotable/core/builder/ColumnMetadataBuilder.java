@@ -5,7 +5,7 @@ import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -31,7 +31,7 @@ public class ColumnMetadataBuilder {
 
         AtomicInteger index = new AtomicInteger(1);
         List<ColumnMetadata> columnMetadata = fields.stream()
-                .filter(field -> TableBeanUtils.isIncludeField(field, clazz))
+                .filter(field -> TableMetadataHandler.isIncludeField(field, clazz))
                 .map(field -> this.build(clazz, field, index.getAndIncrement()))
                 .collect(Collectors.toList());
 
@@ -46,13 +46,13 @@ public class ColumnMetadataBuilder {
 
         ColumnMetadata columnMetadata = newColumnMetadata();
         DatabaseTypeAndLength typeAndLength = getTypeAndLength(databaseDialect, clazz, field);
-        columnMetadata.setName(TableBeanUtils.getRealColumnName(clazz, field))
-                .setComment(TableBeanUtils.getComment(field, clazz))
+        columnMetadata.setName(TableMetadataHandler.getColumnName(clazz, field))
+                .setComment(TableMetadataHandler.getColumnComment(field, clazz))
                 .setType(typeAndLength)
-                .setNotNull(TableBeanUtils.isNotNull(field, clazz))
-                .setPrimary(TableBeanUtils.isPrimary(field, clazz))
-                .setAutoIncrement(TableBeanUtils.isAutoIncrement(field, clazz));
-        ColumnDefault columnDefault = TableBeanUtils.getDefaultValue(field);
+                .setNotNull(TableMetadataHandler.isNotNull(field, clazz))
+                .setPrimary(TableMetadataHandler.isPrimary(field, clazz))
+                .setAutoIncrement(TableMetadataHandler.isAutoIncrement(field, clazz));
+        ColumnDefault columnDefault = TableMetadataHandler.getColumnDefaultValue(field, clazz);
         if (columnDefault != null) {
 
             DefaultValueEnum defaultValueType = columnDefault.type();

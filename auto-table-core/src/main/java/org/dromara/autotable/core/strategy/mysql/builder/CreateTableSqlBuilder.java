@@ -123,8 +123,8 @@ public class CreateTableSqlBuilder {
                 .replace("{columns}", () -> {
                     List<IndexMetadata.IndexColumnParam> columnParams = indexMetadata.getColumns();
                     return columnParams.stream().map(column ->
-                            // 例：name ASC
-                            "{column} {sortMode}"
+                            // 例：`name` ASC
+                            "`{column}` {sortMode}"
                                     .replace("{column}", column.getColumn())
                                     .replace("{sortMode}", column.getSort() != null ? column.getSort().name() : "")
                     ).collect(Collectors.joining(","));

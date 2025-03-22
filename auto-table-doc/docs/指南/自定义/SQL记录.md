@@ -77,7 +77,7 @@ public class RecordSqlFlywayHandler extends RecordSqlFileHandler {
 }
 ```
 
-```java [普通java应用]
+```java [普通java]
 /**
  * 自定义sql记录，文件名以Flyway方式生成
  */

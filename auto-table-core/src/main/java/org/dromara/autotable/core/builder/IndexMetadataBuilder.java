@@ -8,7 +8,7 @@ import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.IndexRepeatChecker;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.lang.reflect.Field;
 import java.security.MessageDigest;
@@ -45,7 +45,7 @@ public class IndexMetadataBuilder {
 
     protected List<IndexMetadata> buildFromField(Class<?> clazz, List<Field> fields, IndexRepeatChecker indexRepeatChecker) {
         return fields.stream()
-                .filter(field -> TableBeanUtils.isIncludeField(field, clazz))
+                .filter(field -> TableMetadataHandler.isIncludeField(field, clazz))
                 .map(field -> buildIndexMetadata(clazz, field))
                 .filter(Objects::nonNull)
                 .peek(indexMetadata -> indexRepeatChecker.filter(indexMetadata.getName()))
@@ -53,7 +53,7 @@ public class IndexMetadataBuilder {
     }
 
     protected List<IndexMetadata> buildFromClass(Class<?> clazz, IndexRepeatChecker indexRepeatChecker) {
-        List<TableIndex> tableIndexes = TableBeanUtils.getTableIndexes(clazz);
+        List<TableIndex> tableIndexes = TableMetadataHandler.getTableIndexes(clazz);
         return tableIndexes.stream()
                 .map(tableIndex -> buildIndexMetadata(clazz, tableIndex))
                 .filter(Objects::nonNull)
@@ -63,9 +63,9 @@ public class IndexMetadataBuilder {
 
     protected IndexMetadata buildIndexMetadata(Class<?> clazz, Field field) {
         // 获取当前字段的@Index注解
-        Index index = TableBeanUtils.getIndex(field);
+        Index index = TableMetadataHandler.getIndex(field);
         if (null != index) {
-            String realColumnName = TableBeanUtils.getRealColumnName(clazz, field);
+            String realColumnName = TableMetadataHandler.getColumnName(clazz, field);
             IndexMetadata indexMetadata = newIndexMetadata();
             String indexName = getIndexName(clazz, field, index);
             indexMetadata.setName(indexName);
@@ -88,9 +88,9 @@ public class IndexMetadataBuilder {
         } else {
             // 自动生成索引名
             String filedNames = Stream.concat(Arrays.stream(tableIndex.indexFields()).map(IndexField::field), Arrays.stream(tableIndex.fields()))
-                    .map(fieldName -> TableBeanUtils.getRealColumnName(clazz, fieldName))
+                    .map(fieldName -> TableMetadataHandler.getColumnName(clazz, fieldName))
                     .collect(Collectors.joining("_"));
-            String tableName = TableBeanUtils.getTableName(clazz);
+            String tableName = TableMetadataHandler.getTableName(clazz);
             return getEncryptIndexName(tableName, filedNames);
         }
     }
@@ -104,8 +104,8 @@ public class IndexMetadataBuilder {
             return getIndexNameWithPrefix(indexName);
         } else {
             // 自动生成索引名
-            String realColumnName = TableBeanUtils.getRealColumnName(clazz, field);
-            String tableName = TableBeanUtils.getTableName(clazz);
+            String realColumnName = TableMetadataHandler.getColumnName(clazz, field);
+            String tableName = TableMetadataHandler.getTableName(clazz);
             return getEncryptIndexName(tableName, realColumnName);
         }
     }
@@ -188,7 +188,7 @@ public class IndexMetadataBuilder {
             columnParams.addAll(
                     Arrays.stream(sortFields)
                             .map(sortField -> {
-                                String realColumnName = TableBeanUtils.getRealColumnName(clazz, sortField.field());
+                                String realColumnName = TableMetadataHandler.getColumnName(clazz, sortField.field());
                                 // 重复字段，自动排除忽略掉
                                 if (exitsColumns.contains(realColumnName)) {
                                     return null;
@@ -206,7 +206,7 @@ public class IndexMetadataBuilder {
             columnParams.addAll(
                     Arrays.stream(fields)
                             .map(field -> {
-                                String realColumnName = TableBeanUtils.getRealColumnName(clazz, field);
+                                String realColumnName = TableMetadataHandler.getColumnName(clazz, field);
                                 // 重复字段，自动排除忽略掉
                                 if (exitsColumns.contains(realColumnName)) {
                                     return null;

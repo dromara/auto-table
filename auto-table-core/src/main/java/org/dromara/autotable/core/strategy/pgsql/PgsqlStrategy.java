@@ -204,17 +204,19 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
             String columnName = columnMetadata.getName();
             PgsqlDbColumn pgsqlDbColumn = pgsqlFieldDetailMap.remove(columnName);
             // 新增字段
+            String fieldComment = columnMetadata.getComment();
             if (pgsqlDbColumn == null) {
                 // 标记注释
-                pgsqlCompareTableInfo.addColumnComment(columnMetadata.getName(), columnMetadata.getComment());
+                pgsqlCompareTableInfo.addColumnComment(columnMetadata.getName(), fieldComment);
                 // 标记字段信息
                 pgsqlCompareTableInfo.addNewColumn(columnMetadata);
                 continue;
             }
             /* 修改的字段 */
             // 修改了字段注释
-            if (!Objects.equals(pgsqlDbColumn.getDescription(), columnMetadata.getComment())) {
-                pgsqlCompareTableInfo.addColumnComment(columnName, columnMetadata.getComment());
+            String dbColumnComment = pgsqlDbColumn.getDescription();
+            if ((StringUtils.hasText(dbColumnComment) || StringUtils.hasText(fieldComment)) && !Objects.equals(dbColumnComment, fieldComment)) {
+                pgsqlCompareTableInfo.addColumnComment(columnName, fieldComment);
             }
             // 主键忽略判断，单独处理
             if (!columnMetadata.isPrimary()) {

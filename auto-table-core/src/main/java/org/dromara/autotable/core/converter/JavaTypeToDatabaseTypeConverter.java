@@ -4,7 +4,7 @@ import org.dromara.autotable.annotation.ColumnType;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.core.utils.TableBeanUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public interface JavaTypeToDatabaseTypeConverter {
      */
     default DatabaseTypeAndLength convert(String databaseDialect, Class<?> clazz, Field field) {
 
-        ColumnType column = TableBeanUtils.getColumnType(field);
+        ColumnType column = TableMetadataHandler.getColumnType(field, clazz);
         // 设置了类型
         if (column != null) {
             String type = column.value();
@@ -110,7 +110,7 @@ public interface JavaTypeToDatabaseTypeConverter {
             // 无法通过直接获取类型，真是字段类型需要从实现类的接口泛型中获取
             fieldClass = getFieldGenericType(clazz, field);
         } else {
-            fieldClass = TableBeanUtils.getFieldType(clazz, field);
+            fieldClass = getFieldType(clazz, field);
         }
 
         if (fieldClass == null) {
@@ -179,5 +179,16 @@ public interface JavaTypeToDatabaseTypeConverter {
         }
 
         return field.getType();
+    }
+
+    /**
+     * 获取字段类型
+     *
+     * @param clazz  实体类
+     * @param field  字段
+     * @return 字段类型
+     */
+    default Class<?> getFieldType(final Class<?> clazz, final Field field) {
+        return null;
     }
 }

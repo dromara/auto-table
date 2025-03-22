@@ -6,7 +6,8 @@ import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
-import org.dromara.autotable.core.callback.RunStateCallback;
+import org.dromara.autotable.core.callback.RunAfterCallback;
+import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
@@ -21,8 +22,10 @@ import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +41,13 @@ public class AutoTableGlobalConfig {
     @Setter
     @Getter
     private static PropertyConfig autoTableProperties = new PropertyConfig();
+
+    /**
+     * class扫描器
+     */
+    @Setter
+    @Getter
+    private static AutoTableClassScanner autoTableClassScanner = new AutoTableClassScanner() {};
 
     /**
      * 数据源处理器
@@ -59,7 +69,7 @@ public class AutoTableGlobalConfig {
      */
     @Setter
     @Getter
-    private static AutoTableOrmFrameAdapter autoTableOrmFrameAdapter = new AutoTableOrmFrameAdapter() {
+    private static AutoTableMetadataAdapter autoTableMetadataAdapter = new AutoTableMetadataAdapter() {
     };
 
     /**
@@ -78,94 +88,86 @@ public class AutoTableGlobalConfig {
     private static RecordSqlHandler customRecordSqlHandler = sqlLog -> {
     };
 
+    /* 拦截器与回调监听 ↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
     /**
      * 自动表注解拦截器
      */
     @Setter
     @Getter
-    private static AutoTableAnnotationInterceptor autoTableAnnotationInterceptor = (includeAnnotations, excludeAnnotations) -> {
-    };
+    private static List<AutoTableAnnotationInterceptor> autoTableAnnotationInterceptors = new ArrayList<>();
 
     /**
      * 创建表拦截
      */
     @Setter
     @Getter
-    private static BuildTableMetadataInterceptor buildTableMetadataInterceptor = (databaseDialect, tableMetadata) -> {
-    };
+    private static List<BuildTableMetadataInterceptor> buildTableMetadataInterceptors = new ArrayList<>();
 
     /**
      * 创建表拦截
      */
     @Setter
     @Getter
-    private static CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
-    };
+    private static List<CreateTableInterceptor> createTableInterceptors = new ArrayList<>();
 
     /**
      * 修改表拦截
      */
     @Setter
     @Getter
-    private static ModifyTableInterceptor modifyTableInterceptor = (databaseDialect, tableMetadata, compareTableInfo) -> {
-    };
+    private static List<ModifyTableInterceptor> modifyTableInterceptors = new ArrayList<>();
 
     /**
      * 验证完成回调
      */
     @Setter
     @Getter
-    private static ValidateFinishCallback validateFinishCallback = (status, databaseDialect, compareTableInfo) -> {
-    };
+    private static List<ValidateFinishCallback> validateFinishCallbacks = new ArrayList<>();
 
     /**
      * 创建表回调
      */
     @Setter
     @Getter
-    private static CreateTableFinishCallback createTableFinishCallback = (databaseDialect, tableMetadata) -> {
-    };
+    private static List<CreateTableFinishCallback> createTableFinishCallbacks = new ArrayList<>();
 
     /**
      * 修改表回调
      */
     @Setter
     @Getter
-    private static ModifyTableFinishCallback modifyTableFinishCallback = (databaseDialect, tableMetadata, compareTableInfo) -> {
+    private static List<ModifyTableFinishCallback> modifyTableFinishCallbacks = new ArrayList<>();
 
-    };
     /**
-     * 单个表执行前后回调
+     * 单个表执行前回调
      */
     @Setter
     @Getter
-    private static RunStateCallback runStateCallback = new RunStateCallback() {
-        @Override
-        public void before(Class<?> tableClass) {
-        }
+    private static List<RunBeforeCallback> runBeforeCallbacks = new ArrayList<>();
 
-        @Override
-        public void after(Class<?> tableClass) {
-        }
-    };
+    /**
+     * 单个表执行后回调
+     */
+    @Setter
+    @Getter
+    private static List<RunAfterCallback> runAfterCallbacks = new ArrayList<>();
 
     /**
      * 执行结束回调
      */
     @Setter
     @Getter
-    private static AutoTableReadyCallback autoTableReadyCallback = (classes) -> {
-
-    };
+    private static List<AutoTableReadyCallback> autoTableReadyCallbacks = new ArrayList<>();
 
     /**
      * 执行结束回调
      */
     @Setter
     @Getter
-    private static AutoTableFinishCallback autoTableFinishCallback = (classes) -> {
+    private static List<AutoTableFinishCallback> autoTableFinishCallbacks = new ArrayList<>();
 
-    };
+    /* 拦截器与回调监听 ↑↑↑↑↑↑↑↑↑ */
 
     private final static Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?>> STRATEGY_MAP = new HashMap<>();
 

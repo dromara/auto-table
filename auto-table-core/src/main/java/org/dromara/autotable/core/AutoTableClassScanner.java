@@ -1,7 +1,7 @@
-package org.dromara.autotable.core.utils;
+package org.dromara.autotable.core;
 
-import org.dromara.autotable.core.AutoTableAnnotationFinder;
-import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.annotation.AutoTable;
+import org.dromara.autotable.annotation.Ignore;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +29,19 @@ import java.util.stream.Collectors;
  *
  * @author don
  */
-public class ClassScanner {
+public abstract class AutoTableClassScanner {
 
-    public static Set<Class<?>> scan(String[] basePackages, Set<Class<? extends Annotation>> includeAnnotations, Set<Class<? extends Annotation>> excludeAnnotations) {
+    public Set<Class<?>> scan(String[] basePackages) {
 
-        if (basePackages == null || includeAnnotations == null) {
+        if (basePackages == null) {
             return Collections.emptySet();
         }
+
+        Set<Class<? extends Annotation>> includeAnnotations = getIncludeAnnotations();
+        Set<Class<? extends Annotation>> excludeAnnotations = getExcludeAnnotations();
+
+        // 经过自定义的拦截器，修改最终影响自动建表的注解
+        AutoTableGlobalConfig.getAutoTableAnnotationInterceptors().forEach(fn -> fn.intercept(includeAnnotations, excludeAnnotations));
 
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
 
@@ -52,7 +58,15 @@ public class ClassScanner {
                 }).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
-    public static Set<Class<?>> getClasses(String packageName, Function<Class<?>, Boolean> checker) throws IOException, ClassNotFoundException {
+    protected Set<Class<? extends Annotation>> getExcludeAnnotations() {
+        return new HashSet<>(Collections.singleton(Ignore.class));
+    }
+
+    protected Set<Class<? extends Annotation>> getIncludeAnnotations() {
+        return new HashSet<>(Collections.singletonList(AutoTable.class));
+    }
+
+    protected Set<Class<?>> getClasses(String packageName, Function<Class<?>, Boolean> checker) throws IOException, ClassNotFoundException {
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String path = packageName.replace('.', '/');
@@ -65,16 +79,16 @@ public class ClassScanner {
             URL resource = resources.nextElement();
             if ("file".equals(resource.getProtocol())) {
                 String decodedPath = URLDecoder.decode(resource.getFile(), "UTF-8");
-                classes.addAll(findClassesLocal(checkPattern, new File(decodedPath), checker));
+                classes.addAll(findLocalClasses(checkPattern, new File(decodedPath), checker));
             } else if ("jar".equals(resource.getProtocol())) {
                 JarURLConnection jarURLConnection = (JarURLConnection) resource.openConnection();
-                classes.addAll(findClassesJar(checkPattern, jarURLConnection.getJarFile(), checker));
+                classes.addAll(findJarClasses(checkPattern, jarURLConnection.getJarFile(), checker));
             }
         }
         return classes;
     }
 
-    private static Set<Class<?>> findClassesLocal(Pattern checkPattern, File directory, Function<Class<?>, Boolean> checker) throws ClassNotFoundException, IOException {
+    protected Set<Class<?>> findLocalClasses(Pattern checkPattern, File directory, Function<Class<?>, Boolean> checker) throws ClassNotFoundException, IOException {
         Set<Class<?>> classes = new HashSet<>();
         if (!directory.exists()) {
             return classes;
@@ -100,7 +114,7 @@ public class ClassScanner {
         return classes;
     }
 
-    private static Set<Class<?>> findClassesJar(Pattern checkPattern, JarFile jarFile, Function<Class<?>, Boolean> checker) throws ClassNotFoundException {
+    protected Set<Class<?>> findJarClasses(Pattern checkPattern, JarFile jarFile, Function<Class<?>, Boolean> checker) throws ClassNotFoundException {
         Set<Class<?>> classes = new HashSet<>();
         Enumeration<JarEntry> entries = jarFile.entries();
 
@@ -113,7 +127,7 @@ public class ClassScanner {
                     Class<?> clazz;
                     try {
                         clazz = Class.forName(className);
-                    }catch (ClassNotFoundException e){
+                    } catch (ClassNotFoundException e) {
                         clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
                     }
                     if (clazz != null && checker.apply(clazz)) {

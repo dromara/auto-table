@@ -400,7 +400,8 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
 
     private static boolean isCommentChanged(InformationSchemaColumn informationSchemaColumn, MysqlColumnMetadata mysqlColumnMetadata) {
         String fieldComment = mysqlColumnMetadata.getComment();
-        return StringUtils.hasText(fieldComment) && !fieldComment.equals(informationSchemaColumn.getColumnComment());
+        String dbColumnComment = informationSchemaColumn.getColumnComment();
+        return (StringUtils.hasText(fieldComment) || StringUtils.hasText(dbColumnComment)) && !fieldComment.equals(dbColumnComment);
     }
 
     private static void compareTableProperties(MysqlTableMetadata mysqlTableMetadata, InformationSchemaTable tableInformation, MysqlCompareTableInfo mysqlCompareTableInfo) {
