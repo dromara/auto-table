@@ -6,7 +6,6 @@ import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.strategy.dm.DmStrategy;
 import org.dromara.autotable.core.utils.StringConnectHelper;
-import org.dromara.autotable.core.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,28 +71,4 @@ public class DmCreateTableSqlBuilder {
                 .toString() + ";";
     }
 
-    private static String buildCommentStatements(DefaultTableMetadata metadata) {
-        List<String> comments = new ArrayList<>();
-        String qualifiedTableName = DmStrategy.withSchemaName(metadata.getSchema(), metadata.getTableName());
-
-        // 表注释
-        if (StringUtils.hasText(metadata.getComment())) {
-            comments.add(String.format("COMMENT ON TABLE \"%s\" IS '\"%s\"';",
-                    qualifiedTableName,
-                    metadata.getComment()));
-        }
-
-        // 列注释
-        metadata.getColumnMetadataList().forEach(column -> {
-            if (StringUtils.hasText(column.getComment())) {
-                comments.add(String.format("COMMENT ON COLUMN \"%s\".\"%s\" IS '\"%s\"';",
-                        qualifiedTableName,
-                        "\"" + column.getName() + "\"",
-                        column.getComment()));
-            }
-        });
-
-        // 索引注释（达梦不支持直接注释索引）
-        return String.join("\n", comments);
-    }
 }

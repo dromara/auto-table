@@ -113,14 +113,6 @@ public class ColumnSqlBuilder {
     }
 
     /**
-     * 构建注释子句
-     */
-    private static String buildComment(ColumnMetadata columnMetadata) {
-        return StringUtils.hasText(columnMetadata.getComment()) ?
-                "COMMENT '" + columnMetadata.getComment().replace("'", "''") + "'" : "";
-    }
-
-    /**
      * 处理保留字列名
      */
     private static String wrapColumnName(String columnName) {
