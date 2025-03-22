@@ -39,7 +39,11 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.dameng</groupId>
+            <artifactId>Dm8JdbcDriver18</artifactId>
+            <version>8.1.0.157</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

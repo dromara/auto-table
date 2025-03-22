@@ -3,6 +3,7 @@ package org.dromara.autotable.core.strategy.dm.builder;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.dm.data.DmDefaultTypeEnum;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
 
@@ -16,21 +17,21 @@ import java.util.Set;
 public class ColumnSqlBuilder {
     // 达梦保留字集合（部分示例）
     private static final Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
-            "USER", "DATE", "LEVEL", "SERIAL", "FILE", "GROUP", "ORDER", "CHECK"
+            "USER", "DATE", "LEVEL", "SERIAL", "FILE", "GROUP",
+            "ORDER", "CHECK", "SESSION", "PARTITION", "CLUSTER", "LINK", "MERGE"
     ));
 
     /**
      * 生成达梦字段定义SQL
      */
     public static String buildSql(ColumnMetadata columnMetadata) {
-        StringConnectHelper sql = StringConnectHelper.newInstance("{columnName} {typeDefinition} {null} {default} " +
-                        "{autoIncrement} {comment}")
+        StringConnectHelper sql = StringConnectHelper.newInstance("{columnName} {type} {null} {default} " +
+                        "{autoIncrement}")
                 .replace("{columnName}", wrapColumnName(columnMetadata.getName()))
-                .replace("{typeDefinition}", () -> buildTypeDefinition(columnMetadata.getType()))
-                .replace("{null}", columnMetadata.isNotNull() ? "NOT NULL" : "NULL")
+                .replace("{type}", buildTypeDefinition(columnMetadata.getType()))
+                .replace("{null}", columnMetadata.isNotNull() ? "NOT NULL" : "")
                 .replace("{default}", buildDefaultValue(columnMetadata))
-                .replace("{autoIncrement}", buildAutoIncrement(columnMetadata))
-                .replace("{comment}", buildComment(columnMetadata));
+                .replace("{autoIncrement}", buildAutoIncrement(columnMetadata));
 
         return sql.toString().replaceAll("\\s+", " ").trim();
     }
@@ -45,10 +46,12 @@ public class ColumnSqlBuilder {
 
         switch (typeName) {
             case "NUMBER":
-                if (decimal != null) {
-                    return String.format("NUMBER(%d,%d)", length != null ? length : 38, decimal);
-                }
-                return length != null ? "NUMBER(" + length + ")" : "NUMBER";
+                // 当未指定精度/小数位时使用默认值
+                int precision = length != null ? length : 38;
+                int scale = decimal != null ? decimal : 4;
+
+                // 调用智能转换方法
+                return DmDefaultTypeEnum.convertNumberType(precision, scale);
 
             case "VARCHAR2":
                 return length != null && length > 0 ?
@@ -121,7 +124,16 @@ public class ColumnSqlBuilder {
      * 处理保留字列名
      */
     private static String wrapColumnName(String columnName) {
-        return "\"" + columnName + "\"";
+        // 统一转为大写判断（达梦保留字不区分大小写）
+        String upperName = columnName.toUpperCase();
+
+        // 仅对保留字添加双引号
+        if (RESERVED_WORDS.contains(upperName)) {
+            return "\"" + columnName + "\"";
+        }
+
+        // 普通列名保持原样
+        return columnName;
     }
 
     /**

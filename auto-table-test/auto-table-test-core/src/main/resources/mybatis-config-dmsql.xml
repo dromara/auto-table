@@ -8,7 +8,7 @@
             <transactionManager type="JDBC"/>
             <dataSource type="POOLED">
                 <property name="driver" value="dm.jdbc.driver.DmDriver"/>
-                <property name="url" value="jdbc:dm://localhost:5236?currentSchema=test"/>
+                <property name="url" value="jdbc:dm://localhost:5236?schema=test"/>
                 <property name="username" value="dm_user"/>
                 <property name="password" value="Dm888888"/>
             </dataSource>

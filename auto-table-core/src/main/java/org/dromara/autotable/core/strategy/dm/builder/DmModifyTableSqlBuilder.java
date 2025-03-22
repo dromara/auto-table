@@ -5,7 +5,6 @@ package org.dromara.autotable.core.strategy.dm.builder;
  * @date: 2025/2/25 23:06
  */
 
-import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.dm.DmStrategy;
 import org.dromara.autotable.core.strategy.dm.data.DmCompareTableInfo;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -19,76 +18,71 @@ import java.util.stream.Collectors;
  */
 public class DmModifyTableSqlBuilder {
 
-    public static String buildSql(DmCompareTableInfo compareInfo) {
+    public static List<String> buildSql(DmCompareTableInfo compareInfo) {
         List<String> sqlList = new ArrayList<>();
         String qualifiedTableName = DmStrategy.withSchemaName(compareInfo.getSchema(), compareInfo.getName());
 
-        // 删除旧索引
+        // 1. 删除旧索引（独立语句）
         compareInfo.getDropIndexList().forEach(index ->
-                sqlList.add("DROP INDEX " + DmStrategy.withSchemaName(compareInfo.getSchema(), index)));
-
-        // 表结构变更
-        List<String> alterClauses = new ArrayList<>();
-
-        // 删除主键
-        if (StringUtils.hasText(compareInfo.getDropPrimaryKeyName())) {
-            alterClauses.add("DROP CONSTRAINT " + compareInfo.getDropPrimaryKeyName());
-        }
-
-        // 删除列
-        compareInfo.getDropColumnList().forEach(column ->
-                alterClauses.add("DROP COLUMN " + column));
-
-        // 添加新列
-        compareInfo.getNewColumnMetadataList().forEach(column ->
-                alterClauses.add("ADD " + ColumnSqlBuilder.buildSql(column)));
-
-        // 修改列
+                sqlList.add("DROP INDEX " + DmStrategy.withSchemaName(compareInfo.getSchema(), index) + ";")
+        );
+        // 2. 字段修改
         compareInfo.getModifyColumnMetadataList().forEach(column -> {
-            String columnName = column.getName();
-            // 修改类型
-            alterClauses.add(String.format("MODIFY %s %s",
-                    columnName,
-                    column.getType().getDefaultFullType()));
-            // 修改非空约束
-            alterClauses.add(String.format("MODIFY %s %s",
-                    columnName,
-                    column.isNotNull() ? "NOT NULL" : "NULL"));
-            // 修改默认值
-            if (StringUtils.hasText(column.getDefaultValue())) {
-                alterClauses.add(String.format("MODIFY %s DEFAULT %s",
-                        columnName,
-                        column.getDefaultValue()));
-            } else {
-                alterClauses.add("MODIFY " + columnName + " DROP DEFAULT");
+            String columnDef = ColumnSqlBuilder.buildSql(column)
+                    .replaceFirst("\"\\w+\"", "\"" + column.getName() + "\"");
+            if (StringUtils.hasText(columnDef)) { // 增加有效性校验
+                sqlList.add("ALTER TABLE " + qualifiedTableName + " MODIFY " + columnDef + ";");
             }
         });
 
-        // 添加主键
+        // 3. 其他ALTER操作拆分为独立语句
+        List<String> alterClauses = new ArrayList<>();
+        // 删除主键
+        if (StringUtils.hasText(compareInfo.getDropPrimaryKeyName())) {
+            sqlList.add("ALTER TABLE " + qualifiedTableName
+                    + " DROP CONSTRAINT \"" + compareInfo.getDropPrimaryKeyName() + "\";");
+        }
+
+        // 删除列（每个列独立）
+        compareInfo.getDropColumnList().forEach(column ->
+                sqlList.add("ALTER TABLE " + qualifiedTableName
+                        + " DROP COLUMN \"" + column + "\";")
+        );
+
+        // 新增列（每个列独立）
+        compareInfo.getNewColumnMetadataList().forEach(column ->
+                sqlList.add("ALTER TABLE " + qualifiedTableName
+                        + " ADD " + ColumnSqlBuilder.buildSql(column) + ";")
+        );
+
+        // 添加主键（独立语句）
         if (!compareInfo.getNewPrimaries().isEmpty()) {
             String pkColumns = compareInfo.getNewPrimaries().stream()
-                    .map(ColumnMetadata::getName)
+                    .map(col -> "\"" + col.getName() + "\"")
                     .collect(Collectors.joining(", "));
-            alterClauses.add("ADD PRIMARY KEY (" + pkColumns + ")");
+            String pkStatement = "ADD PRIMARY KEY (" + pkColumns + ")";
+            sqlList.add("ALTER TABLE " + qualifiedTableName + " " + pkStatement + ";");
         }
 
-        // 生成ALTER TABLE语句
-        if (!alterClauses.isEmpty()) {
-            sqlList.add(String.format("ALTER TABLE %s\n  %s;",
-                    qualifiedTableName,
-                    String.join(",\n  ", alterClauses)));
-        }
-
-        // 新建索引
-        sqlList.add(DmCreateTableSqlBuilder.buildIndexStatements(
+        // 4. 索引生成（增加空校验）
+        String indexStatements = DmCreateTableSqlBuilder.buildIndexStatements(
                 compareInfo.getSchema(),
                 compareInfo.getName(),
-                compareInfo.getIndexMetadataList()));
+                compareInfo.getIndexMetadataList());
+        if (StringUtils.hasText(indexStatements)) {
+            sqlList.add(indexStatements);
+        }
 
-        // 添加注释
-        sqlList.add(buildCommentStatements(compareInfo));
+        // 5. 注释（增加空校验）
+        String commentStatements = buildCommentStatements(compareInfo);
+        if (StringUtils.hasText(commentStatements)) {
+            sqlList.add(commentStatements);
+        }
 
-        return String.join("\n", sqlList);
+        // 过滤空元素
+        return sqlList.stream()
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toList());
     }
 
     private static String buildCommentStatements(DmCompareTableInfo compareInfo) {
@@ -97,17 +91,14 @@ public class DmModifyTableSqlBuilder {
 
         // 表注释
         if (StringUtils.hasText(compareInfo.getComment())) {
-            comments.add(String.format("COMMENT ON TABLE %s IS '%s';",
-                    qualifiedTableName,
-                    compareInfo.getComment()));
+            comments.add("COMMENT ON TABLE " + qualifiedTableName
+                    + " IS '" + compareInfo.getComment().replace("'", "''") + "';");
         }
 
-        // 列注释
+        // 列注释（每个列独立）
         compareInfo.getColumnComment().forEach((col, comment) -> {
-            comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';",
-                    qualifiedTableName,
-                    col,
-                    comment));
+            comments.add("COMMENT ON COLUMN " + qualifiedTableName + ".\"" + col
+                    + "\" IS '" + comment.replace("'", "''") + "';");
         });
 
         return String.join("\n", comments);

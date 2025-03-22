@@ -23,8 +23,8 @@ public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
 
     // 字符类型
     CHAR(DmTypeConstant.CHAR, 255, null),
-    VARCHAR(DmTypeConstant.VARCHAR, 8188, null),
-    VARCHAR2(DmTypeConstant.VARCHAR2, 8188, null),
+    VARCHAR(DmTypeConstant.VARCHAR, 255, null),
+    VARCHAR2(DmTypeConstant.VARCHAR2, 255, null),
     CLOB(DmTypeConstant.CLOB, null, null),
     TEXT(DmTypeConstant.TEXT, null, null),
 

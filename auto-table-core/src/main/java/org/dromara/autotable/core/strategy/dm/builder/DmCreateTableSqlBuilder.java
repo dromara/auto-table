@@ -47,7 +47,7 @@ public class DmCreateTableSqlBuilder {
 
         // 添加主键约束
         if (!primaries.isEmpty()) {
-            columns.add("PRIMARY KEY (" + String.join(", ", primaries) + ")");
+            columns.add("PRIMARY KEY (\"" + String.join(", ", primaries) + "\")");
         }
 
         return String.format("CREATE TABLE %s (\n  %s\n)",
@@ -78,7 +78,7 @@ public class DmCreateTableSqlBuilder {
 
         // 表注释
         if (StringUtils.hasText(metadata.getComment())) {
-            comments.add(String.format("COMMENT ON TABLE %s IS '%s';",
+            comments.add(String.format("COMMENT ON TABLE \"%s\" IS '\"%s\"';",
                     qualifiedTableName,
                     metadata.getComment()));
         }
@@ -86,7 +86,7 @@ public class DmCreateTableSqlBuilder {
         // 列注释
         metadata.getColumnMetadataList().forEach(column -> {
             if (StringUtils.hasText(column.getComment())) {
-                comments.add(String.format("COMMENT ON COLUMN %s.%s IS '%s';",
+                comments.add(String.format("COMMENT ON COLUMN \"%s\".\"%s\" IS '\"%s\"';",
                         qualifiedTableName,
                         "\"" + column.getName() + "\"",
                         column.getComment()));

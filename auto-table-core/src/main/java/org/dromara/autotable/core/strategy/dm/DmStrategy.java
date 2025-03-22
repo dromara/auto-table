@@ -40,7 +40,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     public static String withSchemaName(String schema, String... names) {
         String name = String.join(".", names);
-        return StringUtils.hasText(schema) ? schema + "." + "\"" + name + "\"" : "\"" + name + "\"";
+        return StringUtils.hasText(schema) ? "\"" + schema + "\"" + "." + "\"" + name + "\"" : "\"" + name + "\"";
     }
 
     @Override
@@ -84,7 +84,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     @Override
     public String dropTable(String schema, String tableName) {
-        return String.format("DROP TABLE IF EXISTS %s", withSchemaName(schema, tableName));
+        return String.format("DROP TABLE IF EXISTS \"%s\"", withSchemaName(schema, tableName));
     }
 
     @Override
@@ -292,7 +292,6 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     @Override
     public List<String> modifyTable(DmCompareTableInfo compareInfo) {
-        String sql = DmModifyTableSqlBuilder.buildSql(compareInfo);
-        return Collections.singletonList(sql);
+        return DmModifyTableSqlBuilder.buildSql(compareInfo);
     }
 }

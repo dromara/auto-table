@@ -11,12 +11,6 @@ import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
 

@@ -84,6 +84,7 @@ public interface DmTablesMapper {
             "JOIN USER_IND_COLUMNS cols ON ind.INDEX_NAME = cols.INDEX_NAME",
             "WHERE ind.TABLE_NAME = #{tableName}",
             "  AND ind.INDEX_TYPE != 'LOB'", // 排除LOB索引
+            "  AND ind.INDEX_NAME NOT LIKE 'INDEX%'", // 排除系统索引
             "GROUP BY ind.INDEX_NAME, ind.UNIQUENESS, ind.INDEX_TYPE"
     })
     List<DmDbIndex> selectTableIndexes(String schema, String tableName);
