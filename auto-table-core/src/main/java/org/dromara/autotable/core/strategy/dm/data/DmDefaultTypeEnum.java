@@ -16,10 +16,10 @@ public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
     BIGINT(DmTypeConstant.BIGINT, null, null),
     TINYINT(DmTypeConstant.TINYINT, null, null),
     SMALLINT(DmTypeConstant.SMALLINT, null, null),
-    DECIMAL(DmTypeConstant.DECIMAL, 38, 4),
-    FLOAT(DmTypeConstant.FLOAT, 24, null),
-    DOUBLE(DmTypeConstant.DOUBLE, 53, null),
-    NUMBER(DmTypeConstant.NUMBER, 38, 4),
+    DECIMAL(DmTypeConstant.DECIMAL, null, null),
+    FLOAT(DmTypeConstant.FLOAT, null, null),
+    DOUBLE(DmTypeConstant.DOUBLE, null, null),
+    NUMBER(DmTypeConstant.NUMBER, null, null),
 
     // 字符类型
     CHAR(DmTypeConstant.CHAR, 255, null),
