@@ -17,8 +17,9 @@ import java.util.Set;
 public class ColumnSqlBuilder {
     // 达梦保留字集合（部分示例）
     private static final Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
-            "USER", "DATE", "LEVEL", "SERIAL", "FILE", "GROUP",
-            "ORDER", "CHECK", "SESSION", "PARTITION", "CLUSTER", "LINK", "MERGE"
+            "USER", "DATE", "LEVEL", "SERIAL", "FILE", "GROUP", "ORDER",
+            "CHECK", "SESSION", "PARTITION", "CLUSTER", "LINK", "MERGE",
+            "PASSWORD", "YEAR", "MONTH", "DAY", "HOUR"
     ));
 
     /**
@@ -44,32 +45,45 @@ public class ColumnSqlBuilder {
         Integer length = type.getLength();
         Integer decimal = type.getDecimalLength();
 
-        switch (typeName) {
-            case "NUMBER":
-                // 当未指定精度/小数位时使用默认值
-                int precision = length != null ? length : 38;
-                int scale = decimal != null ? decimal : 4;
+        // 优先使用枚举中定义的默认值
+        DmDefaultTypeEnum typeEnum = Arrays.stream(DmDefaultTypeEnum.values())
+                .filter(e -> e.getTypeName().equalsIgnoreCase(typeName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid type: " + typeName));
 
-                // 调用智能转换方法
-                return DmDefaultTypeEnum.convertNumberType(precision, scale);
-
-            case "VARCHAR2":
-                return length != null && length > 0 ?
-                        "VARCHAR2(" + Math.min(length, 8188) + ")" : "VARCHAR2(8188)";
-
-            case "CHAR":
-                return length != null && length > 0 ?
-                        "CHAR(" + length + ")" : "CHAR";
-
-            case "FLOAT":
-            case "DOUBLE":
-                return length != null ?
-                        String.format("%s(%d)", typeName, length) : typeName;
-
-            default:
-                return typeName;
+        if ("NUMBER".equals(typeName)) {
+            return handleNumberType(typeEnum, length, decimal);
+        } else if ("VARCHAR2".equals(typeName)) {
+            int actualLength = (length != null) ? Math.min(length, 8188) : 50;
+            return String.format("VARCHAR2(%d)", actualLength);
+        } else if ("CHAR".equals(typeName)) {
+            return (length != null && length > 1) ? "CHAR(" + length + ")" : "CHAR";
+        } else {
+            return buildDefaultType(typeEnum, length, decimal);
         }
     }
+
+    private static String handleNumberType(DmDefaultTypeEnum typeEnum,
+                                           Integer length, Integer decimal) {
+        int precision = length != null ? length : typeEnum.getDefaultLength();
+        int scale = decimal != null ? decimal : typeEnum.getDefaultDecimalLength();
+        return DmDefaultTypeEnum.convertNumberType(precision, scale);
+    }
+
+    private static String buildDefaultType(DmDefaultTypeEnum typeEnum,
+                                           Integer length, Integer decimal) {
+        if (typeEnum == DmDefaultTypeEnum.FLOAT || typeEnum == DmDefaultTypeEnum.DOUBLE) {
+            int actualLength = (length != null) ? length : typeEnum.getDefaultLength();
+            return String.format("%s(%d)", typeEnum.getTypeName(), actualLength);
+        } else if (typeEnum == DmDefaultTypeEnum.DECIMAL) {
+            int actualLength = (length != null) ? length : typeEnum.getDefaultLength();
+            int actualDecimal = (decimal != null) ? decimal : typeEnum.getDefaultDecimalLength();
+            return String.format("%s(%d,%d)", typeEnum.getTypeName(), actualLength, actualDecimal);
+        } else {
+            return typeEnum.getTypeName();
+        }
+    }
+
 
     /**
      * 构建默认值子句
@@ -107,10 +121,11 @@ public class ColumnSqlBuilder {
             return "";
         }
 
-        // 判断是否为SERIAL类型
+        // 达梦的SERIAL类型已包含自增特性
         return "SERIAL".equalsIgnoreCase(columnMetadata.getType().getType()) ?
                 "" : "IDENTITY(1,1)";
     }
+
 
     /**
      * 处理保留字列名

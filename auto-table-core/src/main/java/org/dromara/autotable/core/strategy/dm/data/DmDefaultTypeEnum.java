@@ -16,14 +16,14 @@ public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
     BIGINT(DmTypeConstant.BIGINT, null, null),
     TINYINT(DmTypeConstant.TINYINT, null, null),
     SMALLINT(DmTypeConstant.SMALLINT, null, null),
-    DECIMAL(DmTypeConstant.DECIMAL, null, null),
-    FLOAT(DmTypeConstant.FLOAT, null, null),
-    DOUBLE(DmTypeConstant.DOUBLE, null, null),
+    DECIMAL(DmTypeConstant.DECIMAL, 10, 2),
+    FLOAT(DmTypeConstant.FLOAT, 20, null),
+    DOUBLE(DmTypeConstant.DOUBLE, 20, null),
     NUMBER(DmTypeConstant.NUMBER, null, null),
 
     // 字符类型
-    CHAR(DmTypeConstant.CHAR, 255, null),
-    VARCHAR(DmTypeConstant.VARCHAR, 255, null),
+    CHAR(DmTypeConstant.CHAR, 1, null),
+    VARCHAR(DmTypeConstant.VARCHAR, 50, null),
     VARCHAR2(DmTypeConstant.VARCHAR2, 255, null),
     CLOB(DmTypeConstant.CLOB, null, null),
     TEXT(DmTypeConstant.TEXT, null, null),
@@ -62,6 +62,9 @@ public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
      */
     public static String convertNumberType(int precision, int scale) {
         if (scale == 0) {
+            if (precision <= 4) {
+                return DmTypeConstant.SMALLINT;
+            }
             if (precision <= 9) {
                 return DmTypeConstant.INTEGER;
             }
@@ -69,6 +72,9 @@ public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
                 return DmTypeConstant.BIGINT;
             }
         }
-        return String.format("%s(%d,%d)", DmTypeConstant.NUMBER, precision, scale);
+        // 达梦最大精度38位
+        return String.format("%s(%d,%d)", DmTypeConstant.NUMBER,
+                Math.min(precision, 38),
+                Math.min(scale, 38));
     }
 }

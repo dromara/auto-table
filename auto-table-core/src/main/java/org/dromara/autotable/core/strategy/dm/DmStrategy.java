@@ -51,7 +51,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            put(String.class, DmDefaultTypeEnum.VARCHAR2);
+            put(String.class, DmDefaultTypeEnum.VARCHAR);
             put(Character.class, DmDefaultTypeEnum.CHAR);
             put(char.class, DmDefaultTypeEnum.CHAR);
 
