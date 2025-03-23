@@ -37,7 +37,7 @@ public interface DmTypeConstant {
     String IMAGE = "IMAGE";
 
     // 特殊类型
-    String BOOLEAN = "BOOLEAN";
+    String BIT = "BIT";
     String XML = "XML";
     String FILE = "FILE";
     String ARRAY = "ARRAY";

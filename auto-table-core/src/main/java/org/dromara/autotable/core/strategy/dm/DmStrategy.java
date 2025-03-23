@@ -63,8 +63,8 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
             put(long.class, DmDefaultTypeEnum.BIGINT);
             put(BigInteger.class, DmDefaultTypeEnum.BIGINT);
 
-            put(Boolean.class, DmDefaultTypeEnum.BOOLEAN);
-            put(boolean.class, DmDefaultTypeEnum.BOOLEAN);
+            put(Boolean.class, DmDefaultTypeEnum.BIT);
+            put(boolean.class, DmDefaultTypeEnum.BIT);
 
             put(Float.class, DmDefaultTypeEnum.FLOAT);
             put(float.class, DmDefaultTypeEnum.FLOAT);

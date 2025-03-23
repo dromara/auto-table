@@ -21,7 +21,7 @@ public class DmTypeHelper {
     }
 
     public static boolean isBoolean(DatabaseTypeAndLength databaseTypeAndLength) {
-        return databaseTypeAndLength.getType().equalsIgnoreCase(DmDefaultTypeEnum.BOOLEAN.getTypeName());
+        return databaseTypeAndLength.getType().equalsIgnoreCase(DmDefaultTypeEnum.BIT.getTypeName());
     }
 
     public static boolean isTime(DatabaseTypeAndLength databaseTypeAndLength) {

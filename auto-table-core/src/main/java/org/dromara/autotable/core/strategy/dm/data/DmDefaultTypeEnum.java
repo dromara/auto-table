@@ -41,7 +41,7 @@ public enum DmDefaultTypeEnum implements DefaultTypeEnumInterface {
     IMAGE(DmTypeConstant.IMAGE, null, null),
 
     // 特殊类型
-    BOOLEAN(DmTypeConstant.BOOLEAN, null, null),
+    BIT(DmTypeConstant.BIT, null, null),
     XML(DmTypeConstant.XML, null, null),
     FILE(DmTypeConstant.FILE, null, null),
     ARRAY(DmTypeConstant.ARRAY, null, null),
