@@ -13,7 +13,6 @@ import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbIndex;
 import org.dromara.autotable.core.strategy.dm.data.dbdata.DmDbPrimary;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 达梦数据库系统表查询Mapper
@@ -89,19 +88,4 @@ public interface DmTablesMapper {
     })
     List<DmDbIndex> selectTableIndexes(String schema, String tableName);
 
-    /**
-     * 查询外键信息（按需实现）
-     */
-    @Select({
-            "SELECT cons.CONSTRAINT_NAME AS foreignKeyName,",
-            "       cols.COLUMN_NAME,",
-            "       cons.R_CONSTRAINT_NAME AS referencedConstraint,",
-            "       cons.R_OWNER AS referencedSchema,",
-            "       cons.R_TABLE_NAME AS referencedTable",
-            "FROM USER_CONSTRAINTS cons",
-            "JOIN USER_CONS_COLUMNS cols ON cons.CONSTRAINT_NAME = cols.CONSTRAINT_NAME",
-            "WHERE cons.TABLE_NAME = #{tableName}",
-            "  AND cons.CONSTRAINT_TYPE = 'R'"
-    })
-    List<Map<String, Object>> selectForeignKeys(String schema, String tableName);
 }
