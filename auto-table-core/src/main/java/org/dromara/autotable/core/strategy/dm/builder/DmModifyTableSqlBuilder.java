@@ -36,7 +36,6 @@ public class DmModifyTableSqlBuilder {
         });
 
         // 3. 其他ALTER操作拆分为独立语句
-        List<String> alterClauses = new ArrayList<>();
         // 删除主键
         if (StringUtils.hasText(compareInfo.getDropPrimaryKeyName())) {
             sqlList.add("ALTER TABLE " + qualifiedTableName
