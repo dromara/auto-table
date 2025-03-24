@@ -10,6 +10,8 @@ import org.dromara.autotable.core.dynamicds.DatasourceNameManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.TableMetadata;
+import org.dromara.autotable.core.utils.BeanClassUtil;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
@@ -20,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -46,13 +49,13 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
             try {
                 for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
                     String schema = connection.getSchema();
-                    if(StringUtils.hasText(autoTableExecuteSqlLog.getTableSchema())) {
+                    if (StringUtils.hasText(autoTableExecuteSqlLog.getTableSchema())) {
                         schema = autoTableExecuteSqlLog.getTableSchema();
                     }
                     boolean exists = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
                     if (!exists) {
                         // 初始化表
-                        initTable(connection);
+                        initTable(connection, tableName);
                         log.info("初始化sql记录表：{}", tableName);
                     }
                     // 插入数据
@@ -104,14 +107,27 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         preparedStatement.executeUpdate();
     }
 
-    private static void initTable(Connection connection) throws SQLException {
+    private static void initTable(Connection connection, String customTableName) throws SQLException {
 
         IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.getDatasourceHandler();
         String datasourceName = DatasourceNameManager.getDatasourceName();
         String databaseDialect = datasourceHandler.getDatabaseDialect(datasourceName);
 
         IStrategy<?, ?, ?> createTableStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
-        List<String> initTableSql = createTableStrategy.createTable(AutoTableExecuteSqlLog.class);
+        // 使用相应的策略创建数据库表
+        List<String> initTableSql = createTableStrategy.createTable(AutoTableExecuteSqlLog.class, tableMetadata -> {
+            if (!Objects.equals(customTableName, tableMetadata.getTableName())) {
+                // 自定义SQL记录表的名称
+                try {
+                    Field tableNameField = BeanClassUtil.getField(tableMetadata.getClass(), TableMetadata.tableNameFieldName);
+                    tableNameField.setAccessible(true);
+                    tableNameField.set(tableMetadata, customTableName);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return tableMetadata;
+        });
 
         try (Statement statement = connection.createStatement()) {
             for (String sql : initTableSql) {

@@ -20,6 +20,7 @@ public abstract class TableMetadata {
      * 表名
      */
     protected String tableName;
+    public static String tableNameFieldName = "tableName";
 
     /**
      * schema

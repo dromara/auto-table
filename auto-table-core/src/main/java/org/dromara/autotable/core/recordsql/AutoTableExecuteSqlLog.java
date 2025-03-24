@@ -1,9 +1,9 @@
 package org.dromara.autotable.core.recordsql;
 
-import org.dromara.autotable.annotation.ColumnType;
-import org.dromara.autotable.annotation.Ignore;
 import lombok.Getter;
 import lombok.Setter;
+import org.dromara.autotable.annotation.ColumnType;
+import org.dromara.autotable.annotation.Ignore;
 
 /**
  * 记录自动建表执行的SQL
