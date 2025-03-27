@@ -191,6 +191,7 @@ public class ApplicationAllTest {
         recordSqlProperties.setVersion(Version.VALUE);
         // 以数据库的方式记录sql
         recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
+        recordSqlProperties.setTableName("my_record_sql");
         AutoTableGlobalConfig.getAutoTableProperties().setRecordSql(recordSqlProperties);
     }
 

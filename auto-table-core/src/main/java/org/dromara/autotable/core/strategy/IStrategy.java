@@ -278,7 +278,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         // 获取Configuration对象
         Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
         try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-            if(!StringUtils.hasText(schema)) {
+            if (!StringUtils.hasText(schema)) {
                 schema = connection.getSchema();
             }
             boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
@@ -294,8 +294,11 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @param clazz 实体
      * @return sql
      */
-    default List<String> createTable(Class<?> clazz) {
+    default List<String> createTable(Class<?> clazz, Function<TABLE_META, TABLE_META> function) {
         TABLE_META tableMeta = this.analyseClass(clazz);
+        if (function != null) {
+            tableMeta = function.apply(tableMeta);
+        }
         return this.createTable(tableMeta);
     }
 

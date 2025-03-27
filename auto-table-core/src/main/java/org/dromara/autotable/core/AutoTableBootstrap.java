@@ -4,17 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.dm.DmStrategy;
 import org.dromara.autotable.core.strategy.h2.H2Strategy;
+import org.dromara.autotable.core.strategy.kingbase.KingBaseStrategy;
 import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +41,8 @@ public class AutoTableBootstrap {
         // 注册内置的不同数据源策略
         AutoTableGlobalConfig.addStrategy(new MysqlStrategy());
         AutoTableGlobalConfig.addStrategy(new PgsqlStrategy());
+        AutoTableGlobalConfig.addStrategy(new KingBaseStrategy());
+        AutoTableGlobalConfig.addStrategy(new DmStrategy());
         AutoTableGlobalConfig.addStrategy(new SqliteStrategy());
         AutoTableGlobalConfig.addStrategy(new H2Strategy());
 
