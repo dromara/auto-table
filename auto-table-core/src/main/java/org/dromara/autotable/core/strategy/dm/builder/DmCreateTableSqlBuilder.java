@@ -65,13 +65,21 @@ public class DmCreateTableSqlBuilder {
         return StringConnectHelper.newInstance("CREATE {unique}INDEX {indexName} ON {schemaTable} ({columns})")
                 .replace("{unique}", index.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE " : "")
                 .replace("{indexName}", index.getName())
-                // 修改点1：拆分schema和table处理
-                .replace("{schemaTable}", (StringUtils.hasText(schema) ? schema + "." : "") + "\"" + tableName + "\"")
-                // 修改点2：给每个列名添加双引号
+                // 关键修改点：统一处理模式名和表名
+                .replace("{schemaTable}", buildSchemaTableName(schema, tableName))
                 .replace("{columns}", index.getColumns().stream()
-                        .map(col -> "\"" + col.getColumn() + "\"" + (col.getSort() != null ? " " + col.getSort() : ""))
+                        .map(col -> ColumnSqlBuilder.wrapColumnName(col.getColumn())
+                                + (col.getSort() != null ? " " + col.getSort() : ""))
                         .collect(Collectors.joining(", ")))
                 .toString() + ";";
+    }
+
+    private static String buildSchemaTableName(String schema, String tableName) {
+        String wrappedSchema = ColumnSqlBuilder.wrapColumnName(schema);
+        String wrappedTable = ColumnSqlBuilder.wrapColumnName(tableName);
+        return StringUtils.hasText(schema)
+                ? wrappedSchema + "." + wrappedTable
+                : wrappedTable;
     }
 
 

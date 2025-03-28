@@ -206,7 +206,7 @@ public class ColumnSqlBuilder {
     /**
      * 处理保留字列名
      */
-    private static String wrapColumnName(String columnName) {
+    public static String wrapColumnName(String columnName) {
         // 统一转为大写判断（达梦保留字不区分大小写）
         String upperName = columnName.toUpperCase();
 
