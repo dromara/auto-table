@@ -6,6 +6,7 @@ import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.strategy.dm.DmStrategy;
 import org.dromara.autotable.core.utils.StringConnectHelper;
+import org.dromara.autotable.core.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class DmCreateTableSqlBuilder {
         // 构建索引语句
         String indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
 
-        return String.join("\n", createTableSql, indexSql);
+        return String.join(";\n", createTableSql, indexSql);
     }
 
     private static String buildCreateTableStatement(DefaultTableMetadata metadata) {
@@ -61,14 +62,17 @@ public class DmCreateTableSqlBuilder {
     }
 
     private static String buildIndexStatement(String schema, String tableName, IndexMetadata index) {
-        return StringConnectHelper.newInstance("CREATE {unique}INDEX {indexName} ON {tableName} ({columns})")
+        return StringConnectHelper.newInstance("CREATE {unique}INDEX {indexName} ON {schemaTable} ({columns})")
                 .replace("{unique}", index.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE " : "")
                 .replace("{indexName}", index.getName())
-                .replace("{tableName}", DmStrategy.withSchemaName(schema, tableName))
+                // 修改点1：拆分schema和table处理
+                .replace("{schemaTable}", (StringUtils.hasText(schema) ? schema + "." : "") + "\"" + tableName + "\"")
+                // 修改点2：给每个列名添加双引号
                 .replace("{columns}", index.getColumns().stream()
-                        .map(col -> col.getColumn() + (col.getSort() != null ? " " + col.getSort() : ""))
+                        .map(col -> "\"" + col.getColumn() + "\"" + (col.getSort() != null ? " " + col.getSort() : ""))
                         .collect(Collectors.joining(", ")))
                 .toString() + ";";
     }
+
 
 }
