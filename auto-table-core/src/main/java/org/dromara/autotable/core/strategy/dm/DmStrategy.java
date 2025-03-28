@@ -94,8 +94,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     @Override
     public List<String> createTable(DefaultTableMetadata tableMetadata) {
-        String sql = DmCreateTableSqlBuilder.buildSql(tableMetadata);
-        return Collections.singletonList(sql);
+        return DmCreateTableSqlBuilder.buildSql(tableMetadata);
     }
 
     @Override

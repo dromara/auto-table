@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public class DmCreateTableSqlBuilder {
 
-    public static String buildSql(DefaultTableMetadata tableMetadata) {
+    public static List<String> buildSql(DefaultTableMetadata tableMetadata) {
         String schema = tableMetadata.getSchema();
         String tableName = tableMetadata.getTableName();
 
@@ -26,9 +26,9 @@ public class DmCreateTableSqlBuilder {
         String createTableSql = buildCreateTableStatement(tableMetadata);
 
         // 构建索引语句
-        String indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
-
-        return String.join(";\n", createTableSql, indexSql);
+        List<String> indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
+        indexSql.addFirst(createTableSql);
+        return indexSql;
     }
 
     private static String buildCreateTableStatement(DefaultTableMetadata metadata) {
@@ -55,10 +55,10 @@ public class DmCreateTableSqlBuilder {
                 String.join(",\n  ", columns));
     }
 
-    static String buildIndexStatements(String schema, String tableName, List<IndexMetadata> indexes) {
+    static List<String> buildIndexStatements(String schema, String tableName, List<IndexMetadata> indexes) {
         return indexes.stream()
                 .map(index -> buildIndexStatement(schema, tableName, index))
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.toList());
     }
 
     private static String buildIndexStatement(String schema, String tableName, IndexMetadata index) {
@@ -75,10 +75,9 @@ public class DmCreateTableSqlBuilder {
     }
 
     private static String buildSchemaTableName(String schema, String tableName) {
-        String wrappedSchema = ColumnSqlBuilder.wrapColumnName(schema);
         String wrappedTable = ColumnSqlBuilder.wrapColumnName(tableName);
         return StringUtils.hasText(schema)
-                ? wrappedSchema + "." + wrappedTable
+                ? schema + "." + wrappedTable
                 : wrappedTable;
     }
 

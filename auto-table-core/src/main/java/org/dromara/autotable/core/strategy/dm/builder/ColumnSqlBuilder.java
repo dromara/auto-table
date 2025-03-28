@@ -207,16 +207,7 @@ public class ColumnSqlBuilder {
      * 处理保留字列名
      */
     public static String wrapColumnName(String columnName) {
-        // 统一转为大写判断（达梦保留字不区分大小写）
-        String upperName = columnName.toUpperCase();
-
-        // 仅对保留字添加双引号
-        if (RESERVED_WORDS.contains(upperName)) {
-            return "\"" + columnName + "\"";
-        }
-
-        // 普通列名保持原样
-        return columnName;
+        return "\"" + columnName + "\"";
     }
 
     /**
