@@ -64,12 +64,12 @@ public class DmModifyTableSqlBuilder {
         }
 
         // 4. 索引生成（增加空校验）
-        String indexStatements = DmCreateTableSqlBuilder.buildIndexStatements(
+        List<String> indexStatements = DmCreateTableSqlBuilder.buildIndexStatements(
                 compareInfo.getSchema(),
                 compareInfo.getName(),
                 compareInfo.getIndexMetadataList());
-        if (StringUtils.hasText(indexStatements)) {
-            sqlList.add(indexStatements);
+        if (!indexStatements.isEmpty()) {
+            sqlList.addAll(indexStatements);
         }
 
         // 5. 注释（增加空校验）

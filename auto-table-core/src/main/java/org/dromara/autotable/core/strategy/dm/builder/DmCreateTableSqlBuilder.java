@@ -6,6 +6,7 @@ import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.strategy.dm.DmStrategy;
 import org.dromara.autotable.core.utils.StringConnectHelper;
+import org.dromara.autotable.core.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public class DmCreateTableSqlBuilder {
 
-    public static String buildSql(DefaultTableMetadata tableMetadata) {
+    public static List<String> buildSql(DefaultTableMetadata tableMetadata) {
         String schema = tableMetadata.getSchema();
         String tableName = tableMetadata.getTableName();
 
@@ -25,9 +26,9 @@ public class DmCreateTableSqlBuilder {
         String createTableSql = buildCreateTableStatement(tableMetadata);
 
         // 构建索引语句
-        String indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
-
-        return String.join("\n", createTableSql, indexSql);
+        List<String> indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
+        indexSql.addFirst(createTableSql);
+        return indexSql;
     }
 
     private static String buildCreateTableStatement(DefaultTableMetadata metadata) {
@@ -54,21 +55,31 @@ public class DmCreateTableSqlBuilder {
                 String.join(",\n  ", columns));
     }
 
-    static String buildIndexStatements(String schema, String tableName, List<IndexMetadata> indexes) {
+    static List<String> buildIndexStatements(String schema, String tableName, List<IndexMetadata> indexes) {
         return indexes.stream()
                 .map(index -> buildIndexStatement(schema, tableName, index))
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.toList());
     }
 
     private static String buildIndexStatement(String schema, String tableName, IndexMetadata index) {
-        return StringConnectHelper.newInstance("CREATE {unique}INDEX {indexName} ON {tableName} ({columns})")
+        return StringConnectHelper.newInstance("CREATE {unique}INDEX {indexName} ON {schemaTable} ({columns})")
                 .replace("{unique}", index.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE " : "")
                 .replace("{indexName}", index.getName())
-                .replace("{tableName}", DmStrategy.withSchemaName(schema, tableName))
+                // 关键修改点：统一处理模式名和表名
+                .replace("{schemaTable}", buildSchemaTableName(schema, tableName))
                 .replace("{columns}", index.getColumns().stream()
-                        .map(col -> col.getColumn() + (col.getSort() != null ? " " + col.getSort() : ""))
+                        .map(col -> ColumnSqlBuilder.wrapColumnName(col.getColumn())
+                                + (col.getSort() != null ? " " + col.getSort() : ""))
                         .collect(Collectors.joining(", ")))
                 .toString() + ";";
     }
+
+    private static String buildSchemaTableName(String schema, String tableName) {
+        String wrappedTable = ColumnSqlBuilder.wrapColumnName(tableName);
+        return StringUtils.hasText(schema)
+                ? schema + "." + wrappedTable
+                : wrappedTable;
+    }
+
 
 }
