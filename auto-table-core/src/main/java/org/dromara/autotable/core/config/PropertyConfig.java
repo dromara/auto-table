@@ -39,9 +39,13 @@ public class PropertyConfig {
      */
     private Boolean autoDropColumn = false;
     /**
-     * 是否自动删除名称不匹配的索引
+     * 是否自动删除名称不匹配的索引（以indexPrefix配置开头的）
      */
     private Boolean autoDropIndex = true;
+    /**
+     * 是否自动删除名称不匹配的索引（不以indexPrefix配置开头的）
+     */
+    private Boolean autoDropCustomIndex = false;
     /**
      * 子类继承父类的字段的配置，是否开启严格继承的模式：只继承public、protected修饰的字段
      */

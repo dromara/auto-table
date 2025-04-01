@@ -52,9 +52,13 @@ public class AutoTableProperties {
      */
     private Boolean autoDropColumn = false;
     /**
-     * 是否自动删除名称不匹配的索引
+     * 是否自动删除名称不匹配的索引（由autotable创建的）
      */
     private Boolean autoDropIndex = true;
+    /**
+     * 是否自动删除名称不匹配的索引（非autotable创建的）
+     */
+    private Boolean autoDropCustomIndex = false;
     /**
      * 子类继承父类的字段的配置，是否开启严格继承的模式：只继承public、protected修饰的字段
      */
@@ -85,6 +89,7 @@ public class AutoTableProperties {
         propertyConfig.setIndexPrefix(this.indexPrefix);
         propertyConfig.setAutoDropColumn(this.autoDropColumn);
         propertyConfig.setAutoDropIndex(this.autoDropIndex);
+        propertyConfig.setAutoDropCustomIndex(this.autoDropCustomIndex);
         propertyConfig.setStrictExtends(this.strictExtends);
 
         PropertyConfig.SuperInsertPosition superInsertPosition =

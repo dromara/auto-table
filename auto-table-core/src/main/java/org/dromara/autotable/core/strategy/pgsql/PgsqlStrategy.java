@@ -5,6 +5,7 @@ import org.apache.ibatis.session.Configuration;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
@@ -181,11 +182,18 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         }
 
         // 需要删除的索引
-        Set<String> needRemoveIndexes = pgsqlDbIndexMap.keySet();
-        if (!needRemoveIndexes.isEmpty()) {
-            // 根据配置，决定是否删除库上的多余索引
-            if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropIndex()) {
-                pgsqlCompareTableInfo.addDropIndexes(needRemoveIndexes);
+        Set<String> needDropIndexes = pgsqlDbIndexMap.keySet();
+        if (!needDropIndexes.isEmpty()) {
+            PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+            // 删除autotable创建的索引
+            if (autoTableProperties.getAutoDropIndex()) {
+                List<String> autoTableCreateIndexes = needDropIndexes.stream().filter(indexName -> indexName.startsWith(autoTableProperties.getIndexPrefix())).collect(Collectors.toList());
+                pgsqlCompareTableInfo.getDropIndexList().addAll(autoTableCreateIndexes);
+            }
+            // 删除手动创建的索引
+            if (autoTableProperties.getAutoDropCustomIndex()) {
+                List<String> customCreateIndexes = needDropIndexes.stream().filter(indexName -> !indexName.startsWith(autoTableProperties.getIndexPrefix())).collect(Collectors.toList());
+                pgsqlCompareTableInfo.getDropIndexList().addAll(customCreateIndexes);
             }
         }
     }
