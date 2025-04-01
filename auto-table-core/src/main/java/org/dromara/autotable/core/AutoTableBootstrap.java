@@ -8,6 +8,7 @@ import org.dromara.autotable.core.strategy.h2.H2Strategy;
 import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.util.Arrays;
@@ -72,13 +73,17 @@ public class AutoTableBootstrap {
             }
 
             // 查找对应的数据源策略
-            IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
-            if (databaseStrategy != null) {
-                for (Class<?> entityClass : entityClasses) {
-                    databaseStrategy.start(entityClass);
+            for (Class<?> entityClass : entityClasses) {
+                String entityDialect = TableMetadataHandler.getTableStrategy(entityClass);
+                String tableStrategy = StringUtils.hasText(entityDialect) ? entityDialect : databaseDialect;
+                log.info("数据库方言（{}）", tableStrategy);
+                // 查找对应的数据源策略
+                IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(tableStrategy);
+                if (databaseStrategy == null) {
+                    log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", tableStrategy);
+                    continue;
                 }
-            } else {
-                log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
+                databaseStrategy.start(entityClass);
             }
         });
         AutoTableGlobalConfig.getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
