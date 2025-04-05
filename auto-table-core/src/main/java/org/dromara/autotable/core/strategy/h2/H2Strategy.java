@@ -4,6 +4,7 @@ import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.annotation.h2.H2TypeConstant;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
@@ -184,11 +185,18 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
         }
 
         // 需要删除的索引
-        Set<String> needRemoveIndexes = dbIndexMap.keySet();
-        if (!needRemoveIndexes.isEmpty()) {
-            // 根据配置，决定是否删除库上的多余索引
-            if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropIndex()) {
-                h2CompareTableInfo.addDropIndexes(needRemoveIndexes);
+        Set<String> needDropIndexes = dbIndexMap.keySet();
+        if (!needDropIndexes.isEmpty()) {
+            PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+            // 删除autotable创建的索引
+            if (autoTableProperties.getAutoDropIndex()) {
+                List<String> autoTableCreateIndexes = needDropIndexes.stream().filter(indexName -> indexName.startsWith(autoTableProperties.getIndexPrefix())).collect(Collectors.toList());
+                h2CompareTableInfo.getDropIndexList().addAll(autoTableCreateIndexes);
+            }
+            // 删除手动创建的索引
+            if (autoTableProperties.getAutoDropCustomIndex()) {
+                List<String> customCreateIndexes = needDropIndexes.stream().filter(indexName -> !indexName.startsWith(autoTableProperties.getIndexPrefix())).collect(Collectors.toList());
+                h2CompareTableInfo.getDropIndexList().addAll(customCreateIndexes);
             }
         }
     }
