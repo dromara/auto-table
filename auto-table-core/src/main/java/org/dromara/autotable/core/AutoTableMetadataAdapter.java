@@ -23,6 +23,16 @@ public interface AutoTableMetadataAdapter {
     }
 
     /**
+     * 获取表方言策略
+     *
+     * @param clazz 实体类
+     * @return 表方言策略
+     */
+    default String getTableStrategy(Class<?> clazz) {
+        return null;
+    }
+
+    /**
      * 获取表名
      *
      * @param clazz 实体类
