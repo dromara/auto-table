@@ -13,6 +13,16 @@ import java.util.List;
 public interface AutoTableMetadataAdapter {
 
     /**
+     * 获取数据库方言
+     *
+     * @param clazz 实体类
+     * @return 数据库方言
+     */
+    default String getTableDialect(Class<?> clazz) {
+        return null;
+    }
+
+    /**
      * 获取表schema
      *
      * @param clazz 实体类

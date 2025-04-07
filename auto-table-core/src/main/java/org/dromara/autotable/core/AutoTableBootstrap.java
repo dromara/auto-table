@@ -72,19 +72,14 @@ public class AutoTableBootstrap {
             }
 
             // 查找对应的数据源策略
-            for (Class<?> entityClass : entityClasses) {
-                String entityDialect = TableMetadataHandler.getTableStrategy(entityClass);
-                String tableStrategy = StringUtils.hasText(entityDialect) ? entityDialect : databaseDialect;
-                if (!tableStrategy.equals(databaseDialect)) {
-                    log.info("{} 使用自定义数据库方言（{}）", entityClass.getSimpleName(),tableStrategy);
+            IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+            if (databaseStrategy != null) {
+                for (Class<?> entityClass : entityClasses) {
+                    log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);
+                    databaseStrategy.start(entityClass);
                 }
-                // 查找对应的数据源策略
-                IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(tableStrategy);
-                if (databaseStrategy == null) {
-                    log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", tableStrategy);
-                    continue;
-                }
-                databaseStrategy.start(entityClass);
+            } else {
+                log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
             }
         });
         AutoTableGlobalConfig.getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));

@@ -52,6 +52,24 @@ public class TableMetadataHandler {
     }
 
     /**
+     * 获取bean上的dialect
+     *
+     * @param clazz bean
+     * @return dialect
+     */
+    public static String getTableDialect(Class<?> clazz) {
+
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
+        if (autoTable != null) {
+            return autoTable.dialect();
+        }
+
+        // 调用第三方ORM实现
+        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableDialect(clazz);
+    }
+
+    /**
      * 获取bean上的schema
      *
      * @param clazz bean

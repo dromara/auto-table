@@ -2,6 +2,8 @@ package org.dromara.autotable.core.dynamicds;
 
 import lombok.NonNull;
 import org.apache.ibatis.session.Configuration;
+import org.dromara.autotable.core.utils.StringUtils;
+import org.dromara.autotable.core.utils.TableMetadataHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +40,16 @@ public interface IDataSourceHandler {
             log.info("使用数据源：{}", dataSource);
             this.useDataSource(dataSource);
             DatasourceNameManager.setDatasourceName(dataSource);
+            Map<String, Set<Class<?>>> groupByDialect = entityClasses.stream().collect(
+                    Collectors.groupingBy(
+                            // 获取数据库方言
+                            entityClass -> this.getDatabaseDialect(dataSource, entityClass),
+                            Collectors.toSet()
+                    )
+            );
+
             try {
-                String databaseDialect = this.getDatabaseDialect(dataSource);
-                log.info("数据库方言（{}）", databaseDialect);
-                consumer.accept(databaseDialect, entityClasses);
+                groupByDialect.forEach(consumer);
             } finally {
                 log.info("清理数据源：{}", dataSource);
                 this.clearDataSource(dataSource);
@@ -50,6 +58,26 @@ public interface IDataSourceHandler {
         });
     }
 
+    /**
+     * 自动获取当前数据源的方言
+     *
+     * @param dataSource 数据源名称
+     * @param entityClass 实体类
+     * @return 返回数据方言
+     */
+    default String getDatabaseDialect(String dataSource, Class<?> entityClass) {
+
+        // 优先使用注解上的自定义方言
+        if (entityClass != null) {
+            String tableDialect = TableMetadataHandler.getTableDialect(entityClass);
+            if (StringUtils.hasText(tableDialect)) {
+                log.info("使用注解上的方言：{}", tableDialect);
+                return tableDialect;
+            }
+        }
+
+        return getDatabaseDialect(dataSource);
+    }
 
     /**
      * 自动获取当前数据源的方言
@@ -65,9 +93,10 @@ public interface IDataSourceHandler {
         try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
             // 通过连接获取DatabaseMetaData对象
             DatabaseMetaData metaData = connection.getMetaData();
-            log.info("数据库链接 => {}", metaData.getURL());
             // 获取数据库方言
-            return metaData.getDatabaseProductName();
+            String databaseProductName = metaData.getDatabaseProductName();
+            log.info("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
+            return databaseProductName;
         } catch (SQLException e) {
             throw new RuntimeException("获取数据方言失败", e);
         }

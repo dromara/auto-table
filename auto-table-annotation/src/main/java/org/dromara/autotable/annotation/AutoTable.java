@@ -34,7 +34,7 @@ public @interface AutoTable {
     String comment() default "";
 
     /**
-     * @return 自定义方言策略
+     * @return 自定义数据库方言，默认从数据源链接中获取
      */
-    String strategy() default "";
+    String dialect() default "";
 }
