@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.doris.DorisStrategy;
 import org.dromara.autotable.core.strategy.h2.H2Strategy;
 import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
@@ -46,6 +47,7 @@ public class AutoTableBootstrap {
         AutoTableGlobalConfig.addStrategy(new PgsqlStrategy());
         AutoTableGlobalConfig.addStrategy(new SqliteStrategy());
         AutoTableGlobalConfig.addStrategy(new H2Strategy());
+        AutoTableGlobalConfig.addStrategy(new DorisStrategy());
 
         // 扫描所有的类，过滤出指定注解的实体
         Class<?>[] modelClass = autoTableProperties.getModelClass();
@@ -76,7 +78,9 @@ public class AutoTableBootstrap {
             for (Class<?> entityClass : entityClasses) {
                 String entityDialect = TableMetadataHandler.getTableStrategy(entityClass);
                 String tableStrategy = StringUtils.hasText(entityDialect) ? entityDialect : databaseDialect;
-                log.info("数据库方言（{}）", tableStrategy);
+                if (!tableStrategy.equals(databaseDialect)) {
+                    log.info("{} 使用自定义数据库方言（{}）", entityClass.getSimpleName(),tableStrategy);
+                }
                 // 查找对应的数据源策略
                 IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(tableStrategy);
                 if (databaseStrategy == null) {
