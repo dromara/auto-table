@@ -32,4 +32,9 @@ public @interface AutoTable {
      * @return 表注释，为空默认取类名
      */
     String comment() default "";
+
+    /**
+     * @return 自定义数据库方言，默认从数据源链接中获取
+     */
+    String dialect() default "";
 }
