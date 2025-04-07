@@ -41,8 +41,9 @@ public class Table7 {
 
     @DorisColumn(aggregateFun = AggregateFun.max)
     private Integer v2;
+
     @AutoColumn(defaultValue = "100")
-    @DorisColumn(aggregateFun = AggregateFun.max)
+    @DorisColumn(aggregateFun = AggregateFun.sum)
     private Integer v3;
 
 }

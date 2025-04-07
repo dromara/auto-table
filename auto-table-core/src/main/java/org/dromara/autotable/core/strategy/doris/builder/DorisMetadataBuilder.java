@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 public class DorisMetadataBuilder {
     private static final ColumnMetadataBuilder defaultColumnMetadataBuilder = new ColumnMetadataBuilder(DorisStrategy.databaseDialect);
 
+
     /**
      * 根据实体类生成Doris表元数据
      *
