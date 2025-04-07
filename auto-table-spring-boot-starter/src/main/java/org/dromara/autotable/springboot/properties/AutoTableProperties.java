@@ -72,6 +72,8 @@ public class AutoTableProperties {
      */
     private Mysql mysql = new Mysql();
 
+    private DorisConfig doris = new DorisConfig();
+
     /**
      * doris配置
      */
