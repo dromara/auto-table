@@ -32,4 +32,9 @@ public @interface AutoTable {
      * @return 表注释，为空默认取类名
      */
     String comment() default "";
+
+    /**
+     * @return 自定义方言策略
+     */
+    String strategy() default "";
 }

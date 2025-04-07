@@ -4,10 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.doris.DorisStrategy;
 import org.dromara.autotable.core.strategy.h2.H2Strategy;
 import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.util.Arrays;
@@ -45,6 +47,7 @@ public class AutoTableBootstrap {
         AutoTableGlobalConfig.addStrategy(new PgsqlStrategy());
         AutoTableGlobalConfig.addStrategy(new SqliteStrategy());
         AutoTableGlobalConfig.addStrategy(new H2Strategy());
+        AutoTableGlobalConfig.addStrategy(new DorisStrategy());
 
         // 扫描所有的类，过滤出指定注解的实体
         Class<?>[] modelClass = autoTableProperties.getModelClass();
@@ -72,13 +75,19 @@ public class AutoTableBootstrap {
             }
 
             // 查找对应的数据源策略
-            IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
-            if (databaseStrategy != null) {
-                for (Class<?> entityClass : entityClasses) {
-                    databaseStrategy.start(entityClass);
+            for (Class<?> entityClass : entityClasses) {
+                String entityDialect = TableMetadataHandler.getTableStrategy(entityClass);
+                String tableStrategy = StringUtils.hasText(entityDialect) ? entityDialect : databaseDialect;
+                if (!tableStrategy.equals(databaseDialect)) {
+                    log.info("{} 使用自定义数据库方言（{}）", entityClass.getSimpleName(),tableStrategy);
                 }
-            } else {
-                log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
+                // 查找对应的数据源策略
+                IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(tableStrategy);
+                if (databaseStrategy == null) {
+                    log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", tableStrategy);
+                    continue;
+                }
+                databaseStrategy.start(entityClass);
             }
         });
         AutoTableGlobalConfig.getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));

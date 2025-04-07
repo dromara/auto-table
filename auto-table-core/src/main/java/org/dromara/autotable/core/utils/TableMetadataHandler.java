@@ -69,6 +69,25 @@ public class TableMetadataHandler {
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableSchema(clazz);
     }
 
+
+    /**
+     * 获取bean上的strategy
+     *
+     * @param clazz bean
+     * @return strategy
+     */
+    public static String getTableStrategy(Class<?> clazz) {
+
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
+        if (autoTable != null) {
+            return autoTable.strategy();
+        }
+
+        // 调用第三方ORM实现
+        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableStrategy(clazz);
+    }
+
     /**
      * 获取bean上的表名
      *

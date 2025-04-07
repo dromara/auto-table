@@ -12,4 +12,5 @@ public interface DatabaseDialect {
     String Oracle = "Oracle";
     String SQLServer = "SQLServer";
     String DB2 = "DB2";
+    String Doris = "Doris";
 }

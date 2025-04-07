@@ -17,6 +17,7 @@
         <module>auto-table-test-dynamicdatasource</module>
         <module>auto-table-test-solon-plugin</module>
         <module>auto-table-test-spring-boot-dynamicdatasource</module>
+        <module>auto-table-test-doris</module>
     </modules>
 
     <properties>

@@ -62,6 +62,11 @@ public class PropertyConfig {
     private MysqlConfig mysql = new MysqlConfig();
 
     /**
+     * doris配置
+     */
+    private DorisConfig doris = new DorisConfig();
+
+    /**
      * 记录执行的SQL
      */
     private RecordSqlProperties recordSql = new RecordSqlProperties();
@@ -138,5 +143,28 @@ public class PropertyConfig {
          * 列默认排序规则
          */
         private String columnDefaultCollation;
+    }
+
+    @Data
+    public static class DorisConfig {
+        /**
+         * 自己定义的物化视图前缀
+         */
+        private String rollupPrefix = "auto_rlp_";
+        /**
+         * 物化视图自动生成名字的最大长度
+         */
+        private int rollupAutoNameMaxLength = 100;
+
+        /**
+         * 更新表时，允许更新表的最大容量上限，默认为1G，当表容量大于1G时,不执行更新
+         */
+        private long updateLimitTableDataLength = 1073741824;
+
+        /**
+         * 更新时,是否备份旧表
+         */
+        private boolean updateBackupOldTable = false;
+
     }
 }
