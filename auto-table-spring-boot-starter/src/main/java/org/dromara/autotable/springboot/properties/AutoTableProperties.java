@@ -1,8 +1,8 @@
 package org.dromara.autotable.springboot.properties;
 
+import lombok.Data;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
-import lombok.Data;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -71,9 +71,6 @@ public class AutoTableProperties {
      * mysql配置
      */
     private Mysql mysql = new Mysql();
-
-    private DorisConfig doris = new DorisConfig();
-
     /**
      * doris配置
      */

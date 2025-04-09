@@ -2,7 +2,10 @@ package org.dromara.autotable.test.doris.entity;
 
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
-import org.dromara.autotable.annotation.*;
+import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.AutoIncrement;
+import org.dromara.autotable.annotation.AutoTable;
+import org.dromara.autotable.annotation.ColumnComment;
 import org.dromara.autotable.annotation.doris.DorisColumn;
 import org.dromara.autotable.annotation.doris.DorisTable;
 import org.dromara.autotable.core.constants.DatabaseDialect;
@@ -11,7 +14,7 @@ import java.math.BigDecimal;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table1", comment = "创建一个明细模型的表", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table1", comment = "创建一个明细模型的表", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {Table1.Fields.k1, Table1.Fields.k2},
         properties = {

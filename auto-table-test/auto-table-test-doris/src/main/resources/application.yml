@@ -1,7 +1,7 @@
 auto-table:
   enable: true
   auto-drop-column: true
-  mode: validate
+  mode: create
   record-sql:
     # 开启SQL记录
     enable: true

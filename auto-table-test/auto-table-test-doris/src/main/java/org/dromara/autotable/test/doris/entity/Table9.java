@@ -5,21 +5,18 @@ import lombok.experimental.FieldNameConstants;
 import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.doris.DorisColumn;
-import org.dromara.autotable.annotation.doris.DorisDynamicPartition;
 import org.dromara.autotable.annotation.doris.DorisRollup;
 import org.dromara.autotable.annotation.doris.DorisTable;
 import org.dromara.autotable.annotation.doris.emuns.AggregateFun;
-import org.dromara.autotable.annotation.doris.emuns.DorisTimeUnit;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table9", comment = "创建一个带有物化视图（ROLLUP）的表", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table9", comment = "创建一个带有物化视图（ROLLUP）的表", dialect = DatabaseDialect.Doris)
 @DorisTable(
         aggregate_key = {
                 Table9.Fields.eventDay,

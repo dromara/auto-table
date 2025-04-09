@@ -6,19 +6,15 @@ import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoIncrement;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.doris.DorisColumn;
-import org.dromara.autotable.annotation.doris.DorisPartition;
 import org.dromara.autotable.annotation.doris.DorisTable;
-import org.dromara.autotable.annotation.doris.emuns.DorisTimeUnit;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table14", comment = "批量创建分区", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table14", comment = "批量创建分区", dialect = DatabaseDialect.Doris)
 @DorisTable(
         unique_key = {
                 Table14.Fields.k1,

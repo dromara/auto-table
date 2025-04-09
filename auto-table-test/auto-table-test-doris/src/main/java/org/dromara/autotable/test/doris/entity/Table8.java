@@ -4,16 +4,11 @@ import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.doris.DorisColumn;
 import org.dromara.autotable.annotation.doris.DorisDynamicPartition;
-import org.dromara.autotable.annotation.doris.DorisIndex;
 import org.dromara.autotable.annotation.doris.DorisTable;
-import org.dromara.autotable.annotation.doris.emuns.AggregateFun;
-import org.dromara.autotable.annotation.doris.emuns.DorisIndexType;
 import org.dromara.autotable.annotation.doris.emuns.DorisTimeUnit;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
 
@@ -22,7 +17,7 @@ import java.util.Date;
  */
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table8", comment = "创建一个动态分区表", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table8", comment = "创建一个动态分区表", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {Table8.Fields.k1, Table8.Fields.k2, Table8.Fields.k3},
         distributed_by_hash = {Table8.Fields.k2},

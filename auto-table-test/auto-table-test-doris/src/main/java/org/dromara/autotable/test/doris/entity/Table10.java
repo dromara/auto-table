@@ -4,20 +4,15 @@ import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.doris.DorisColumn;
-import org.dromara.autotable.annotation.doris.DorisRollup;
 import org.dromara.autotable.annotation.doris.DorisTable;
-import org.dromara.autotable.annotation.doris.emuns.AggregateFun;
-import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table10", comment = "通过 replication_allocation 属性设置表的副本", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table10", comment = "通过 replication_allocation 属性设置表的副本", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {
                 Table10.Fields.k1,

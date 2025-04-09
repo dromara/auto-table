@@ -4,17 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.doris.DorisStrategy;
 import org.dromara.autotable.core.strategy.h2.H2Strategy;
 import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +42,7 @@ public class AutoTableBootstrap {
         AutoTableGlobalConfig.addStrategy(new PgsqlStrategy());
         AutoTableGlobalConfig.addStrategy(new SqliteStrategy());
         AutoTableGlobalConfig.addStrategy(new H2Strategy());
+        AutoTableGlobalConfig.addStrategy(new DorisStrategy());
 
         // 扫描所有的类，过滤出指定注解的实体
         Class<?>[] modelClass = autoTableProperties.getModelClass();

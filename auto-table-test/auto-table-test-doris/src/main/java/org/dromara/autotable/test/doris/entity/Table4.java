@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.experimental.FieldNameConstants;
 import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.PrimaryKey;
 import org.dromara.autotable.annotation.doris.DorisColumn;
 import org.dromara.autotable.annotation.doris.DorisPartition;
 import org.dromara.autotable.annotation.doris.DorisTable;
@@ -15,7 +14,7 @@ import java.time.LocalDate;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table4", comment = "创建一个聚合模型表，使用固定范围分区描述", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table4", comment = "创建一个聚合模型表，使用固定范围分区描述", dialect = DatabaseDialect.Doris)
 @DorisTable(
         aggregate_key = {Table4.Fields.k1, Table4.Fields.k2, Table4.Fields.k3},
         distributed_by_hash = {Table4.Fields.k2},

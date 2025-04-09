@@ -2,20 +2,18 @@ package org.dromara.autotable.test.doris.entity;
 
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
-import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.doris.DorisPartition;
 import org.dromara.autotable.annotation.doris.DorisTable;
 import org.dromara.autotable.annotation.doris.emuns.DorisTimeUnit;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table13", comment = "批量创建分区", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table13", comment = "批量创建分区", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {
                 Table13.Fields.k1,

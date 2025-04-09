@@ -1,18 +1,6 @@
 package org.dromara.autotable.core.utils;
 
-import org.dromara.autotable.annotation.AutoColumn;
-import org.dromara.autotable.annotation.AutoIncrement;
-import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.ColumnComment;
-import org.dromara.autotable.annotation.ColumnDefault;
-import org.dromara.autotable.annotation.ColumnName;
-import org.dromara.autotable.annotation.ColumnNotNull;
-import org.dromara.autotable.annotation.ColumnType;
-import org.dromara.autotable.annotation.Ignore;
-import org.dromara.autotable.annotation.Index;
-import org.dromara.autotable.annotation.PrimaryKey;
-import org.dromara.autotable.annotation.TableIndex;
-import org.dromara.autotable.annotation.TableIndexes;
+import org.dromara.autotable.annotation.*;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
@@ -85,25 +73,6 @@ public class TableMetadataHandler {
 
         // 调用第三方ORM实现
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableSchema(clazz);
-    }
-
-
-    /**
-     * 获取bean上的strategy
-     *
-     * @param clazz bean
-     * @return strategy
-     */
-    public static String getTableStrategy(Class<?> clazz) {
-
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
-        AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
-        if (autoTable != null) {
-            return autoTable.strategy();
-        }
-
-        // 调用第三方ORM实现
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableStrategy(clazz);
     }
 
     /**
