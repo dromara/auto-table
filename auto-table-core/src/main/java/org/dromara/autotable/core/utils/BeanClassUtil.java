@@ -1,5 +1,7 @@
 package org.dromara.autotable.core.utils;
 
+import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
 
@@ -50,12 +52,12 @@ public class BeanClassUtil {
     }
 
     /**
-     * 查询某个类下所有的列的字段
+     * 查询某个类下所有的列的字段并排序
      *
      * @param beanClass 类class
      * @return 所有列的字段
      */
-    public static List<Field> listAllFieldForColumn(Class<?> beanClass) {
+    public static List<Field> sortAllFieldForColumn(Class<?> beanClass) {
 
         // 获取父类追加到子类位置的配置
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
@@ -63,7 +65,32 @@ public class BeanClassUtil {
 
         List<Field> fieldList = new ArrayList<>();
         getColumnFieldList(fieldList, beanClass, false, superInsertPosition == PropertyConfig.SuperInsertPosition.after, autoTableProperties.getStrictExtends());
-        return fieldList;
+
+        /* 处理自定义排序的情况 */
+        // 排序后的字段
+        List<Field> sortFieldList = new ArrayList<>(fieldList.size());
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        for (Field field : fieldList) {
+            AutoColumn autoColumn = autoTableAnnotationFinder.find(field, AutoColumn.class);
+            if (autoColumn != null) {
+                int sort = autoColumn.sort();
+                if (sort > 0) {
+                    // 插入到开头
+                    sortFieldList.add(sort - 1, field);
+                    continue;
+                }
+                if (sort < 0) {
+                    // 负数，插入到末尾
+                    sortFieldList.add(fieldList.size() + sort, field);
+                    continue;
+                }
+            }
+
+            // 顺序不变
+            sortFieldList.add(field);
+        }
+
+        return sortFieldList;
     }
 
     /**

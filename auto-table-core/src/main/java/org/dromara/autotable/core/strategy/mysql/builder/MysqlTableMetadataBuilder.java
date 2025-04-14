@@ -53,7 +53,7 @@ public class MysqlTableMetadataBuilder {
             mysqlTableMetadata.setEngine(mysqlEngine.value());
         }
 
-        List<Field> fields = BeanClassUtil.listAllFieldForColumn(clazz);
+        List<Field> fields = BeanClassUtil.sortAllFieldForColumn(clazz);
 
         List<MysqlColumnMetadata> columnMetadataList = new MysqlColumnMetadataBuilder().buildList(clazz, fields);
         mysqlTableMetadata.setColumnMetadataList(columnMetadataList);
