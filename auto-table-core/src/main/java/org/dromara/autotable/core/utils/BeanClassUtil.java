@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,27 +68,46 @@ public class BeanClassUtil {
         getColumnFieldList(fieldList, beanClass, false, superInsertPosition == PropertyConfig.SuperInsertPosition.after, autoTableProperties.getStrictExtends());
 
         /* 处理自定义排序的情况 */
-        // 排序后的字段
-        List<Field> sortFieldList = new ArrayList<>(fieldList.size());
+        // 指定排序的字段
+        List<Field> sortFieldList = new ArrayList<>(Collections.nCopies(fieldList.size(), null));
+        // 未指定排序的字段。sortFieldList + unSortFieldList = fieldList
+        List<Field> unSortFieldList = new ArrayList<>();
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
         for (Field field : fieldList) {
             AutoColumn autoColumn = autoTableAnnotationFinder.find(field, AutoColumn.class);
+            // 记录指定排序的字段到指定位置
             if (autoColumn != null) {
                 int sort = autoColumn.sort();
+                Integer index = null;
                 if (sort > 0) {
                     // 插入到开头
-                    sortFieldList.add(sort - 1, field);
-                    continue;
+                    index = sort - 1;
                 }
                 if (sort < 0) {
                     // 负数，插入到末尾
-                    sortFieldList.add(fieldList.size() + sort, field);
+                    index = fieldList.size() + sort;
+                }
+                if(index != null) {
+                    if (index < 0 || index >= fieldList.size()) {
+                        throw new RuntimeException(String.format("%s下的字段%s的排序配置错误，范围在[-%s~%s]之间", beanClass.getName(), field.getName(), fieldList.size(), fieldList.size()));
+                    }
+                    if(sortFieldList.get(index) != null) {
+                        throw new RuntimeException(String.format("%s下的字段%s的排序配置错误，排序位置%s已经被%s占用了", beanClass.getName(), field.getName(), index, sortFieldList.get(index).getName()));
+                    }
+                    sortFieldList.set(index, field);
                     continue;
                 }
             }
 
-            // 顺序不变
-            sortFieldList.add(field);
+            // 记录未指定排序的字段
+            unSortFieldList.add(field);
+        }
+
+        // 将未指定排序的字段，按照空白顺序填充到指定排序的字段中
+        for (int i = 0, j = 0; i < sortFieldList.size(); i++) {
+            if(sortFieldList.get(i) == null) {
+                sortFieldList.set(i, unSortFieldList.get(j++));
+            }
         }
 
         return sortFieldList;
