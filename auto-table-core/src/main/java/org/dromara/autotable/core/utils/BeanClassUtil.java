@@ -91,8 +91,10 @@ public class BeanClassUtil {
                     if (index < 0 || index >= fieldList.size()) {
                         throw new RuntimeException(String.format("%s下的字段%s的排序配置错误，范围在[-%s~%s]之间", beanClass.getName(), field.getName(), fieldList.size(), fieldList.size()));
                     }
-                    if(sortFieldList.get(index) != null) {
-                        throw new RuntimeException(String.format("%s下的字段%s的排序配置错误，排序位置%s已经被%s占用了", beanClass.getName(), field.getName(), index, sortFieldList.get(index).getName()));
+                    Field eleField = sortFieldList.get(index);
+                    if(eleField != null) {
+                        int existEleSort = autoTableAnnotationFinder.find(eleField, AutoColumn.class).sort();
+                        throw new RuntimeException(String.format("%s下的字段%s(sort:%s)的排序配置错误，排序位置已经被%s(sort:%s)占用了", beanClass.getName(), field.getName(), sort, eleField.getName(), existEleSort));
                     }
                     sortFieldList.set(index, field);
                     continue;
