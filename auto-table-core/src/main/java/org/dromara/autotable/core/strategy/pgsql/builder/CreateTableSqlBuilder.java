@@ -1,6 +1,7 @@
 package org.dromara.autotable.core.strategy.pgsql.builder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.autotable.annotation.enums.IndexSortTypeEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
@@ -70,8 +71,9 @@ public class CreateTableSqlBuilder {
                             // 例："name" ASC
                             "{column}{sortMode}"
                                     .replace("{column}", column.getColumn())
-                                    .replace("{sortMode}", column.getSort() != null ? " " + column.getSort().name() : "")
-                    ).collect(Collectors.joining(","));
+                                    // pgsql中，asc为默认
+                                    .replace("{sortMode}", (column.getSort() == null || column.getSort() == IndexSortTypeEnum.ASC) ? "" : (" " + column.getSort().name()))
+                    ).collect(Collectors.joining(", "));
                 })
                 .toString();
     }

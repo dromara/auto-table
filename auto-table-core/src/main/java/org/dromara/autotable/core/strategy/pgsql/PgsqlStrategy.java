@@ -174,7 +174,9 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
             }
 
             // 获取索引定义语句，进行比较  CREATE UNIQUE INDEX mpe_idx_phone_index ON "public".my_pgsql_table USING btree (phone DESC)
-            String dbIndexdef = dbIndex.getIndexdef().replace("\"", "") + ";";
+            String dbIndexdef = dbIndex.getIndexdef().replace("\"", "")
+                    .replace(" NULLS FIRST", "")
+                    .replace(" NULLS LAST", "") + ";";
             String newIndexdef = CreateTableSqlBuilder.getCreateIndexSql(schema, tableName, indexMetadata).replace("\"", "");
             if (!newIndexdef.equals(dbIndexdef)) {
                 pgsqlCompareTableInfo.addModifyIndex(indexMetadata);
