@@ -40,6 +40,7 @@
         <module>auto-table-spring-boot-starter</module>
         <module>auto-table-solon-plugin</module>
         <module>auto-table-test</module>
+        <module>auto-table-strategy</module>
     </modules>
 
     <properties>
@@ -55,6 +56,7 @@
         <spring-boot.version>2.7.18</spring-boot.version>
         <mybatis-spring.version>2.1.2</mybatis-spring.version>
         <lombok.version>1.18.34</lombok.version>
+        <slf4j.version>1.7.36</slf4j.version>
 
         <!--插件-->
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>

@@ -20,7 +20,7 @@
 
         <dependency>
             <groupId>org.dromara.autotable</groupId>
-            <artifactId>auto-table-core</artifactId>
+            <artifactId>auto-table-strategy-all</artifactId>
             <version>${project.version}</version>
         </dependency>
 

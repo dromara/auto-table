@@ -4,10 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
-import org.dromara.autotable.core.strategy.h2.H2Strategy;
-import org.dromara.autotable.core.strategy.mysql.MysqlStrategy;
-import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
-import org.dromara.autotable.core.strategy.sqlite.SqliteStrategy;
+import org.dromara.autotable.core.utils.SpiLoader;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.util.Arrays;
@@ -40,18 +37,11 @@ public class AutoTableBootstrap {
 
         final long start = System.currentTimeMillis();
 
-        // 注册内置的不同数据源策略
-        AutoTableGlobalConfig.addStrategy(new MysqlStrategy());
-        AutoTableGlobalConfig.addStrategy(new PgsqlStrategy());
-        AutoTableGlobalConfig.addStrategy(new SqliteStrategy());
-        AutoTableGlobalConfig.addStrategy(new H2Strategy());
+        // 注册不同数据源策略
+        registerAllDbStrategy();
 
         // 扫描所有的类，过滤出指定注解的实体
-        Class<?>[] modelClass = autoTableProperties.getModelClass();
-        Set<Class<?>> classes = new HashSet<>(Arrays.asList(modelClass));
-        String[] packs = getModelPackage(autoTableProperties);
-        Set<Class<?>> packClasses = AutoTableGlobalConfig.getAutoTableClassScanner().scan(packs);
-        classes.addAll(packClasses);
+        Set<Class<?>> classes = findAllEntityClass(autoTableProperties);
 
         AutoTableGlobalConfig.getAutoTableReadyCallbacks().forEach(fn -> fn.ready(classes));
 
@@ -60,30 +50,59 @@ public class AutoTableBootstrap {
         datasourceHandler.handleAnalysis(classes, (databaseDialect, entityClasses) -> {
 
             // 同一个数据源下，检查重名的表
-            Map<String, List<Class<?>>> repeatCheckMap = entityClasses.stream()
-                    .collect(Collectors.groupingBy(entity -> TableMetadataHandler.getTableSchema(entity) + "." + TableMetadataHandler.getTableName(entity)));
-            for (Map.Entry<String, List<Class<?>>> repeatCheckItem : repeatCheckMap.entrySet()) {
-                int sameTableNameCount = repeatCheckItem.getValue().size();
-                if (sameTableNameCount > 1) {
-                    String tableName = repeatCheckItem.getKey();
-                    throw new RuntimeException(String.format("存在重名的表：%s(%s)，请检查！", tableName,
-                            String.join(",", repeatCheckItem.getValue().stream().map(Class::getName).collect(Collectors.toSet()))));
-                }
-            }
+            checkRepeatTableName(entityClasses);
 
-            // 查找对应的数据源策略
-            IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
-            if (databaseStrategy != null) {
-                for (Class<?> entityClass : entityClasses) {
-                    log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);
-                    databaseStrategy.start(entityClass);
-                }
-            } else {
-                log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
-            }
+            // 查找对应的数据源策略并执行
+            start(databaseDialect, entityClasses);
         });
         AutoTableGlobalConfig.getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
         log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
+    }
+
+    private static void start(String databaseDialect, Set<Class<?>> entityClasses) {
+        IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+        if (databaseStrategy != null) {
+            for (Class<?> entityClass : entityClasses) {
+                log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);
+                databaseStrategy.start(entityClass);
+            }
+        } else {
+            log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
+        }
+    }
+
+    private static void checkRepeatTableName(Set<Class<?>> entityClasses) {
+        Map<String, List<Class<?>>> repeatCheckMap = entityClasses.stream()
+                .collect(Collectors.groupingBy(entity -> TableMetadataHandler.getTableSchema(entity) + "." + TableMetadataHandler.getTableName(entity)));
+        for (Map.Entry<String, List<Class<?>>> repeatCheckItem : repeatCheckMap.entrySet()) {
+            int sameTableNameCount = repeatCheckItem.getValue().size();
+            if (sameTableNameCount > 1) {
+                String tableName = repeatCheckItem.getKey();
+                throw new RuntimeException(String.format("存在重名的表：%s(%s)，请检查！", tableName,
+                        String.join(",", repeatCheckItem.getValue().stream().map(Class::getName).collect(Collectors.toSet()))));
+            }
+        }
+    }
+
+    private static Set<Class<?>> findAllEntityClass(PropertyConfig autoTableProperties) {
+        Class<?>[] modelClass = autoTableProperties.getModelClass();
+        Set<Class<?>> classes = new HashSet<>(Arrays.asList(modelClass));
+        String[] packs = getModelPackage(autoTableProperties);
+        Set<Class<?>> packClasses = AutoTableGlobalConfig.getAutoTableClassScanner().scan(packs);
+        classes.addAll(packClasses);
+        return classes;
+    }
+
+    private static void registerAllDbStrategy() {
+        List<IStrategy> strategies = SpiLoader.loadAll(IStrategy.class);
+        if (strategies.isEmpty()) {
+            log.warn("没有发现任何数据库策略！");
+        } else {
+            for (IStrategy provider : strategies) {
+                log.info("注册数据库策略：{}", provider.databaseDialect());
+                AutoTableGlobalConfig.addStrategy(provider);
+            }
+        }
     }
 
     private static String[] getModelPackage(PropertyConfig autoTableProperties) {
