@@ -115,6 +115,29 @@ public class ApplicationAllTest {
     }
 
     @Test
+    public void testPgsqlUpdateIndexColumnSort() {
+
+        initSqlSessionFactory("mybatis-config-pgsql.xml");
+
+        testRecordSqlByDB();
+
+        // 测试
+        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class<?>[]{
+                org.dromara.autotable.test.core.entity.pgsql.TestIndexSort.class
+        });
+
+        /* 新建表 */
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        // 开始
+        AutoTableBootstrap.start();
+
+        /* 修改表的逻辑 */
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
     public void testH2Create() {
 
         initSqlSessionFactory("mybatis-config-h2.xml");

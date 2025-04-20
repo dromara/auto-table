@@ -97,12 +97,12 @@ public interface JavaTypeToDatabaseTypeConverter {
      */
     default DatabaseTypeAndLength getDatabaseTypeAndLength(String databaseDialect, Class<?> clazz, Field field) {
 
-        DatabaseTypeAndLength typeAndLength;
+        DefaultTypeEnumInterface sqlType = getSqlType(databaseDialect, clazz, field);
 
-        Map<Class<?>, DefaultTypeEnumInterface> typeMap = JAVA_TO_DB_TYPE_MAPPING.getOrDefault(databaseDialect, Collections.emptyMap());
-        if (typeMap.isEmpty()) {
-            log.warn("数据库方言{}没有找到对应的数据库类型映射关系", databaseDialect);
-        }
+        return new DatabaseTypeAndLength(sqlType.getTypeName(), sqlType.getDefaultLength(), sqlType.getDefaultDecimalLength(), Collections.emptyList());
+    }
+
+    default DefaultTypeEnumInterface getSqlType(String databaseDialect, Class<?> clazz, Field field) {
 
         Class<?> fieldClass;
         // 处理泛型
@@ -113,22 +113,26 @@ public interface JavaTypeToDatabaseTypeConverter {
             fieldClass = getFieldType(clazz, field);
         }
 
-        if (fieldClass == null) {
-            fieldClass = field.getType();
+        Map<Class<?>, DefaultTypeEnumInterface> typeMap = JAVA_TO_DB_TYPE_MAPPING.getOrDefault(databaseDialect, Collections.emptyMap());
+        if (typeMap.isEmpty()) {
+            log.warn("数据库方言{}没有找到对应的数据库类型映射关系", databaseDialect);
         }
-
         DefaultTypeEnumInterface sqlType = typeMap.get(fieldClass);
         if (sqlType == null) {
+            sqlType = typeMap.get(String.class);
+            if (sqlType == null) {
+                throw new RuntimeException("数据库方言" + databaseDialect + "下没有找到类型" + fieldClass.getName() + "对应的数据库类型映射关系");
+            }
             log.warn("{}下的字段{}在{}下找不到对应的数据库类型，默认使用了字符串类型，如果想自定义，请调用JavaTypeToDatabaseTypeConverter.addTypeMap(DatabaseDialect.{}, {}.class, ?)添加映射关系",
                     clazz.getName(), fieldClass.getSimpleName(), databaseDialect, databaseDialect, fieldClass.getSimpleName());
-            sqlType = typeMap.get(String.class);
         }
-        typeAndLength = new DatabaseTypeAndLength(sqlType.getTypeName(), sqlType.getDefaultLength(), sqlType.getDefaultDecimalLength(), Collections.emptyList());
-        return typeAndLength;
+
+        return sqlType;
     }
 
     /**
      * 获取指定类中某字段的泛型类型
+     * 如果存在复杂的类型，可以重写该方法
      *
      * @param clazz 子类的Class对象
      * @param field 要获取的字段
@@ -164,7 +168,7 @@ public interface JavaTypeToDatabaseTypeConverter {
                 Type actualTypeArgument = actualTypeArguments[index];
 
                 // 是Class类型，说明指定了泛型类型，直接返回
-                if(actualTypeArgument instanceof Class) {
+                if (actualTypeArgument instanceof Class) {
                     return (Class<?>) actualTypeArgument;
                 } else {
                     genericTypeName = actualTypeArgument.getTypeName();
@@ -183,12 +187,13 @@ public interface JavaTypeToDatabaseTypeConverter {
 
     /**
      * 获取字段类型
+     * 如果存在复杂的类型，可以重写该方法
      *
-     * @param clazz  实体类
-     * @param field  字段
+     * @param clazz 实体类
+     * @param field 字段
      * @return 字段类型
      */
     default Class<?> getFieldType(final Class<?> clazz, final Field field) {
-        return null;
+        return field.getType();
     }
 }

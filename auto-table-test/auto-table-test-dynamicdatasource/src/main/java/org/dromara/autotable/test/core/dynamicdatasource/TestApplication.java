@@ -19,7 +19,7 @@ public class TestApplication {
         // 开启 删除不存在的列
         autoTableProperties.setAutoDropColumn(true);
         // 创建模式
-        autoTableProperties.setMode(RunMode.update);
+        autoTableProperties.setMode(RunMode.create);
 
         // 记录sql
         PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
