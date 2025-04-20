@@ -27,7 +27,7 @@ public class DmCreateTableSqlBuilder {
 
         // 构建索引语句
         List<String> indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
-        indexSql.addFirst(createTableSql);
+        indexSql.add(0, createTableSql);
         return indexSql;
     }
 
