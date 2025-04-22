@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Data
 @FieldNameConstants
 @Ds("h2")
-@AutoTable(value = "sys_user", schema = "my_test", comment = "用户表")
+@AutoTable(value = "sys_user", comment = "用户表")
 @TableIndex(fields = {UserH2.Fields.phone, UserH2.Fields.name})
 public class UserH2 {
 

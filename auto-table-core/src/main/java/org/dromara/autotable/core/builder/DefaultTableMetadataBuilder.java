@@ -31,7 +31,7 @@ public class DefaultTableMetadataBuilder {
         String tableComment = getTableComment(clazz);
         DefaultTableMetadata tableMetadata = new DefaultTableMetadata(clazz, tableName, tableSchema, tableComment);
 
-        List<Field> fields = BeanClassUtil.listAllFieldForColumn(clazz);
+        List<Field> fields = BeanClassUtil.sortAllFieldForColumn(clazz);
 
         // 填充字段
         fillColumnMetadataList(clazz, tableMetadata, fields);

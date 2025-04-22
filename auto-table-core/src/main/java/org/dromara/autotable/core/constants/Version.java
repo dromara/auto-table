@@ -1,5 +1,5 @@
 package org.dromara.autotable.core.constants;
 
 public interface Version {
-    String VALUE = "2.3.3";
+    String VALUE = "2.3.6";
 }

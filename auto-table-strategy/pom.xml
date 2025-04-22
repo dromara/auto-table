@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.autotable</groupId>
+        <artifactId>auto-table</artifactId>
+        <version>2.3.6</version>
+    </parent>
+    <packaging>pom</packaging>
+
+    <artifactId>auto-table-strategy</artifactId>
+
+    <modules>
+        <module>auto-table-strategy-all</module>
+        <module>auto-table-strategy-h2</module>
+        <module>auto-table-strategy-mysql</module>
+        <module>auto-table-strategy-pgsql</module>
+        <module>auto-table-strategy-sqlite</module>
+    </modules>
+
+</project>

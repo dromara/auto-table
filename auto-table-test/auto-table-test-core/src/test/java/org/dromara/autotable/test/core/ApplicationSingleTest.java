@@ -45,6 +45,20 @@ public class ApplicationSingleTest {
     }
 
     @Test
+    public void testMysqlColumnSort() {
+
+        initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        // 指定扫描包
+        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
+                org.dromara.autotable.test.core.entity.mysql.TestColumnSort.class
+        });
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
     public void testH2Create() {
 
         initSqlSessionFactory("mybatis-config-h2.xml");

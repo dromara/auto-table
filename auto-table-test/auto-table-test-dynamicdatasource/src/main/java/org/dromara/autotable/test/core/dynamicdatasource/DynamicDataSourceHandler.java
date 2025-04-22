@@ -30,7 +30,7 @@ public class DynamicDataSourceHandler implements IDataSourceHandler {
 
             String resource = CONFIG_MAP.get(dataSourceName);
 
-            try (InputStream inputStream = TestApplication.class.getClassLoader().getResourceAsStream(resource)) {
+            try (InputStream inputStream = DynamicDataSourceHandler.class.getClassLoader().getResourceAsStream(resource)) {
                 // 使用SqlSessionFactoryBuilder加载配置文件
                 return new SqlSessionFactoryBuilder().build(inputStream);
             } catch (Exception e) {
