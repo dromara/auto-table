@@ -7,7 +7,7 @@ import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.Version;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -223,7 +223,7 @@ public class ApplicationAllTest {
             // 使用SqlSessionFactoryBuilder加载配置文件
             SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
             // 设置当前数据源
-            SqlSessionFactoryManager.setSqlSessionFactory(sessionFactory);
+            DataSourceManager.setDataSource(sessionFactory.getConfiguration().getEnvironment().getDataSource());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

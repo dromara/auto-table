@@ -60,7 +60,7 @@ public class AutoTableBootstrap {
     }
 
     private static void start(String databaseDialect, Set<Class<?>> entityClasses) {
-        IStrategy<?, ?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+        IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
         if (databaseStrategy != null) {
             for (Class<?> entityClass : entityClasses) {
                 log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);

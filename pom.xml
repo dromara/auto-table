@@ -57,6 +57,7 @@
         <mybatis-spring.version>2.1.2</mybatis-spring.version>
         <lombok.version>1.18.34</lombok.version>
         <slf4j.version>1.7.36</slf4j.version>
+        <commons-dbutils.version>1.8.1</commons-dbutils.version>
 
         <!--插件-->
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>

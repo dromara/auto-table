@@ -1,5 +1,6 @@
 package org.dromara.autotable.core.strategy.h2;
 
+import lombok.NonNull;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.annotation.h2.H2TypeConstant;
@@ -23,7 +24,6 @@ import org.dromara.autotable.core.strategy.h2.data.dbdata.InformationSchemaIndex
 import org.dromara.autotable.core.strategy.h2.data.dbdata.InformationSchemaTables;
 import org.dromara.autotable.core.strategy.h2.mapper.H2TablesMapper;
 import org.dromara.autotable.core.utils.StringUtils;
-import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -39,7 +39,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTableInfo, H2TablesMapper> {
+public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTableInfo> {
+
+    private final H2TablesMapper mapper = new H2TablesMapper();
+
     @Override
     public String databaseDialect() {
         return DatabaseDialect.H2;
@@ -117,7 +120,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
 
-        List<InformationSchemaIndexes> informationSchemaIndexes = executeReturn(pgsqlTablesMapper -> pgsqlTablesMapper.findIndexInformation(schema, tableName));
+        List<InformationSchemaIndexes> informationSchemaIndexes = mapper.findIndexInformation(schema, tableName);
         Map<String, List<InformationSchemaIndexes>> dbIndexMap = informationSchemaIndexes.stream()
                 .collect(Collectors.groupingBy(InformationSchemaIndexes::getIndexName));
 
@@ -206,7 +209,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
         // 数据库字段元信息
-        List<InformationSchemaColumns> informationSchemaColumns = executeReturn(mapper -> mapper.findColumnInformation(schema, tableName));
+        List<InformationSchemaColumns> informationSchemaColumns = mapper.findColumnInformation(schema, tableName);
         Map<String, InformationSchemaColumns> pgsqlFieldDetailMap = informationSchemaColumns.stream().collect(Collectors.toMap(InformationSchemaColumns::getColumnName, Function.identity()));
         // 当前字段信息
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
@@ -355,10 +358,10 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
 
         if (hasChinese) {
             // 打印编码后的字符串
-            if(!input.startsWith("'")) {
+            if (!input.startsWith("'")) {
                 unicodeString.insert(0, "'");
             }
-            if(!input.endsWith("'")) {
+            if (!input.endsWith("'")) {
                 unicodeString.append("'");
             }
             return "U&" + unicodeString;
@@ -371,7 +374,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
 
-        InformationSchemaTables informationSchemaTables = executeReturn(mapper -> mapper.findTableInformation(schema, tableName));
+        InformationSchemaTables informationSchemaTables = mapper.findTableInformation(schema, tableName);
         String dbTableComment = informationSchemaTables.getRemarks();
         String tableComment = tableMetadata.getComment();
         if ((StringUtils.hasText(tableComment) || StringUtils.hasText(dbTableComment)) && !Objects.equals(dbTableComment, tableComment)) {

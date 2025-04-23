@@ -17,8 +17,6 @@
 package org.dromara.autotable.solon.integration;
 
 import cn.hutool.core.util.ObjUtil;
-import org.apache.ibatis.solon.MybatisAdapter;
-import org.apache.ibatis.solon.integration.MybatisAdapterManager;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableClassScanner;
@@ -32,8 +30,8 @@ import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
 import org.dromara.autotable.core.interceptor.BuildTableMetadataInterceptor;
 import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
@@ -45,7 +43,6 @@ import org.dromara.autotable.solon.adapter.SolonDataSourceHandler;
 import org.dromara.autotable.solon.annotation.EnableAutoTable;
 import org.dromara.autotable.solon.properties.AutoTableProperties;
 import org.noear.solon.core.AppContext;
-import org.noear.solon.core.BeanWrap;
 import org.noear.solon.core.Plugin;
 
 import javax.sql.DataSource;
@@ -75,11 +72,12 @@ public class AutoTablePlugin implements Plugin {
         AutoTableGlobalConfig.setAutoTableProperties(autoTableProperties.toConfig());
 
         // 资源加载完成后启动AutoTable
-        context.lifecycle(-100, ()-> resourceLoadFinish(context));
+        context.lifecycle(-100, () -> resourceLoadFinish(context));
     }
 
     /**
      * 资源加载完成
+     *
      * @param context SolonContext
      */
     private void resourceLoadFinish(AppContext context) {
@@ -89,12 +87,11 @@ public class AutoTablePlugin implements Plugin {
         AutoTableGlobalConfig.setAutoTableAnnotationFinder(ObjUtil.defaultIfNull(annotationFinder, new CustomAnnotationFinder()));
 
         // 资源全部加载完成后
-        BeanWrap wrap = context.getWrap(DataSource.class);
-        MybatisAdapter mybatisAdapter = MybatisAdapterManager.get(wrap);
-        SqlSessionFactoryManager.setSqlSessionFactory(mybatisAdapter.getFactory());
+        DataSource dataSource = context.getWrap(DataSource.class).get();
+        DataSourceManager.setDataSource(dataSource);
 
         // 默认的数据源处理器
-        if (context.getBean(IDataSourceHandler.class) == null){
+        if (context.getBean(IDataSourceHandler.class) == null) {
             context.beanMake(SolonDataSourceHandler.class);
         }
 
@@ -143,14 +140,14 @@ public class AutoTablePlugin implements Plugin {
 
     private <C> void getAndSetBean(AppContext context, Class<C> clazz, Consumer<C> consumer) {
         C bean = context.getBean(clazz);
-        if(bean != null){
+        if (bean != null) {
             consumer.accept(bean);
         }
     }
 
     private <C> void getAndSetBeans(AppContext context, Class<C> clazz, Consumer<List<C>> consumer) {
         List<C> beans = context.getBeansOfType(clazz);
-        if(!beans.isEmpty()){
+        if (!beans.isEmpty()) {
             consumer.accept(beans);
         }
     }

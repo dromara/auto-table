@@ -169,18 +169,18 @@ public class AutoTableGlobalConfig {
 
     /* 拦截器与回调监听 ↑↑↑↑↑↑↑↑↑ */
 
-    private final static Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?>> STRATEGY_MAP = new HashMap<>();
+    private final static Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> STRATEGY_MAP = new HashMap<>();
 
-    public static void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?> strategy) {
+    public static void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo> strategy) {
         STRATEGY_MAP.put(strategy.databaseDialect(), strategy);
         JavaTypeToDatabaseTypeConverter.addTypeMapping(strategy.databaseDialect(), strategy.typeMapping());
     }
 
-    public static IStrategy<?, ?, ?> getStrategy(String databaseDialect) {
+    public static IStrategy<?, ?> getStrategy(String databaseDialect) {
         return STRATEGY_MAP.get(databaseDialect);
     }
 
-    public static Collection<IStrategy<?, ?, ?>> getAllStrategy() {
+    public static Collection<IStrategy<?, ?>> getAllStrategy() {
         return STRATEGY_MAP.values();
     }
 

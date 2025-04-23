@@ -32,13 +32,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.mybatis</groupId>
-            <artifactId>mybatis</artifactId>
-            <version>${mybatis.version}</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
             <groupId>org.dromara.autotable</groupId>
             <artifactId>auto-table-annotation</artifactId>
             <version>${project.version}</version>
