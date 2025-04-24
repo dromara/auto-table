@@ -40,7 +40,7 @@ public class DynamicDataSourceHandler implements IDataSourceHandler {
             }
         });
 
-        // 设置新的SqlSessionFactory
+        // 设置新的dataSource
         DataSourceManager.setDataSource(dataSource);
     }
 
