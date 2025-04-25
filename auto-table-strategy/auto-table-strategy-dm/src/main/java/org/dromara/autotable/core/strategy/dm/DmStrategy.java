@@ -1,12 +1,11 @@
 package org.dromara.autotable.core.strategy.dm;
 
 import lombok.NonNull;
-import org.apache.ibatis.session.Configuration;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
@@ -24,7 +23,6 @@ import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -36,7 +34,9 @@ import java.util.stream.Collectors;
 /**
  * 达梦数据库策略实现
  */
-public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTableInfo, DmTablesMapper> {
+public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTableInfo> {
+
+    private final DmTablesMapper mapper = new DmTablesMapper();
 
     public static String withSchemaName(String schema, String... names) {
         String name = String.join(".", names);
@@ -118,20 +118,19 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     @Override
     public boolean checkTableNotExist(String schema, String tableName) {
-        Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
-        try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-            if (!StringUtils.hasText(schema)) {
-                schema = connection.getMetaData().getUserName();
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE", "PARTITIONED" +
+                        " TABLE"}, true);
+                return !exist;
+            } catch (SQLException e) {
+                throw new RuntimeException("判断数据库是否存在出错", e);
             }
-            return !Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
-        } catch (SQLException e) {
-            throw new RuntimeException("检查表存在性失败", e);
-        }
+        });
     }
 
     private void compareTableInfo(DefaultTableMetadata metadata, DmCompareTableInfo compareInfo) {
-        String tableComment = executeReturn(mapper ->
-                mapper.selectTableComment(metadata.getSchema(), metadata.getTableName()));
+        String tableComment = mapper.selectTableDescription(metadata.getSchema(), metadata.getTableName());
         if (!Objects.equals(tableComment, metadata.getComment())) {
             compareInfo.setComment(metadata.getComment());
         }
@@ -142,8 +141,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
         String tableName = metadata.getTableName();
 
         // 获取数据库字段信息
-        List<DmDbColumn> dbColumns = executeReturn(mapper ->
-                mapper.selectTableColumns(schema, tableName));
+        List<DmDbColumn> dbColumns = mapper.selectTableColumns(schema, tableName);
         Map<String, DmDbColumn> columnMap = dbColumns.stream()
                 .collect(Collectors.toMap(DmDbColumn::getName, Function.identity()));
 
@@ -221,8 +219,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
     private void handlePrimaryKeyChange(DefaultTableMetadata metadata, DmCompareTableInfo compareInfo,
                                         String schema, String tableName) {
         // 获取数据库主键信息
-        DmDbPrimary dbPrimary = executeReturn(mapper ->
-                mapper.selectPrimaryKey(schema, tableName));
+        DmDbPrimary dbPrimary = mapper.selectPrimaryKey(schema, tableName);
         Set<String> dbPkColumns = dbPrimary != null ?
                 new HashSet<>(Arrays.asList(dbPrimary.getColumns().split(","))) : Collections.emptySet();
 
@@ -250,8 +247,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
         String tableName = metadata.getTableName();
 
         // 获取数据库索引信息
-        List<DmDbIndex> dbIndexes = executeReturn(mapper ->
-                mapper.selectTableIndexes(schema, tableName));
+        List<DmDbIndex> dbIndexes = mapper.selectTableIndexes(schema, tableName);
         Map<String, DmDbIndex> indexMap = dbIndexes.stream()
                 .collect(Collectors.toMap(DmDbIndex::getIndexName, Function.identity()));
 

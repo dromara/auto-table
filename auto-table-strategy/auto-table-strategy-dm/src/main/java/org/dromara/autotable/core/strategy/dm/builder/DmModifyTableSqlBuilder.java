@@ -73,9 +73,9 @@ public class DmModifyTableSqlBuilder {
         }
 
         // 5. 注释（增加空校验）
-        String commentStatements = buildCommentStatements(compareInfo);
-        if (StringUtils.hasText(commentStatements)) {
-            sqlList.add(commentStatements);
+        List<String> commentStatements = buildCommentStatements(compareInfo);
+        if (!commentStatements.isEmpty()) {
+            sqlList.addAll(commentStatements);
         }
 
         // 过滤空元素
@@ -84,7 +84,7 @@ public class DmModifyTableSqlBuilder {
                 .collect(Collectors.toList());
     }
 
-    private static String buildCommentStatements(DmCompareTableInfo compareInfo) {
+    private static List<String> buildCommentStatements(DmCompareTableInfo compareInfo) {
         List<String> comments = new ArrayList<>();
         String qualifiedTableName = DmStrategy.withSchemaName(compareInfo.getSchema(), compareInfo.getName());
 
@@ -100,6 +100,6 @@ public class DmModifyTableSqlBuilder {
                     + "\" IS '" + comment.replace("'", "''") + "';");
         });
 
-        return String.join("\n", comments);
+        return comments;
     }
 }

@@ -5,14 +5,12 @@ import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.pgsql.PgsqlStrategy;
 import org.dromara.autotable.core.strategy.pgsql.data.PgsqlCompareTableInfo;
-import org.dromara.autotable.core.strategy.pgsql.mapper.PgsqlTablesMapper;
 
 /**
  * @author Min, Freddy
  * @date: 2025/3/23 20:42
  */
-public class KingBaseStrategy extends PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompareTableInfo,
-        PgsqlTablesMapper> {
+public class KingBaseStrategy extends PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompareTableInfo> {
     @Override
     public String databaseDialect() {
         return DatabaseDialect.KingBase;

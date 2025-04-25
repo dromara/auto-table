@@ -6,6 +6,7 @@ package org.dromara.autotable.core.strategy.dm.data.dbdata;
  */
 
 import lombok.Data;
+import org.dromara.autotable.core.utils.DBHelper;
 
 /**
  * 达梦索引元信息
@@ -15,25 +16,21 @@ public class DmDbIndex {
     /**
      * 索引名称
      */
+    @DBHelper.ColumnName("INDEX_NAME")
     private String indexName;
     /**
      * 是否唯一索引（UNIQUE/NONUNIQUE）
      */
+    @DBHelper.ColumnName("UNIQUENESS")
     private String uniqueness;
-    /**
-     * 索引类型（NORMAL/BITMAP）
-     */
-    private String indexType;
     /**
      * 索引列（多个用逗号分隔）
      */
+    @DBHelper.ColumnName("COLUMNS")
     private String columns;
     /**
-     * 索引表空间
+     * 索引类型（NORMAL/BITMAP）
      */
-    private String tablespace;
-    /**
-     * 索引创建语句
-     */
-    private String indexDef;
+    @DBHelper.ColumnName("INDEX_TYPE")
+    private String indexType;
 }

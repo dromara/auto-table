@@ -6,14 +6,11 @@ package org.dromara.autotable.core.strategy.dm.builder;
  */
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.session.Configuration;
 import org.dromara.autotable.core.builder.DefaultTableMetadataBuilder;
 import org.dromara.autotable.core.builder.IndexMetadataBuilder;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.utils.StringUtils;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,24 +28,25 @@ public class DmTableMetadataBuilder extends DefaultTableMetadataBuilder {
     @Override
     protected String getTableSchema(Class<?> clazz) {
         String tableSchema = super.getTableSchema(clazz);
-        if (StringUtils.noText(tableSchema)) {
-            Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
-            try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-                // 优先从URL参数获取schema
-                String url = connection.getMetaData().getURL();
-                String schemaFromUrl = parseSchemaFromUrl(url);
-
-                if (StringUtils.hasText(schemaFromUrl)) {
-                    return schemaFromUrl.toLowerCase();
-                }
-                // 从连接元数据获取用户名作为schema
-                return connection.getMetaData().getUserName().toUpperCase();
-            } catch (SQLException e) {
-                log.error("获取达梦数据库schema失败", e);
-                return null;
-            }
+        if (StringUtils.hasText(tableSchema)) {
+            return tableSchema;
         }
-        return tableSchema;
+
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                String url = connection.getClientInfo("url");
+                String schema = parseSchemaFromUrl(url);
+                //优先使用url上的shema
+                if (StringUtils.hasText(schema)) {
+                    return schema;
+                }
+                // 通过连接获取DatabaseMetaData对象
+                return connection.getSchema();
+            } catch (Exception e) {
+                log.error("获取数据库信息失败", e);
+            }
+            return "public";
+        });
     }
 
     /**

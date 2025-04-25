@@ -1,12 +1,10 @@
 package org.dromara.autotable.test.core.dynamicdatasource;
 
-import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import lombok.NonNull;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 
 import javax.sql.DataSource;
 import java.io.InputStream;
