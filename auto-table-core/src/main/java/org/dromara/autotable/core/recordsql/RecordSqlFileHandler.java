@@ -3,7 +3,7 @@ package org.dromara.autotable.core.recordsql;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
-import org.dromara.autotable.core.dynamicds.DatasourceNameManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.utils.StringUtils;
 
 import java.io.IOException;
@@ -76,7 +76,7 @@ public class RecordSqlFileHandler implements RecordSqlHandler {
             fileName.append(autoTableExecuteSqlLog.getVersion()).append("_");
         }
         // 添加数据源名称
-        String dataSourceName = DatasourceNameManager.getDatasourceName();
+        String dataSourceName = DataSourceManager.getDatasourceName();
         if (StringUtils.hasText(dataSourceName)) {
             fileName.append(dataSourceName).append("_");
         }

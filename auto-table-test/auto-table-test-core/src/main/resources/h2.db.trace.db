@@ -3023,3 +3023,6 @@ java.sql.SQLClientInfoException: Client info name 'ApplicationName' not supporte
 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
+2025-04-23 21:04:10.437792+08:00 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "ALTER TABLE PUBLIC.test_h2 DROP COLUMN [*]null;"; expected "identifier"; SQL statement:
+ALTER TABLE PUBLIC.test_h2 DROP COLUMN null; [42001-224]

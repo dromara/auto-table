@@ -1,14 +1,11 @@
 package org.dromara.autotable.core.recordsql;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.config.PropertyConfig;
-import org.dromara.autotable.core.dynamicds.DatasourceNameManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.core.utils.BeanClassUtil;
@@ -40,37 +37,59 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         }
 
         // 判断表是否存在，不存在则创建
-        SqlSessionFactory sqlSessionFactory = SqlSessionFactoryManager.getSqlSessionFactory();
-        try (SqlSession sqlSession = sqlSessionFactory.openSession();
-             Connection connection = sqlSession.getConnection()) {
+        String finalTableName = tableName;
+        DataSourceManager.useConnection(connection -> {
             log.debug("开启sql记录事务");
-            connection.setAutoCommit(false);
 
             try {
+                connection.setAutoCommit(false);
                 for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
-                    String schema = connection.getSchema();
-                    if (StringUtils.hasText(autoTableExecuteSqlLog.getTableSchema())) {
-                        schema = autoTableExecuteSqlLog.getTableSchema();
-                    }
-                    boolean exists = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
+                    String schema = autoTableExecuteSqlLog.getTableSchema();
+                    boolean exists = Utils.tableIsExists(connection, schema, finalTableName, new String[]{"TABLE"}, true);
                     if (!exists) {
                         // 初始化表
-                        initTable(connection, tableName);
-                        log.info("初始化sql记录表：{}", tableName);
+                        initTable(connection, finalTableName);
+                        log.info("初始化sql记录表：{}", finalTableName);
                     }
                     // 插入数据
-                    insertLog(tableName, autoTableExecuteSqlLog, connection);
+                    insertLog(finalTableName, autoTableExecuteSqlLog, connection);
                 }
+                log.debug("提交sql记录事务");
+                connection.commit();
             } catch (Exception e) {
                 throw new RuntimeException("记录sql到数据库出错", e);
             }
-            log.debug("提交sql记录事务");
-            connection.commit();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            log.debug("关闭sql记录事务");
-        }
+        });
+        // try (SqlSession sqlSession = sqlSessionFactory.openSession();
+        //      Connection connection = sqlSession.getConnection()) {
+        //     log.debug("开启sql记录事务");
+        //     connection.setAutoCommit(false);
+        //
+        //     try {
+        //         for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
+        //             String schema = connection.getSchema();
+        //             if (StringUtils.hasText(autoTableExecuteSqlLog.getTableSchema())) {
+        //                 schema = autoTableExecuteSqlLog.getTableSchema();
+        //             }
+        //             boolean exists = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
+        //             if (!exists) {
+        //                 // 初始化表
+        //                 initTable(connection, tableName);
+        //                 log.info("初始化sql记录表：{}", tableName);
+        //             }
+        //             // 插入数据
+        //             insertLog(tableName, autoTableExecuteSqlLog, connection);
+        //         }
+        //     } catch (Exception e) {
+        //         throw new RuntimeException("记录sql到数据库出错", e);
+        //     }
+        //     log.debug("提交sql记录事务");
+        //     connection.commit();
+        // } catch (SQLException e) {
+        //     throw new RuntimeException(e);
+        // } finally {
+        //     log.debug("关闭sql记录事务");
+        // }
     }
 
     private static void insertLog(String tableName, AutoTableExecuteSqlLog autoTableExecuteSqlLog, Connection connection) throws SQLException {
@@ -110,10 +129,10 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
     private static void initTable(Connection connection, String customTableName) throws SQLException {
 
         IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.getDatasourceHandler();
-        String datasourceName = DatasourceNameManager.getDatasourceName();
+        String datasourceName = DataSourceManager.getDatasourceName();
         String databaseDialect = datasourceHandler.getDatabaseDialect(datasourceName);
 
-        IStrategy<?, ?, ?> createTableStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+        IStrategy<?, ?> createTableStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
         // 使用相应的策略创建数据库表
         List<String> initTableSql = createTableStrategy.createTable(AutoTableExecuteSqlLog.class, tableMetadata -> {
             if (!Objects.equals(customTableName, tableMetadata.getTableName())) {

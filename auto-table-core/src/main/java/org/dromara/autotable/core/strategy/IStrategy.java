@@ -1,22 +1,17 @@
 package org.dromara.autotable.core.strategy;
 
 import lombok.NonNull;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.recordsql.AutoTableExecuteSqlLog;
 import org.dromara.autotable.core.recordsql.RecordSqlService;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.ParameterizedType;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -28,47 +23,9 @@ import java.util.function.Function;
 /**
  * @author don
  */
-public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO extends CompareTableInfo, MAPPER> {
+public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO extends CompareTableInfo> {
 
     Logger log = LoggerFactory.getLogger(IStrategy.class);
-
-    /**
-     * 获取mapper执行mapper的方法
-     *
-     * @param execute 要执行的SQL方法
-     * @return 数据库类型
-     */
-    default <R> R executeReturn(Function<MAPPER, R> execute) {
-
-        // 从接口泛型上读取MapperClass
-        Class<MAPPER> mapperClass = getMapperClass();
-
-        // 执行
-        try (SqlSession sqlSession = SqlSessionFactoryManager.getSqlSessionFactory().openSession()) {
-            return execute.apply(sqlSession.getMapper(mapperClass));
-        }
-    }
-
-    /**
-     * 从接口泛型上读取MapperClass
-     *
-     * @return MapperClass
-     */
-    default Class<MAPPER> getMapperClass() {
-
-        // 从接口泛型上读取MapperClass
-        ParameterizedType genericSuperclass = (ParameterizedType) getClass().getGenericInterfaces()[0];
-        Class<MAPPER> mapperClass = (Class<MAPPER>) genericSuperclass.getActualTypeArguments()[2];
-
-        // 如果没有注册Mapper，则注册
-        SqlSessionFactory sqlSessionFactory = SqlSessionFactoryManager.getSqlSessionFactory();
-        Configuration configuration = sqlSessionFactory.getConfiguration();
-        if (!configuration.hasMapper(mapperClass)) {
-            configuration.addMapper(mapperClass);
-        }
-
-        return mapperClass;
-    }
 
     /**
      * 开始分析实体集合
@@ -220,51 +177,46 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @param sqlList       SQL集合
      */
     default void executeSql(TABLE_META tableMetadata, List<String> sqlList) {
-        SqlSessionFactory sqlSessionFactory = SqlSessionFactoryManager.getSqlSessionFactory();
 
         List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs = new ArrayList<>();
-        try (SqlSession sqlSession = sqlSessionFactory.openSession();
-             Connection connection = sqlSession.getConnection()) {
+        DataSourceManager.useConnection(connection -> {
+            try {
+                // 批量的SQL 改为手动提交模式
+                connection.setAutoCommit(false);
 
-            log.debug("开启执行sql事务");
-            // 批量的SQL 改为手动提交模式
-            connection.setAutoCommit(false);
+                try (Statement statement = connection.createStatement()) {
+                    boolean recordSql = AutoTableGlobalConfig.getAutoTableProperties().getRecordSql().isEnable();
+                    for (String sql : sqlList) {
+                        // sql末尾添加;
+                        if (!sql.endsWith(";")) {
+                            sql += ";";
+                        }
 
-            try (Statement statement = connection.createStatement()) {
-                boolean recordSql = AutoTableGlobalConfig.getAutoTableProperties().getRecordSql().isEnable();
-                for (String sql : sqlList) {
-                    // sql末尾添加;
-                    if (!sql.endsWith(";")) {
-                        sql += ";";
+                        long executionTime = System.currentTimeMillis();
+                        statement.execute(sql);
+                        long executionEndTime = System.currentTimeMillis();
+
+                        if (recordSql) {
+                            AutoTableExecuteSqlLog autoTableExecuteSqlLog = AutoTableExecuteSqlLog.of(tableMetadata.getEntityClass(), tableMetadata.getSchema(), tableMetadata.getTableName(), sql, executionTime, executionEndTime);
+                            autoTableExecuteSqlLogs.add(autoTableExecuteSqlLog);
+                        }
+
+                        log.info("执行sql({}ms)：{}", executionEndTime - executionTime, sql);
                     }
-
-                    long executionTime = System.currentTimeMillis();
-                    statement.execute(sql);
-                    long executionEndTime = System.currentTimeMillis();
-
-                    if (recordSql) {
-                        AutoTableExecuteSqlLog autoTableExecuteSqlLog = AutoTableExecuteSqlLog.of(tableMetadata.getEntityClass(), tableMetadata.getSchema(), tableMetadata.getTableName(), sql, executionTime, executionEndTime);
-                        autoTableExecuteSqlLogs.add(autoTableExecuteSqlLog);
-                    }
-
-                    log.info("执行sql({}ms)：{}", executionEndTime - executionTime, sql);
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format("执行SQL期间出错: \n%s\n", String.join("\n", sqlList)), e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("执行SQL期间出错: \n%s\n", String.join("\n", sqlList)), e);
+                // 提交
+                connection.commit();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-            // 提交
-            log.debug("提交执行sql事务");
-            connection.commit();
-        } catch (SQLException e) {
-            throw new RuntimeException("获取数据库连接出错", e);
-        } finally {
-            log.debug("关闭执行sql事务");
-        }
 
-        // 记录SQL
-        if (!autoTableExecuteSqlLogs.isEmpty()) {
-            RecordSqlService.record(autoTableExecuteSqlLogs);
-        }
+            // 记录SQL
+            if (!autoTableExecuteSqlLogs.isEmpty()) {
+                RecordSqlService.record(autoTableExecuteSqlLogs);
+            }
+        });
     }
 
     /**
@@ -276,16 +228,14 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     default boolean checkTableNotExist(String schema, String tableName) {
         // 获取Configuration对象
-        Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
-        try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-            if (!StringUtils.hasText(schema)) {
-                schema = connection.getSchema();
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
+                return !exist;
+            } catch (SQLException e) {
+                throw new RuntimeException("判断数据库是否存在出错", e);
             }
-            boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
-            return !exist;
-        } catch (SQLException e) {
-            throw new RuntimeException("判断数据库是否存在出错", e);
-        }
+        });
     }
 
     /**

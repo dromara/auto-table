@@ -14,7 +14,7 @@ import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
 import org.dromara.autotable.core.interceptor.BuildTableMetadataInterceptor;
 import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
@@ -24,12 +24,12 @@ import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.springboot.properties.AutoTableProperties;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
+import javax.sql.DataSource;
 import java.util.stream.Collectors;
 
 /**
@@ -40,9 +40,9 @@ import java.util.stream.Collectors;
 public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(
-            SqlSessionTemplate sqlSessionTemplate,
             AutoTableProperties autoTableProperties,
-            ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?>> strategies,
+            ObjectProvider<DataSource> dataSource,
+            ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> strategies,
             ObjectProvider<AutoTableClassScanner> autoTableClassScanner,
             ObjectProvider<AutoTableAnnotationFinder> autoTableAnnotationFinder,
             ObjectProvider<AutoTableMetadataAdapter> autoTableMetadataAdapter,
@@ -64,8 +64,8 @@ public class AutoTableAutoConfig {
 
             ObjectProvider<JavaTypeToDatabaseTypeConverter> javaTypeToDatabaseTypeConverter) {
 
-        // 默认设置全局的SqlSessionFactory
-        SqlSessionFactoryManager.setSqlSessionFactory(sqlSessionTemplate.getSqlSessionFactory());
+        // 默认设置全局的dataSource
+        dataSource.ifUnique(DataSourceManager::setDataSource);
 
         // 设置全局的配置
         PropertyConfig propertiesConfig = autoTableProperties.toConfig();
