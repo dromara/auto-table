@@ -9,8 +9,12 @@ import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
 import org.dromara.autotable.core.strategy.h2.data.H2DefaultTypeEnum;
+import org.dromara.autotable.core.strategy.mysql.data.MysqlColumnMetadata;
+import org.dromara.autotable.core.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
+import org.dromara.autotable.test.core.entity.mysql.custome_add_column.MyBuildTableMetadataInterceptor;
 import org.dromara.autotable.test.core.entity.pgsql.TestNoColumnComment;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -19,7 +23,9 @@ import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @Disabled
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -30,11 +36,49 @@ public class ApplicationSingleTest {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
         AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
                 org.dromara.autotable.test.core.entity.mysql.TestColumnSort.class
         });
+
+        CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
+            assert databaseDialect.equals(DatabaseDialect.MySQL);
+            assert tableMetadata instanceof MysqlTableMetadata;
+            MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
+            List<MysqlColumnMetadata> columnMetadataList = mysqlTableMetadata.getColumnMetadataList();
+            assert "id".equals(columnMetadataList.get(0).getName());
+            assert "update_time".equals(columnMetadataList.get(columnMetadataList.size() - 1).getName());
+        };
+        AutoTableGlobalConfig.setCreateTableInterceptors(Collections.singletonList(
+                createTableInterceptor
+        ));
+
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
+    public void testMysqlConsumeAddColumn() {
+
+        initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        AutoTableGlobalConfig.setBuildTableMetadataInterceptors(Collections.singletonList(new MyBuildTableMetadataInterceptor()));
+        // 指定扫描包
+        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
+                org.dromara.autotable.test.core.entity.mysql.custome_add_column.SoftwareClassify.class
+        });
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        // 开始
+        AutoTableBootstrap.start();
+
+        AutoTableGlobalConfig.setCompareTableFinishCallbacks(
+                Collections.singletonList((databaseDialect, tableMetadata, compareTableInfo) -> {
+                    boolean needModify = compareTableInfo.needModify();
+                    assert !needModify;
+                })
+        );
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
         // 开始
         AutoTableBootstrap.start();
     }

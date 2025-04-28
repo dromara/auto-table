@@ -51,7 +51,9 @@ public interface IDataSourceHandler {
             try {
                 groupByDialect.forEach(consumer);
             } finally {
-                log.info("清理数据源：{}", dataSource);
+                if (StringUtils.hasText(dataSource)) {
+                    log.info("清理数据源：{}", dataSource);
+                }
                 this.clearDataSource(dataSource);
                 DataSourceManager.cleanDatasourceName();
             }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
@@ -110,6 +111,13 @@ public class AutoTableGlobalConfig {
     @Setter
     @Getter
     private static List<CreateTableInterceptor> createTableInterceptors = new ArrayList<>();
+
+    /**
+     * 比对完回调
+     */
+    @Setter
+    @Getter
+    private static List<CompareTableFinishCallback> CompareTableFinishCallbacks = new ArrayList<>();
 
     /**
      * 修改表拦截

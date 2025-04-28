@@ -2,6 +2,7 @@ package org.dromara.autotable.core.strategy.mysql.data;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 
@@ -13,6 +14,7 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Data
+@Accessors(chain = true)
 public class MysqlColumnMetadata extends ColumnMetadata {
 
     /**
