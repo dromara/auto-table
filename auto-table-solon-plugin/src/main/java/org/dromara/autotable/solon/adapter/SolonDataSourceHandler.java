@@ -1,11 +1,13 @@
 package org.dromara.autotable.solon.adapter;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.noear.solon.Solon;
 import org.noear.solon.annotation.Component;
+import org.noear.solon.core.BeanWrap;
 import org.noear.solon.data.dynamicds.DynamicDs;
 import org.noear.solon.data.dynamicds.DynamicDsKey;
 
@@ -23,7 +25,7 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
 
     @Override
     public void useDataSource(String dataSourceName) {
-        DynamicDsKey.setCurrent(dataSourceName);
+        DynamicDsKey.use(dataSourceName);
         DataSource dataSource = Solon.context().getWrap(DataSource.class).get();
         DataSourceManager.setDataSource(dataSource);
     }
@@ -40,7 +42,14 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
         if (annotation != null) {
             return annotation.value();
         }
-        return DynamicDsKey.getCurrent();
+        // 动态数据源优先
+        String current = DynamicDsKey.current();
+        if (StrUtil.isNotBlank(current)){
+            return current;
+        }
+        // 默认数据源
+        BeanWrap beanWrap = Solon.context().getWrap(DataSource.class);
+        return beanWrap.name();
     }
 
 }
