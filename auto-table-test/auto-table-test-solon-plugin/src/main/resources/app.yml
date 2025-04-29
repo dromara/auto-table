@@ -11,12 +11,45 @@ auto-table:
 server:
   port: 9999
 
-solon.dataSources.master!: #数据源（!结尾表示 typed=true）
-  class: "com.zaxxer.hikari.HikariDataSource"
-  driverClassName: com.mysql.cj.jdbc.Driver
-  jdbcUrl: jdbc:mysql://localhost:3306/auto_table?useUnicode=true&characterEncoding=utf8&autoReconnect=true&rewriteBatchedStatements=true
-  username: root
-  password: P@ssw0rd
+solon.dataSources:
+  "db_order!": #数据源（!结尾表示 typed=true）
+    class: "com.zaxxer.hikari.HikariDataSource"
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://localhost:3306/auto_table?useUnicode=true&characterEncoding=utf8&autoReconnect=true&rewriteBatchedStatements=true
+    username: root
+    password: P@ssw0rd
+  "db_user": #动态数据源
+    class: "org.noear.solon.data.dynamicds.DynamicDataSource"
+    strict: true #是否严格的
+    default: db_user_r #指定默认的内部数据源
+    db_user_r: #内部数据源1
+      type: "com.zaxxer.hikari.HikariDataSource"
+      driverClassName: com.mysql.cj.jdbc.Driver
+      jdbcUrl: jdbc:mysql://localhost:3306/auto_table2?useUnicode=true&characterEncoding=utf8&autoReconnect=true&rewriteBatchedStatements=true
+      username: root
+      password: P@ssw0rd
+    db_user_w: #内部数据源2
+      type: "com.zaxxer.hikari.HikariDataSource"
+      driverClassName: com.mysql.cj.jdbc.Driver
+      jdbcUrl: jdbc:mysql://localhost:3306/auto_table3?useUnicode=true&characterEncoding=utf8&autoReconnect=true&rewriteBatchedStatements=true
+      username: root
+      password: P@ssw0rd
+  "db_user2": #动态数据源
+      class: "org.noear.solon.data.dynamicds.DynamicDataSource"
+      strict: true #是否严格的
+      default: db_user_r2 #指定默认的内部数据源
+      db_user_r2: #内部数据源1
+        type: "com.zaxxer.hikari.HikariDataSource"
+        driverClassName: com.mysql.cj.jdbc.Driver
+        jdbcUrl: jdbc:mysql://localhost:3306/auto_table2?useUnicode=true&characterEncoding=utf8&autoReconnect=true&rewriteBatchedStatements=true
+        username: root
+        password: P@ssw0rd
+      db_user_w2: #内部数据源2
+        type: "com.zaxxer.hikari.HikariDataSource"
+        driverClassName: com.mysql.cj.jdbc.Driver
+        jdbcUrl: jdbc:mysql://localhost:3306/auto_table3?useUnicode=true&characterEncoding=utf8&autoReconnect=true&rewriteBatchedStatements=true
+        username: root
+        password: P@ssw0rd
 
 logging:
   level:
