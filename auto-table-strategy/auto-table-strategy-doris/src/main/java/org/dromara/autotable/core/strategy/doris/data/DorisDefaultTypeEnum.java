@@ -1,69 +1,66 @@
 package org.dromara.autotable.core.strategy.doris.data;
 
 import lombok.Getter;
-import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;
+import org.dromara.autotable.annotation.doris.DorisTypeConstant;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 
 /**
  * 默认类型映射
- * 复制MySqlDefaultTypeEnum
  *
  * @author lizhian
  */
 @Getter
 public enum DorisDefaultTypeEnum implements DefaultTypeEnumInterface {
-
     /**
-     * 整数，从8.0.17版本开始,TINYINT,SMALLINT,MEDIUMINT,INT,andBIGINT类型的显示宽度将失效
+     * 布尔值
      */
-    INT(MysqlTypeConstant.INT, null, null),
-    TINYINT(MysqlTypeConstant.TINYINT, null, null),
-    SMALLINT(MysqlTypeConstant.SMALLINT, null, null),
-    MEDIUMINT(MysqlTypeConstant.MEDIUMINT, null, null),
-    BIGINT(MysqlTypeConstant.BIGINT, null, null),
+    BOOLEAN(DorisTypeConstant.BOOLEAN, null, null),
+    /**
+     * 整数
+     */
+    TINYINT(DorisTypeConstant.TINYINT, null, null),
+    SMALLINT(DorisTypeConstant.SMALLINT, null, null),
+    INT(DorisTypeConstant.INT, null, null),
+    BIGINT(DorisTypeConstant.BIGINT, null, null),
+    LARGEINT(DorisTypeConstant.LARGEINT, null, null),
     /**
      * 小数
      */
-    FLOAT(MysqlTypeConstant.FLOAT, 4, 2),
-    DOUBLE(MysqlTypeConstant.DOUBLE, 6, 2),
-    DECIMAL(MysqlTypeConstant.DECIMAL, 10, 4),
-    /**
-     * 字符串
-     */
-    CHAR(MysqlTypeConstant.CHAR, 255, null),
-    VARCHAR(MysqlTypeConstant.VARCHAR, 255, null),
-    TEXT(MysqlTypeConstant.TEXT, null, null),
-    TINYTEXT(MysqlTypeConstant.TINYTEXT, null, null),
-    MEDIUMTEXT(MysqlTypeConstant.MEDIUMTEXT, null, null),
-    LONGTEXT(MysqlTypeConstant.LONGTEXT, null, null),
-    /**
-     * 枚举
-     */
-    ENUM(MysqlTypeConstant.ENUM, null, null),
-    SET(MysqlTypeConstant.SET, null, null),
+    FLOAT(DorisTypeConstant.FLOAT, 6, 2),
+    DOUBLE(DorisTypeConstant.DOUBLE, 10, 2),
+    DECIMAL(DorisTypeConstant.DECIMAL, 12, 2),
     /**
      * 日期
      */
-    YEAR(MysqlTypeConstant.YEAR, null, null),
-    TIME(MysqlTypeConstant.TIME, null, null),
-    DATE(MysqlTypeConstant.DATE, null, null),
-    DATETIME(MysqlTypeConstant.DATETIME, null, null),
-    TIMESTAMP(MysqlTypeConstant.TIMESTAMP, null, null),
+    DATE(DorisTypeConstant.DATE, null, null),
+    DATETIME(DorisTypeConstant.DATETIME, null, null),
     /**
-     * 二进制
+     * 字符串
      */
-    BIT(MysqlTypeConstant.BIT, 1, null),
-    BINARY(MysqlTypeConstant.BINARY, 1, null),
-    VARBINARY(MysqlTypeConstant.VARBINARY, 1, null),
-    BLOB(MysqlTypeConstant.BLOB, null, null),
-    TINYBLOB(MysqlTypeConstant.TINYBLOB, null, null),
-    MEDIUMBLOB(MysqlTypeConstant.MEDIUMBLOB, null, null),
-    LONGBLOB(MysqlTypeConstant.LONGBLOB, null, null),
+    CHAR(DorisTypeConstant.CHAR, 255, null),
+    VARCHAR(DorisTypeConstant.VARCHAR, 255, null),
+    STRING(DorisTypeConstant.STRING, null, null),
     /**
-     * json
+     * 半结构类型
      */
-    JSON(MysqlTypeConstant.JSON, null, null);
-
+    ARRAY(DorisTypeConstant.ARRAY, null, null),
+    MAP(DorisTypeConstant.MAP, null, null),
+    STRUCT(DorisTypeConstant.STRUCT, null, null),
+    JSON(DorisTypeConstant.JSON, null, null),
+    VARIANT(DorisTypeConstant.VARIANT, null, null),
+    /**
+     * 聚合类型
+     */
+    HLL(DorisTypeConstant.HLL, null, null),
+    BITMAP(DorisTypeConstant.BITMAP, null, null),
+    QUANTILE_STATE(DorisTypeConstant.QUANTILE_STATE, null, null),
+    AGG_STATE(DorisTypeConstant.AGG_STATE, null, null),
+    /**
+     * IP 类型
+     */
+    IPv4(DorisTypeConstant.IPv4, null, null),
+    IPv6(DorisTypeConstant.IPv6, null, null),
+    ;
     /**
      * 默认类型长度
      */

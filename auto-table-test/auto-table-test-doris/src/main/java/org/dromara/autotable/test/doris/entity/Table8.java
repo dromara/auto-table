@@ -17,7 +17,7 @@ import java.util.Date;
  */
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table8", comment = "创建一个动态分区表", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table8", comment = "创建一个动态分区表", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {Table8.Fields.k1, Table8.Fields.k2, Table8.Fields.k3},
         distributed_by_hash = {Table8.Fields.k2},

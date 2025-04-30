@@ -13,7 +13,7 @@ import java.time.LocalDate;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table13", comment = "批量创建分区", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table13", comment = "批量创建分区", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {
                 Table13.Fields.k1,

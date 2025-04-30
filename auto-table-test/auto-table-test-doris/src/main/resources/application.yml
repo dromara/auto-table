@@ -27,3 +27,4 @@ spring:
 logging:
   level:
     org.dromara: info
+    com.zaxxer.hikari: trace

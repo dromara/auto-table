@@ -11,32 +11,23 @@ public class DorisTypeHelper {
     public static final Set<String> CHAR_STRING_TYPE = new HashSet<>(Arrays.asList(
             DorisDefaultTypeEnum.CHAR.getTypeName(),
             DorisDefaultTypeEnum.VARCHAR.getTypeName(),
-            DorisDefaultTypeEnum.TEXT.getTypeName(),
-            DorisDefaultTypeEnum.TINYTEXT.getTypeName(),
-            DorisDefaultTypeEnum.MEDIUMTEXT.getTypeName(),
-            DorisDefaultTypeEnum.LONGTEXT.getTypeName(),
-            DorisDefaultTypeEnum.ENUM.getTypeName(),
-            DorisDefaultTypeEnum.SET.getTypeName()
+            DorisDefaultTypeEnum.STRING.getTypeName(),
+            DorisDefaultTypeEnum.IPv4.getTypeName(),
+            DorisDefaultTypeEnum.IPv6.getTypeName()
     ));
 
-    public static final Set<String> ENUM_OR_SET_TYPE = new HashSet<>(Arrays.asList(
-            DorisDefaultTypeEnum.ENUM.getTypeName(),
-            DorisDefaultTypeEnum.SET.getTypeName()
-    ));
 
     public static final Set<String> DATE_TIME_TYPE = new HashSet<>(Arrays.asList(
             DorisDefaultTypeEnum.DATE.getTypeName(),
-            DorisDefaultTypeEnum.DATETIME.getTypeName(),
-            DorisDefaultTypeEnum.YEAR.getTypeName(),
-            DorisDefaultTypeEnum.TIME.getTypeName()
+            DorisDefaultTypeEnum.DATETIME.getTypeName()
     ));
 
     public static final Set<String> INTEGER_TYPE = new HashSet<>(Arrays.asList(
-            DorisDefaultTypeEnum.INT.getTypeName(),
             DorisDefaultTypeEnum.TINYINT.getTypeName(),
             DorisDefaultTypeEnum.SMALLINT.getTypeName(),
-            DorisDefaultTypeEnum.MEDIUMINT.getTypeName(),
-            DorisDefaultTypeEnum.BIGINT.getTypeName()
+            DorisDefaultTypeEnum.INT.getTypeName(),
+            DorisDefaultTypeEnum.BIGINT.getTypeName(),
+            DorisDefaultTypeEnum.LARGEINT.getTypeName()
     ));
 
     public static final Set<String> FLOAT_TYPE = new HashSet<>(Arrays.asList(
@@ -46,13 +37,7 @@ public class DorisTypeHelper {
     ));
 
     public static String getFullType(DatabaseTypeAndLength databaseTypeAndLength) {
-
-        // 枚举类型，罗列枚举值，并需要用单引号括起来
-        if (DorisTypeHelper.isEnum(databaseTypeAndLength)) {
-            return databaseTypeAndLength.getType() + "('" + String.join("','", databaseTypeAndLength.getValues()) + "')";
-        } else {
-            return databaseTypeAndLength.getDefaultFullType();
-        }
+        return databaseTypeAndLength.getDefaultFullType();
     }
 
     public static boolean isCharString(DatabaseTypeAndLength databaseTypeAndLength) {
@@ -68,16 +53,13 @@ public class DorisTypeHelper {
     }
 
     public static boolean isBoolean(DatabaseTypeAndLength databaseTypeAndLength) {
-        return DorisDefaultTypeEnum.BIT.getTypeName().equalsIgnoreCase(databaseTypeAndLength.getType());
+        return DorisDefaultTypeEnum.BOOLEAN.getTypeName().equalsIgnoreCase(databaseTypeAndLength.getType());
     }
 
     public static boolean isNumber(DatabaseTypeAndLength databaseTypeAndLength) {
         return (INTEGER_TYPE.contains(databaseTypeAndLength.getType()) || FLOAT_TYPE.contains(databaseTypeAndLength.getType()));
     }
 
-    public static boolean isEnum(DatabaseTypeAndLength databaseTypeAndLength) {
-        return ENUM_OR_SET_TYPE.contains(databaseTypeAndLength.getType());
-    }
 
     public static boolean isFloatNumber(DatabaseTypeAndLength databaseTypeAndLength) {
         return FLOAT_TYPE.contains(databaseTypeAndLength.getType());

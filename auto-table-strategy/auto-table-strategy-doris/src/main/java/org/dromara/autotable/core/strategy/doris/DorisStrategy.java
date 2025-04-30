@@ -57,8 +57,8 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
             put(Integer.class, DorisDefaultTypeEnum.INT);
             put(int.class, DorisDefaultTypeEnum.INT);
 
-            put(Boolean.class, DorisDefaultTypeEnum.BIT);
-            put(boolean.class, DorisDefaultTypeEnum.BIT);
+            put(Boolean.class, DorisDefaultTypeEnum.BOOLEAN);
+            put(boolean.class, DorisDefaultTypeEnum.BOOLEAN);
 
             put(Float.class, DorisDefaultTypeEnum.FLOAT);
             put(float.class, DorisDefaultTypeEnum.FLOAT);
@@ -69,10 +69,10 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
             put(Date.class, DorisDefaultTypeEnum.DATETIME);
             put(java.sql.Date.class, DorisDefaultTypeEnum.DATE);
             put(java.sql.Timestamp.class, DorisDefaultTypeEnum.DATETIME);
-            put(java.sql.Time.class, DorisDefaultTypeEnum.TIME);
+            put(java.sql.Time.class, DorisDefaultTypeEnum.VARCHAR);
             put(LocalDateTime.class, DorisDefaultTypeEnum.DATETIME);
             put(LocalDate.class, DorisDefaultTypeEnum.DATE);
-            put(LocalTime.class, DorisDefaultTypeEnum.TIME);
+            put(LocalTime.class, DorisDefaultTypeEnum.VARCHAR);
 
             put(Short.class, DorisDefaultTypeEnum.SMALLINT);
             put(short.class, DorisDefaultTypeEnum.SMALLINT);

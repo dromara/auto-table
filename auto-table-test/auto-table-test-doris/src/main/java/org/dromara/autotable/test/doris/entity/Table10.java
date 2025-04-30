@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table10", comment = "通过 replication_allocation 属性设置表的副本", strategy = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table10", comment = "通过 replication_allocation 属性设置表的副本", dialect = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {
                 Table10.Fields.k1,

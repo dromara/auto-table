@@ -3,15 +3,18 @@ package org.dromara.autotable.annotation.doris;
  * doris类型常量
  */
 public interface DorisTypeConstant {
-
+    /**
+     * 布尔值
+     */
+    String BOOLEAN = "boolean";
     /**
      * 整数
      */
-    String INT = "int";
     String TINYINT = "tinyint";
     String SMALLINT = "smallint";
-    String MEDIUMINT = "mediumint";
+    String INT = "int";
     String BIGINT = "bigint";
+    String LARGEINT = "largeint";
     /**
      * 小数
      */
@@ -19,39 +22,34 @@ public interface DorisTypeConstant {
     String DOUBLE = "double";
     String DECIMAL = "decimal";
     /**
+     * 日期
+     */
+    String DATE = "date";
+    String DATETIME = "datetime";
+    /**
      * 字符串
      */
     String CHAR = "char";
     String VARCHAR = "varchar";
-    String TEXT = "text";
-    String TINYTEXT = "tinytext";
-    String MEDIUMTEXT = "mediumtext";
-    String LONGTEXT = "longtext";
+    String STRING = "string";
     /**
-     * 枚举
+     * 半结构类型
      */
-    String ENUM = "enum";
-    String SET = "set";
-    /**
-     * 日期
-     */
-    String YEAR = "year";
-    String TIME = "time";
-    String DATE = "date";
-    String DATETIME = "datetime";
-    String TIMESTAMP = "timestamp";
-    /**
-     * 二进制
-     */
-    String BIT = "bit";
-    String BINARY = "binary";
-    String VARBINARY = "varbinary";
-    String BLOB = "blob";
-    String TINYBLOB = "tinyblob";
-    String MEDIUMBLOB = "mediumblob";
-    String LONGBLOB = "longblob";
-    /**
-     * json
-     */
+    String ARRAY = "array";
+    String MAP = "map";
+    String STRUCT = "struct";
     String JSON = "json";
+    String VARIANT = "variant";
+    /**
+     * 聚合类型
+     */
+    String HLL = "hll";
+    String BITMAP = "bitmap";
+    String QUANTILE_STATE = "quantile_state";
+    String AGG_STATE = "agg_state";
+    /**
+     * IP 类型
+     */
+    String IPv4 = "ipv4";
+    String IPv6 = "ipv6";
 }
