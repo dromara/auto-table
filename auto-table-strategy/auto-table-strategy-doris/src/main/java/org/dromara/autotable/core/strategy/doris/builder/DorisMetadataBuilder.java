@@ -45,7 +45,7 @@ public class DorisMetadataBuilder {
             throw new IllegalStateException(clazz.getSimpleName() + "缺少@" + DorisTable.class.getSimpleName());
         }
         // 获取字段和列信息
-        List<Field> fields = BeanClassUtil.listAllFieldForColumn(clazz);
+        List<Field> fields = BeanClassUtil.sortAllFieldForColumn(clazz);
         AtomicInteger fieldIndex = new AtomicInteger(1);
         List<DorisColumnMetadata> columnMetadataList = fields.stream()
                 .filter(field -> TableMetadataHandler.isIncludeField(field, clazz))

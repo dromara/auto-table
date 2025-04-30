@@ -9,10 +9,10 @@ import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.doris.builder.DorisMetadataBuilder;
 import org.dromara.autotable.core.strategy.doris.builder.DorisSqlBuilder;
 import org.dromara.autotable.core.strategy.doris.data.DorisCompareTableInfo;
+import org.dromara.autotable.core.strategy.doris.data.DorisDefaultTypeEnum;
 import org.dromara.autotable.core.strategy.doris.data.DorisTableMetadata;
-import org.dromara.autotable.core.strategy.doris.data.enums.DorisDefaultTypeEnum;
+import org.dromara.autotable.core.strategy.doris.data.dbdata.InformationSchemaColumn;
 import org.dromara.autotable.core.strategy.doris.mapper.DorisTablesMapper;
-import org.dromara.autotable.core.strategy.mysql.data.dbdata.InformationSchemaColumn;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,8 +32,11 @@ import java.util.stream.Collectors;
  * @version 2019/07/06
  */
 @Slf4j
-public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompareTableInfo, DorisTablesMapper> {
+public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompareTableInfo> {
+
     public static final String databaseDialect = DatabaseDialect.Doris;
+    private final DorisTablesMapper mapper = new DorisTablesMapper();
+
 
     @Override
     public String databaseDialect() {
@@ -105,14 +108,11 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
         // 获取表名
         String tableName = tableMetadata.getTableName();
         // 执行SQL查询获取表的数据长度
-        Long tableDataLength = executeReturn(mapper -> mapper.findTableDataLength(tableName));
+        Long tableDataLength = mapper.findTableDataLength(tableName);
         // 执行SQL查询获取创建表的SQL语句
-        String createTableSql = executeReturn(mapper -> {
-            Map<String, String> showCreateTable = mapper.findTableCreateSql(tableName);
-            return showCreateTable.get("Create Table");
-        });
+        String createTableSql = mapper.findTableCreateSql(tableName);
         // 执行SQL查询获取表的列信息
-        List<InformationSchemaColumn> columns = executeReturn(mapper -> mapper.findTableEnsembleByTableName(tableName));
+        List<InformationSchemaColumn> columns = mapper.findTableEnsembleByTableName(tableName);
         // 加载临时表的信息
         DorisCompareTableInfo.TempTableInfo tempTableInfo = loadTempTableInfo(tableMetadata);
 
@@ -256,26 +256,23 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
         String createTempTable = DorisSqlBuilder.buildSql(tableMetadata).replace("`" + tableName + "`", "`" + tempTableName + "`");
 
         // 执行SQL操作并返回结果
-        return executeReturn(mapper -> {
-            try {
-                // 执行创建临时表的SQL语句
-                mapper.executeRawSql(createTempTable);
+        try {
+            // 执行创建临时表的SQL语句
+            mapper.executeRawSql(createTempTable);
 
-                // 获取临时表的创建SQL语句
-                Map<String, String> showCreateTable = mapper.findTableCreateSql(tempTableName);
-                String createTempTableSql = showCreateTable.get("Create Table")
-                        .replace("`" + tempTableName + "`", "`" + tableName + "`");
+            // 获取临时表的创建SQL语句
+            String showCreateTable = mapper.findTableCreateSql(tempTableName);
+            String createTempTableSql = showCreateTable.replace("`" + tempTableName + "`", "`" + tableName + "`");
 
-                // 获取临时表的列信息
-                List<InformationSchemaColumn> columns = mapper.findTableEnsembleByTableName(tempTableName);
+            // 获取临时表的列信息
+            List<InformationSchemaColumn> columns = mapper.findTableEnsembleByTableName(tempTableName);
 
-                // 返回包含临时表创建SQL和列信息的对象
-                return new DorisCompareTableInfo.TempTableInfo(createTempTableSql, columns);
-            } finally {
-                // 生成并执行删除临时表的SQL语句
-                String dropTable = dropTable(schema, tempTableName);
-                mapper.executeRawSql(dropTable);
-            }
-        });
+            // 返回包含临时表创建SQL和列信息的对象
+            return new DorisCompareTableInfo.TempTableInfo(createTempTableSql, columns);
+        } finally {
+            // 生成并执行删除临时表的SQL语句
+            String dropTable = dropTable(schema, tempTableName);
+            mapper.executeRawSql(dropTable);
+        }
     }
 }

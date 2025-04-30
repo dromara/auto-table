@@ -10,7 +10,7 @@ import org.dromara.autotable.core.constants.DatabaseDialect;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table3", comment = "创建一个主键唯一模型的表，设置初始存储介质和冷却时间,使用@PrimaryKey定义unique_key", dialect = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table3", comment = "创建一个主键唯一模型的表，设置初始存储介质和冷却时间,使用@PrimaryKey定义unique_key", strategy = DatabaseDialect.Doris)
 @DorisTable(
         // unique_key = {Table3.Fields.k1, Table3.Fields.k2},
         distributed_by_hash = {Table3.Fields.k1, Table3.Fields.k2},

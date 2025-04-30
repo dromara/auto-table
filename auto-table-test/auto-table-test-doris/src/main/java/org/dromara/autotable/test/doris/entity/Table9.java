@@ -16,7 +16,7 @@ import java.time.LocalDate;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table9", comment = "创建一个带有物化视图（ROLLUP）的表", dialect = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table9", comment = "创建一个带有物化视图（ROLLUP）的表", strategy = DatabaseDialect.Doris)
 @DorisTable(
         aggregate_key = {
                 Table9.Fields.eventDay,

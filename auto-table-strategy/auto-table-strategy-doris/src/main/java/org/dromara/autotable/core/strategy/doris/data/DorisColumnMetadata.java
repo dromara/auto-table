@@ -5,7 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
-import org.dromara.autotable.core.strategy.mysql.data.MysqlTypeHelper;
+import org.dromara.autotable.core.strategy.doris.DorisTypeHelper;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
 
@@ -78,7 +78,7 @@ public class DorisColumnMetadata extends ColumnMetadata {
     public String toSql() {
         return StringConnectHelper.newInstance("`{column_name}` {column_type} {aggregate_fun} {null} {auto_increment(auto_auto_increment_start_value)} {default_value} {on update current_timestamp} {column_comment}")
                 .replace("{column_name}", name)
-                .replace("{column_type}", MysqlTypeHelper.getFullType(type))
+                .replace("{column_type}", DorisTypeHelper.getFullType(type))
                 .replace("{aggregate_fun}", aggregateFun)
                 .replace("{null}", notNull ? "not null" : "null")
                 .replace("{auto_increment(auto_auto_increment_start_value)}", () -> {

@@ -14,7 +14,7 @@ import java.time.LocalDate;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table2", comment = "创建一个明细模型的表，分区，指定排序列，设置副本数为 1", dialect = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table2", comment = "创建一个明细模型的表，分区，指定排序列，设置副本数为 1", strategy = DatabaseDialect.Doris)
 @DorisTable(
         duplicate_key = {Table2.Fields.k1, Table2.Fields.k2},
         partition_by_range = {Table2.Fields.k1},

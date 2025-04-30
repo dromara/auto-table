@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table14", comment = "批量创建分区", dialect = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table14", comment = "批量创建分区", strategy = DatabaseDialect.Doris)
 @DorisTable(
         unique_key = {
                 Table14.Fields.k1,

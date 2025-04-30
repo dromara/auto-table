@@ -1,4 +1,4 @@
-package org.dromara.autotable.core.strategy.doris.data.enums;
+package org.dromara.autotable.core.strategy.doris.data;
 
 import lombok.Getter;
 import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;

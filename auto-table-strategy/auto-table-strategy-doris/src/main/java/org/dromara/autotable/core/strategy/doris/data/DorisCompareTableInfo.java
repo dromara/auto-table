@@ -2,7 +2,7 @@ package org.dromara.autotable.core.strategy.doris.data;
 
 import lombok.*;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
-import org.dromara.autotable.core.strategy.mysql.data.dbdata.InformationSchemaColumn;
+import org.dromara.autotable.core.strategy.doris.data.dbdata.InformationSchemaColumn;
 
 import java.util.List;
 

@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 
 @Data
 @FieldNameConstants
-@AutoTable(value = "doris_table7", comment = "创建一个带有倒排索引以及 bloom filter 索引的表", dialect = DatabaseDialect.Doris)
+@AutoTable(value = "doris_table7", comment = "创建一个带有倒排索引以及 bloom filter 索引的表", strategy = DatabaseDialect.Doris)
 @DorisTable(
         aggregate_key = {Table7.Fields.k1, Table7.Fields.k2},
         distributed_by_hash = {Table7.Fields.k1},
