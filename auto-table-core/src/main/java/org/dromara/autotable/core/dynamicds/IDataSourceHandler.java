@@ -1,13 +1,11 @@
 package org.dromara.autotable.core.dynamicds;
 
 import lombok.NonNull;
-import org.apache.ibatis.session.Configuration;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Map;
@@ -37,9 +35,11 @@ public interface IDataSourceHandler {
 
         needHandleTableMap.forEach((dataSource, entityClasses) -> {
             // 使用数据源
-            log.info("使用数据源：{}", dataSource);
+            if (StringUtils.hasText(dataSource)) {
+                log.info("使用数据源：{}", dataSource);
+            }
             this.useDataSource(dataSource);
-            DatasourceNameManager.setDatasourceName(dataSource);
+            DataSourceManager.setDatasourceName(dataSource);
             Map<String, Set<Class<?>>> groupByDialect = entityClasses.stream().collect(
                     Collectors.groupingBy(
                             // 获取数据库方言
@@ -51,9 +51,11 @@ public interface IDataSourceHandler {
             try {
                 groupByDialect.forEach(consumer);
             } finally {
-                log.info("清理数据源：{}", dataSource);
+                if (StringUtils.hasText(dataSource)) {
+                    log.info("清理数据源：{}", dataSource);
+                }
                 this.clearDataSource(dataSource);
-                DatasourceNameManager.cleanDatasourceName();
+                DataSourceManager.cleanDatasourceName();
             }
         });
     }
@@ -61,7 +63,7 @@ public interface IDataSourceHandler {
     /**
      * 自动获取当前数据源的方言
      *
-     * @param dataSource 数据源名称
+     * @param dataSource  数据源名称
      * @param entityClass 实体类
      * @return 返回数据方言
      */
@@ -87,19 +89,18 @@ public interface IDataSourceHandler {
      */
     default String getDatabaseDialect(String dataSource) {
 
-        // 获取Configuration对象
-        Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
-
-        try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-            // 通过连接获取DatabaseMetaData对象
-            DatabaseMetaData metaData = connection.getMetaData();
-            // 获取数据库方言
-            String databaseProductName = metaData.getDatabaseProductName();
-            log.info("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
-            return databaseProductName;
-        } catch (SQLException e) {
-            throw new RuntimeException("获取数据方言失败", e);
-        }
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                // 通过连接获取DatabaseMetaData对象
+                DatabaseMetaData metaData = connection.getMetaData();
+                // 获取数据库方言
+                String databaseProductName = metaData.getDatabaseProductName();
+                log.debug("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
+                return databaseProductName;
+            } catch (SQLException e) {
+                throw new RuntimeException("获取数据方言失败", e);
+            }
+        });
     }
 
     /**
@@ -122,5 +123,6 @@ public interface IDataSourceHandler {
      * @param clazz 指定类
      * @return 数据源名称，表分组的依据，届时，根据该值分组所有的表，同一数据源下的统一处理
      */
-    @NonNull String getDataSourceName(Class<?> clazz);
+    @NonNull
+    String getDataSourceName(Class<?> clazz);
 }

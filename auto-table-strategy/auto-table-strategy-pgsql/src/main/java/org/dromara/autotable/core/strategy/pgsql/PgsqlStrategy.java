@@ -1,14 +1,13 @@
 package org.dromara.autotable.core.strategy.pgsql;
 
 import lombok.NonNull;
-import org.apache.ibatis.session.Configuration;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
@@ -26,7 +25,6 @@ import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,7 +45,9 @@ import java.util.stream.Collectors;
 /**
  * @author don
  */
-public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompareTableInfo, PgsqlTablesMapper> {
+public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompareTableInfo> {
+
+    private final PgsqlTablesMapper mapper = new PgsqlTablesMapper();
 
     @Override
     public String databaseDialect() {
@@ -128,17 +128,15 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
 
     @Override
     public boolean checkTableNotExist(String schema, String tableName) {
-        // 获取Configuration对象
-        Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
-        try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-            if (!StringUtils.hasText(schema)) {
-                schema = connection.getSchema();
+
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE", "PARTITIONED TABLE"}, true);
+                return !exist;
+            } catch (SQLException e) {
+                throw new RuntimeException("判断数据库是否存在出错", e);
             }
-            boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE", "PARTITIONED TABLE"}, true);
-            return !exist;
-        } catch (SQLException e) {
-            throw new RuntimeException("判断数据库是否存在出错", e);
-        }
+        });
     }
 
     private void compareIndexInfo(DefaultTableMetadata tableMetadata, PgsqlCompareTableInfo pgsqlCompareTableInfo) {
@@ -146,9 +144,9 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
 
-        List<PgsqlDbIndex> pgsqlDbIndices = executeReturn(pgsqlTablesMapper -> pgsqlTablesMapper.selectTableIndexesDetail(schema, tableName));
+        List<PgsqlDbIndex> pgsqlDbIndices = mapper.selectTableIndexesDetail(schema, tableName);
         Map<String, PgsqlDbIndex> pgsqlDbIndexMap = pgsqlDbIndices.stream()
-                .collect(Collectors.toMap(PgsqlDbIndex::getIndexName, Function.identity()));
+                .collect(Collectors.toMap(PgsqlDbIndex::getIndexname, Function.identity()));
 
         List<IndexMetadata> indexMetadataList = tableMetadata.getIndexMetadataList();
         for (IndexMetadata indexMetadata : indexMetadataList) {
@@ -205,7 +203,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
         // 数据库字段元信息
-        List<PgsqlDbColumn> pgsqlDbColumns = executeReturn(pgsqlTablesMapper -> pgsqlTablesMapper.selectTableFieldDetail(schema, tableName));
+        List<PgsqlDbColumn> pgsqlDbColumns = mapper.selectTableFieldDetail(schema, tableName);
         Map<String, PgsqlDbColumn> pgsqlFieldDetailMap = pgsqlDbColumns.stream().collect(Collectors.toMap(PgsqlDbColumn::getColumnName, Function.identity()));
         // 当前字段信息
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
@@ -255,7 +253,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         List<ColumnMetadata> primaryColumnList = columnMetadataList.stream().filter(ColumnMetadata::isPrimary).collect(Collectors.toList());
         Set<String> newPrimaryColumns = primaryColumnList.stream().map(ColumnMetadata::getName).collect(Collectors.toSet());
         // 查询数据库主键信息
-        PgsqlDbPrimary pgsqlDbPrimary = executeReturn(pgsqlTablesMapper -> pgsqlTablesMapper.selectPrimaryKeyName(schema, tableName));
+        PgsqlDbPrimary pgsqlDbPrimary = mapper.selectPrimaryKeyName(schema, tableName);
         HashSet<String> dbPrimaryColumns = pgsqlDbPrimary == null ? new HashSet<>() : new HashSet<>(Arrays.asList(pgsqlDbPrimary.getColumns().split(",")));
 
         boolean primaryChange = !dbPrimaryColumns.equals(newPrimaryColumns);
@@ -312,7 +310,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         String tableName = tableMetadata.getTableName();
         String schema = tableMetadata.getSchema();
 
-        String tableDescription = executeReturn(pgsqlTablesMapper -> pgsqlTablesMapper.selectTableDescription(schema, tableName));
+        String tableDescription = mapper.selectTableDescription(schema, tableName);
         if (!Objects.equals(tableDescription, tableMetadata.getComment())) {
             pgsqlCompareTableInfo.setComment(tableMetadata.getComment());
         }

@@ -34,9 +34,11 @@ import java.util.stream.Collectors;
 /**
  * @author don
  */
-public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCompareTableInfo, SqliteTablesMapper> {
+public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCompareTableInfo> {
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    private final SqliteTablesMapper mapper = new SqliteTablesMapper();
 
     @Override
     public String databaseDialect() {
@@ -109,14 +111,14 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         SqliteCompareTableInfo sqliteCompareTableInfo = new SqliteCompareTableInfo(tableName, schema);
 
         // 判断表是否需要重建
-        String orgBuildTableSql = executeReturn(sqliteTablesMapper -> sqliteTablesMapper.queryBuildTableSql(tableName));
+        String orgBuildTableSql = mapper.queryBuildTableSql(tableName);
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
         String newBuildTableSql = CreateTableSqlBuilder.buildTableSql(tableMetadata.getTableName(), tableMetadata.getComment(), columnMetadataList);
         boolean needRebuildTable = !Objects.equals(orgBuildTableSql + ";", newBuildTableSql);
         if (needRebuildTable) {
 
             // 筛选出数据迁移的列
-            List<SqliteColumns> oldColumns = executeReturn(sqliteTablesMapper -> sqliteTablesMapper.queryTableColumns(tableName));
+            List<SqliteColumns> oldColumns = mapper.queryTableColumns(tableName);
             Set<String> oldColumnNames = oldColumns.stream().map(SqliteColumns::getName).collect(Collectors.toSet());
             Set<String> newColumnNames = columnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.toSet());
             List<String> validColumnNames = newColumnNames.stream().filter(oldColumnNames::contains).collect(Collectors.toList());
@@ -125,7 +127,7 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
             // 该情况下无需单独分析索引了，因为sqlite的表修改方式为重建整个表，索引需要全部删除，重新创建
             sqliteCompareTableInfo.setRebuildTableSql(newBuildTableSql);
             // 删除当前所有索引
-            List<SqliteMaster> orgBuildIndexSqlList = executeReturn(sqliteTablesMapper -> sqliteTablesMapper.queryBuildIndexSql(tableName));
+            List<SqliteMaster> orgBuildIndexSqlList = mapper.queryBuildIndexSql(tableName);
             for (SqliteMaster sqliteMaster : orgBuildIndexSqlList) {
                 sqliteCompareTableInfo.getDeleteIndexList().add(sqliteMaster.getName());
             }
@@ -143,7 +145,7 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
                             indexMetadata -> CreateTableSqlBuilder.getIndexSql(tableName, indexMetadata)
                     ));
             // 遍历所有数据库存在的索引，判断有没有变化
-            List<SqliteMaster> orgBuildIndexSqlList = executeReturn(sqliteTablesMapper -> sqliteTablesMapper.queryBuildIndexSql(tableName));
+            List<SqliteMaster> orgBuildIndexSqlList = mapper.queryBuildIndexSql(tableName);
             for (SqliteMaster sqliteMaster : orgBuildIndexSqlList) {
                 String indexName = sqliteMaster.getName();
                 String newBuildIndexSql = rebuildIndexMap.remove(indexName);

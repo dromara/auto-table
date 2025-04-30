@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
@@ -112,6 +113,13 @@ public class AutoTableGlobalConfig {
     private static List<CreateTableInterceptor> createTableInterceptors = new ArrayList<>();
 
     /**
+     * 比对完回调
+     */
+    @Setter
+    @Getter
+    private static List<CompareTableFinishCallback> CompareTableFinishCallbacks = new ArrayList<>();
+
+    /**
      * 修改表拦截
      */
     @Setter
@@ -169,18 +177,18 @@ public class AutoTableGlobalConfig {
 
     /* 拦截器与回调监听 ↑↑↑↑↑↑↑↑↑ */
 
-    private final static Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?>> STRATEGY_MAP = new HashMap<>();
+    private final static Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> STRATEGY_MAP = new HashMap<>();
 
-    public static void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?> strategy) {
+    public static void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo> strategy) {
         STRATEGY_MAP.put(strategy.databaseDialect(), strategy);
         JavaTypeToDatabaseTypeConverter.addTypeMapping(strategy.databaseDialect(), strategy.typeMapping());
     }
 
-    public static IStrategy<?, ?, ?> getStrategy(String databaseDialect) {
+    public static IStrategy<?, ?> getStrategy(String databaseDialect) {
         return STRATEGY_MAP.get(databaseDialect);
     }
 
-    public static Collection<IStrategy<?, ?, ?>> getAllStrategy() {
+    public static Collection<IStrategy<?, ?>> getAllStrategy() {
         return STRATEGY_MAP.values();
     }
 

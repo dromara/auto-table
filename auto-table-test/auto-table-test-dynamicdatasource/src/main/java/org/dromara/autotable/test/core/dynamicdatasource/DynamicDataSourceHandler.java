@@ -1,11 +1,12 @@
 package org.dromara.autotable.test.core.dynamicdatasource;
 
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import lombok.NonNull;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,30 +22,31 @@ public class DynamicDataSourceHandler implements IDataSourceHandler {
         put("sqlite", "mybatis-config-sqlite.xml");
         put("h2", "mybatis-config-h2.xml");
     }};
-    private static final Map<String, SqlSessionFactory> STRING_SQL_SESSION_FACTORY_MAP = new HashMap<>();
+    private static final Map<String, DataSource> STRING_DATA_SOURCE_MAP = new HashMap<>();
 
     @Override
     public void useDataSource(String dataSourceName) {
 
-        SqlSessionFactory sqlSessionFactory = STRING_SQL_SESSION_FACTORY_MAP.computeIfAbsent(dataSourceName, key -> {
+        DataSource dataSource = STRING_DATA_SOURCE_MAP.computeIfAbsent(dataSourceName, key -> {
 
             String resource = CONFIG_MAP.get(dataSourceName);
 
             try (InputStream inputStream = DynamicDataSourceHandler.class.getClassLoader().getResourceAsStream(resource)) {
                 // 使用SqlSessionFactoryBuilder加载配置文件
-                return new SqlSessionFactoryBuilder().build(inputStream);
+                SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+                return sessionFactory.getConfiguration().getEnvironment().getDataSource();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
 
-        // 设置新的SqlSessionFactory
-        SqlSessionFactoryManager.setSqlSessionFactory(sqlSessionFactory);
+        // 设置新的dataSource
+        DataSourceManager.setDataSource(dataSource);
     }
 
     @Override
     public void clearDataSource(String dataSourceName) {
-        SqlSessionFactoryManager.cleanSqlSessionFactory();
+        DataSourceManager.cleanDataSource();
     }
 
     @Override

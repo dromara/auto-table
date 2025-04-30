@@ -6,6 +6,7 @@ import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
@@ -14,7 +15,7 @@ import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
 import org.dromara.autotable.core.interceptor.BuildTableMetadataInterceptor;
 import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
@@ -24,12 +25,12 @@ import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.springboot.properties.AutoTableProperties;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
+import javax.sql.DataSource;
 import java.util.stream.Collectors;
 
 /**
@@ -40,9 +41,9 @@ import java.util.stream.Collectors;
 public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(
-            SqlSessionTemplate sqlSessionTemplate,
             AutoTableProperties autoTableProperties,
-            ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo, ?>> strategies,
+            ObjectProvider<DataSource> dataSource,
+            ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> strategies,
             ObjectProvider<AutoTableClassScanner> autoTableClassScanner,
             ObjectProvider<AutoTableAnnotationFinder> autoTableAnnotationFinder,
             ObjectProvider<AutoTableMetadataAdapter> autoTableMetadataAdapter,
@@ -56,6 +57,7 @@ public class AutoTableAutoConfig {
             /* 回调事件 */
             ObjectProvider<CreateTableFinishCallback> createTableFinishCallback,
             ObjectProvider<ModifyTableFinishCallback> modifyTableFinishCallback,
+            ObjectProvider<CompareTableFinishCallback> compareTableFinishCallbacks,
             ObjectProvider<RunBeforeCallback> runBeforeCallbacks,
             ObjectProvider<RunAfterCallback> runAfterCallbacks,
             ObjectProvider<ValidateFinishCallback> validateFinishCallback,
@@ -64,8 +66,8 @@ public class AutoTableAutoConfig {
 
             ObjectProvider<JavaTypeToDatabaseTypeConverter> javaTypeToDatabaseTypeConverter) {
 
-        // 默认设置全局的SqlSessionFactory
-        SqlSessionFactoryManager.setSqlSessionFactory(sqlSessionTemplate.getSqlSessionFactory());
+        // 默认设置全局的dataSource
+        dataSource.ifUnique(DataSourceManager::setDataSource);
 
         // 设置全局的配置
         PropertyConfig propertiesConfig = autoTableProperties.toConfig();
@@ -112,6 +114,8 @@ public class AutoTableAutoConfig {
         AutoTableGlobalConfig.setCreateTableFinishCallbacks(createTableFinishCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的修改表回调
         AutoTableGlobalConfig.setModifyTableFinishCallbacks(modifyTableFinishCallback.orderedStream().collect(Collectors.toList()));
+        // 配置自定义的比对表回调
+        AutoTableGlobalConfig.setCompareTableFinishCallbacks(compareTableFinishCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的单个表执行前回调
         AutoTableGlobalConfig.setRunBeforeCallbacks(runBeforeCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的单个表执行后回调

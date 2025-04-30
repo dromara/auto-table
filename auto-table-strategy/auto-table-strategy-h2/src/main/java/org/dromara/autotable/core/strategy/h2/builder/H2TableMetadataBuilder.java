@@ -1,15 +1,14 @@
 package org.dromara.autotable.core.strategy.h2.builder;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.builder.ColumnMetadataBuilder;
 import org.dromara.autotable.core.builder.DefaultTableMetadataBuilder;
 import org.dromara.autotable.core.builder.IndexMetadataBuilder;
 import org.dromara.autotable.core.constants.DatabaseDialect;
-import org.dromara.autotable.core.dynamicds.SqlSessionFactoryManager;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.utils.StringUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.session.Configuration;
 
-import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author don
@@ -31,17 +30,18 @@ public class H2TableMetadataBuilder extends DefaultTableMetadataBuilder {
     @Override
     protected String getTableSchema(Class<?> clazz) {
         String tableSchema = super.getTableSchema(clazz);
-        if (StringUtils.noText(tableSchema)) {
-            // 获取Configuration对象
-            Configuration configuration = SqlSessionFactoryManager.getSqlSessionFactory().getConfiguration();
-            try (Connection connection = configuration.getEnvironment().getDataSource().getConnection()) {
-                // 通过连接获取DatabaseMetaData对象
+
+        if (StringUtils.hasText(tableSchema)) {
+            return tableSchema;
+        }
+
+        return DataSourceManager.useConnection(connection -> {
+            try {
                 return connection.getSchema();
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 log.error("获取数据库信息失败", e);
             }
             return "PUBLIC";
-        }
-        return tableSchema;
+        });
     }
 }
