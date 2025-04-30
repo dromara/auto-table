@@ -18,6 +18,7 @@
         <module>auto-table-strategy-mysql</module>
         <module>auto-table-strategy-pgsql</module>
         <module>auto-table-strategy-sqlite</module>
+        <module>auto-table-strategy-doris</module>
     </modules>
 
 </project>
