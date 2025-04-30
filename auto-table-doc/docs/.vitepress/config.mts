@@ -30,6 +30,7 @@ export default defineConfig({
             {text: '指南', link: '/指南/介绍/什么是AutoTable'},
             {text: '配置', link: '/配置'},
             {text: '葵花宝典', link: '/葵花宝典/说明'},
+            {text: '数据库特性', link: '/数据库特性/Doris/配置'},
             {text: '变更日志', link: '/变更日志'},
             {text: '第三方框架集成', link: '/第三方框架集成/index'},
             {text: '支持/联系', link: '/支持联系/支持我'}
@@ -103,6 +104,23 @@ export default defineConfig({
                         {text: '字段删除', link: '/葵花宝典/字段删除'},
                         {text: '自定义类型映射', link: '/葵花宝典/自定义类型映射'},
                         {text: '没有创建表', link: '/葵花宝典/没有创建表'},
+                    ]
+                },
+            ],
+            '/数据库特性/': [
+                {
+                    text: 'Doris',
+                    items: [
+                        {text: '配置', link: '/数据库特性/Doris/配置'},
+                        {text: '@DorisTable', link: '/数据库特性/Doris/DorisTable.md'},
+                        {text: '@DorisColumn', link: '/数据库特性/Doris/DorisColumn.md'},
+                        {text: '例子', link: '/数据库特性/Doris/例子.md'},
+                    ]
+                },
+                {
+                    text: '达梦',
+                    items: [
+                        {text: '配置', link: '/数据库特性/Doris/配置'},
                     ]
                 },
             ],
