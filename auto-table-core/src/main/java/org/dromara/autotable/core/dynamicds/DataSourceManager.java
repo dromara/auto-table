@@ -42,8 +42,8 @@ public class DataSourceManager {
         }
     }
 
-    public static void setDataSource(@NonNull DataSource sqlSessionFactory) {
-        DataSourceManager.DATA_SOURCE_THREAD_LOCAL.set(sqlSessionFactory);
+    public static void setDataSource(@NonNull DataSource dataSource) {
+        DataSourceManager.DATA_SOURCE_THREAD_LOCAL.set(dataSource);
     }
 
     public static DataSource getDataSource() {

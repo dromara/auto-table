@@ -35,7 +35,9 @@ public interface IDataSourceHandler {
 
         needHandleTableMap.forEach((dataSource, entityClasses) -> {
             // 使用数据源
-            log.info("使用数据源：{}", dataSource);
+            if (StringUtils.hasText(dataSource)) {
+                log.info("使用数据源：{}", dataSource);
+            }
             this.useDataSource(dataSource);
             DataSourceManager.setDatasourceName(dataSource);
             Map<String, Set<Class<?>>> groupByDialect = entityClasses.stream().collect(
@@ -49,7 +51,9 @@ public interface IDataSourceHandler {
             try {
                 groupByDialect.forEach(consumer);
             } finally {
-                log.info("清理数据源：{}", dataSource);
+                if (StringUtils.hasText(dataSource)) {
+                    log.info("清理数据源：{}", dataSource);
+                }
                 this.clearDataSource(dataSource);
                 DataSourceManager.cleanDatasourceName();
             }
@@ -91,7 +95,7 @@ public interface IDataSourceHandler {
                 DatabaseMetaData metaData = connection.getMetaData();
                 // 获取数据库方言
                 String databaseProductName = metaData.getDatabaseProductName();
-                log.info("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
+                log.debug("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
                 return databaseProductName;
             } catch (SQLException e) {
                 throw new RuntimeException("获取数据方言失败", e);

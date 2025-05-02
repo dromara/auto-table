@@ -143,6 +143,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
         // 当表存在，比对数据库表结构与表元数据的差异
         COMPARE_TABLE_INFO compareTableInfo = this.compareTable(tableMetadata);
+        AutoTableGlobalConfig.getCompareTableFinishCallbacks().forEach(fn -> fn.afterCompareTable(this.databaseDialect(), tableMetadata, compareTableInfo));
         if (compareTableInfo.needModify()) {
             // 修改表信息
             log.info("修改表：{}", (StringUtils.hasText(schema) ? schema + "." : "") + tableName);

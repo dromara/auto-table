@@ -24,6 +24,7 @@ import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
@@ -123,6 +124,8 @@ public class AutoTablePlugin implements Plugin {
         this.getAndSetBeans(context, CreateTableFinishCallback.class, AutoTableGlobalConfig::setCreateTableFinishCallbacks);
         // ModifyTableFinishCallback
         this.getAndSetBeans(context, ModifyTableFinishCallback.class, AutoTableGlobalConfig::setModifyTableFinishCallbacks);
+        // CompareTableFinishCallback
+        this.getAndSetBeans(context, CompareTableFinishCallback.class, AutoTableGlobalConfig::setCompareTableFinishCallbacks);
         // RunBeforeCallback
         this.getAndSetBeans(context, RunBeforeCallback.class, AutoTableGlobalConfig::setRunBeforeCallbacks);
         // RunAfterCallback

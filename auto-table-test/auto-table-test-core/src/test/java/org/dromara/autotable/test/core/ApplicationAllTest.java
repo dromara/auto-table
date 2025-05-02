@@ -13,6 +13,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -55,15 +56,41 @@ public class ApplicationAllTest {
         AutoTableGlobalConfig.setCustomRecordSqlHandler(new RecordSqlFlywayHandler("/Users/don/Downloads/sqlLogs"));
 
         // 开始
-        testMysqlCreate();
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        // 开始
+        AutoTableBootstrap.start();
     }
 
     @Test
-    public void testMysqlCreate() {
+    public void testRecordSqlByFile() {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
-        testRecordSqlByDB();
+        // 指定扫描包
+        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+                "org.dromara.autotable.test.core.entity.common",
+                "org.dromara.autotable.test.core.entity.mysql"
+        });
+
+        // 记录sql
+        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
+        recordSqlProperties.setEnable(true);
+        recordSqlProperties.setVersion(Version.VALUE);
+        // 自定义，以文件形式记录sql
+        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.file);
+        recordSqlProperties.setFolderPath("/Users/don/Downloads/sqlLogs");
+        AutoTableGlobalConfig.getAutoTableProperties().setRecordSql(recordSqlProperties);
+
+        // 开始
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
+    public void testMysqlCreateAndUpdate() {
+
+        initSqlSessionFactory("mybatis-config-mysql.xml");
 
         AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
@@ -74,9 +101,8 @@ public class ApplicationAllTest {
         // 开始
         AutoTableBootstrap.start();
 
-
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
         // 测试所有的公共测试类
         AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common_update",
@@ -90,8 +116,6 @@ public class ApplicationAllTest {
     public void testPgsqlCreate() {
 
         initSqlSessionFactory("mybatis-config-pgsql.xml");
-
-        testRecordSqlByDB();
 
         AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
         // 测试所有的公共测试类
@@ -170,8 +194,6 @@ public class ApplicationAllTest {
 
         initSqlSessionFactory("mybatis-config-sqlite.xml");
 
-        testRecordSqlByFile();
-
         AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
         AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
@@ -191,21 +213,6 @@ public class ApplicationAllTest {
         AutoTableBootstrap.start();
     }
 
-    private void testRecordSqlByFile() {
-
-        // 记录sql
-        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
-        recordSqlProperties.setEnable(true);
-        recordSqlProperties.setVersion(Version.VALUE);
-        // 自定义，以文件形式记录sql
-        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.file);
-        recordSqlProperties.setFolderPath("/Users/don/Downloads/sqlLogs");
-        AutoTableGlobalConfig.getAutoTableProperties().setRecordSql(recordSqlProperties);
-
-        // 开始
-        testMysqlCreate();
-    }
-
     private void testRecordSqlByDB() {
 
         // 记录sql
@@ -223,7 +230,8 @@ public class ApplicationAllTest {
             // 使用SqlSessionFactoryBuilder加载配置文件
             SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
             // 设置当前数据源
-            DataSourceManager.setDataSource(sessionFactory.getConfiguration().getEnvironment().getDataSource());
+            DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
+            DataSourceManager.setDataSource(dataSource);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

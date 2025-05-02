@@ -3,8 +3,6 @@ package org.dromara.autotable.core.strategy.mysql.data.dbdata;
 import lombok.Data;
 import org.dromara.autotable.core.utils.DBHelper;
 
-import java.util.Date;
-
 /**
  * 数据库表查询的表信息
  * @author don
@@ -83,20 +81,20 @@ public class InformationSchemaTable {
     @DBHelper.ColumnName("auto_increment")
     private Long autoIncrement;
     /**
-     * 表的创建时间
+     * 表的创建时间 (时间格式，涉及了兼容性问题[https://gitee.com/dromara/auto-table/issues/IC3SDB]，注释掉，不查询)
      */
-    @DBHelper.ColumnName("create_time")
-    private Date createTime;
+    // @DBHelper.ColumnName("create_time")
+    // private Date createTime;
     /**
-     * 表的更新时间
+     * 表的更新时间 (时间格式，涉及了兼容性问题[https://gitee.com/dromara/auto-table/issues/IC3SDB]，注释掉，不查询)
      */
-    @DBHelper.ColumnName("update_time")
-    private Date updateTime;
+    // @DBHelper.ColumnName("update_time")
+    // private Date updateTime;
     /**
-     * 表的检查时间
+     * 表的检查时间 (时间格式，涉及了兼容性问题[https://gitee.com/dromara/auto-table/issues/IC3SDB]，注释掉，不查询)
      */
-    @DBHelper.ColumnName("check_time")
-    private Date checkTime;
+    // @DBHelper.ColumnName("check_time")
+    // private Date checkTime;
     /**
      * 表的字符校验编码集
      */
