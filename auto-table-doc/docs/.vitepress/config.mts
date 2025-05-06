@@ -119,12 +119,6 @@ export default defineConfig({
                         {text: '配置', link: '/数据库特性/Doris/配置'},
                     ]
                 },
-                /*{
-                    text: '达梦',
-                    items: [
-                        {text: '配置', link: '/数据库特性/Doris/配置'},
-                    ]
-                },*/
             ],
             '/支持联系/': [
                 {
