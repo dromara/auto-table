@@ -32,7 +32,6 @@ public interface AutoTableMetadataAdapter {
         return null;
     }
 
-
     /**
      * 获取表名
      *

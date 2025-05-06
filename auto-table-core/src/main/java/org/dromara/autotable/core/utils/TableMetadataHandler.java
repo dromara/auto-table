@@ -1,6 +1,18 @@
 package org.dromara.autotable.core.utils;
 
-import org.dromara.autotable.annotation.*;
+import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.AutoIncrement;
+import org.dromara.autotable.annotation.AutoTable;
+import org.dromara.autotable.annotation.ColumnComment;
+import org.dromara.autotable.annotation.ColumnDefault;
+import org.dromara.autotable.annotation.ColumnName;
+import org.dromara.autotable.annotation.ColumnNotNull;
+import org.dromara.autotable.annotation.ColumnType;
+import org.dromara.autotable.annotation.Ignore;
+import org.dromara.autotable.annotation.Index;
+import org.dromara.autotable.annotation.PrimaryKey;
+import org.dromara.autotable.annotation.TableIndex;
+import org.dromara.autotable.annotation.TableIndexes;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
