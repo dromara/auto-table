@@ -24,7 +24,6 @@ public @interface DorisColumn {
      */
     long autoIncrementStartValue() default -1;
 
-
     /**
      * 是否更新为当前时间戳
      */

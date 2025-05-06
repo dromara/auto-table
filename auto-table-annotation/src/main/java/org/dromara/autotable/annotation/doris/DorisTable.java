@@ -87,7 +87,6 @@ public @interface DorisTable {
      */
     int distributed_buckets() default -1;
 
-
     /**
      * 物化视频配置
      */

@@ -15,6 +15,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface DorisDynamicPartition {
+
     boolean enable();
 
     DorisTimeUnit time_unit() default DorisTimeUnit.none;
