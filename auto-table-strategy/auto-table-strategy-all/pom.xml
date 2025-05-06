@@ -32,6 +32,11 @@
             <artifactId>auto-table-strategy-sqlite</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-strategy-doris</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>
