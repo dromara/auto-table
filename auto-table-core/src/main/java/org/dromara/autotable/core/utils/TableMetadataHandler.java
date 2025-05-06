@@ -61,7 +61,7 @@ public class TableMetadataHandler {
 
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
         AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
-        if (autoTable != null) {
+        if (autoTable != null && StringUtils.hasText(autoTable.dialect())) {
             return autoTable.dialect();
         }
 
@@ -79,7 +79,7 @@ public class TableMetadataHandler {
 
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
         AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
-        if (autoTable != null) {
+        if (autoTable != null && StringUtils.hasText(autoTable.schema())) {
             return autoTable.schema();
         }
 
