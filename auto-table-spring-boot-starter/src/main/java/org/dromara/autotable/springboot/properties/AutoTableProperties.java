@@ -1,8 +1,8 @@
 package org.dromara.autotable.springboot.properties;
 
+import lombok.Data;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
-import lombok.Data;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -71,6 +71,10 @@ public class AutoTableProperties {
      * mysql配置
      */
     private Mysql mysql = new Mysql();
+    /**
+     * doris配置
+     */
+    private DorisConfig doris = new DorisConfig();
 
     /**
      * 记录执行的SQL
@@ -100,6 +104,13 @@ public class AutoTableProperties {
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
         propertyConfig.setMysql(mysqlConfig);
+
+        PropertyConfig.DorisConfig dorisConfig = new PropertyConfig.DorisConfig();
+        dorisConfig.setRollupPrefix(this.doris.getRollupPrefix());
+        dorisConfig.setRollupAutoNameMaxLength(this.doris.getRollupAutoNameMaxLength());
+        dorisConfig.setUpdateLimitTableDataLength(this.doris.getUpdateLimitTableDataLength());
+        dorisConfig.setUpdateBackupOldTable(this.doris.isUpdateBackupOldTable());
+        propertyConfig.setDoris(dorisConfig);
 
         PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
         recordSqlProperties.setEnable(this.recordSql.enable);
@@ -184,5 +195,28 @@ public class AutoTableProperties {
          * 在子类的前面
          */
         before
+    }
+
+    @Data
+    public static class DorisConfig {
+        /**
+         * 自己定义的物化视图前缀
+         */
+        private String rollupPrefix = "auto_rlp_";
+        /**
+         * 物化视图自动生成名字的最大长度
+         */
+        private int rollupAutoNameMaxLength = 100;
+
+        /**
+         * 更新表时，允许更新表的最大容量上限，默认为1G，当表容量大于1G时,不执行更新
+         */
+        private long updateLimitTableDataLength = 1073741824;
+
+        /**
+         * 更新时,是否备份旧表
+         */
+        private boolean updateBackupOldTable = false;
+
     }
 }
