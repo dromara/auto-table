@@ -21,7 +21,7 @@ AutoTable分别在表名、字段名、主键、主键策略、枚举处理、�
 
 ### mybatis-plus拓展包
 
-<a href="../../../../dromara/mybatis-plus-ext" target="_blank"></a>
+<a href="../../../../dromara/mybatis-plus-ext" target="_blank">mybatis-plus-ext</a>
 是mybatis-plus框架的拓展包，在框架原有基础上做了进一步的轻度封装，增强内容：免手写Mapper、多数据源自动建表(auto-table)、数据自动填充、自动关联查询、冗余数据自动更新、动态查询条件等。
 
 ### mybatis-flex拓展包
