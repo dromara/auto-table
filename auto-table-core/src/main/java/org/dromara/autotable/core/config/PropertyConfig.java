@@ -62,6 +62,11 @@ public class PropertyConfig {
     private MysqlConfig mysql = new MysqlConfig();
 
     /**
+     * pgsql配置
+     */
+    private PgsqlConfig pgsql = new PgsqlConfig();
+
+    /**
      * doris配置
      */
     private DorisConfig doris = new DorisConfig();
@@ -143,6 +148,25 @@ public class PropertyConfig {
          * 列默认排序规则
          */
         private String columnDefaultCollation;
+    }
+
+    @Data
+    public static class PgsqlConfig {
+        /**
+         * 主键自增方式
+         */
+        private PgsqlPkAutoIncrementType pkAutoIncrementType = PgsqlPkAutoIncrementType.byDefault;
+
+        public static enum PgsqlPkAutoIncrementType {
+            /**
+             * 更安全，避免手动干预
+             */
+            always,
+            /**
+             * 更灵活，适合需要手动插值的情况
+             */
+            byDefault,
+        }
     }
 
     @Data

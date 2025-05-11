@@ -75,6 +75,11 @@ public class AutoTableProperties {
     private Mysql mysql = new Mysql();
 
     /**
+     * pgsql配置
+     */
+    private Pgsql pgsql = new Pgsql();
+
+    /**
      * doris配置
      */
     private DorisConfig doris = new DorisConfig();
@@ -107,6 +112,10 @@ public class AutoTableProperties {
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
         propertyConfig.setMysql(mysqlConfig);
+
+        PropertyConfig.PgsqlConfig pgsqlConfig = new PropertyConfig.PgsqlConfig();
+        pgsqlConfig.setPkAutoIncrementType(PropertyConfig.PgsqlConfig.PgsqlPkAutoIncrementType.valueOf(this.pgsql.getPkAutoIncrementType().name()));
+        propertyConfig.setPgsql(pgsqlConfig);
 
         PropertyConfig.DorisConfig dorisConfig = new PropertyConfig.DorisConfig();
         dorisConfig.setRollupPrefix(this.doris.getRollupPrefix());
@@ -144,6 +153,25 @@ public class AutoTableProperties {
          * 列默认排序规则
          */
         private String columnDefaultCollation;
+    }
+
+    @Data
+    public static class Pgsql {
+        /**
+         * 主键自增方式
+         */
+        private PgsqlPkAutoIncrementType pkAutoIncrementType = PgsqlPkAutoIncrementType.byDefault;
+
+        public static enum PgsqlPkAutoIncrementType {
+            /**
+             * 更安全，避免手动干预
+             */
+            always,
+            /**
+             * 更灵活，适合需要手动插值的情况
+             */
+            byDefault,
+        }
     }
 
     @Data
