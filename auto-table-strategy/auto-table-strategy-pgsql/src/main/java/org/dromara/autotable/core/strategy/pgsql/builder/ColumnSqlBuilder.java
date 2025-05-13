@@ -23,7 +23,7 @@ public class ColumnSqlBuilder {
     public static String buildSql(ColumnMetadata columnMetadata) {
         // 例子："name" varchar(100) NULL DEFAULT '张三' COMMENT '名称'
         // 例子："id" int4(32) NOT NULL AUTO_INCREMENT COMMENT '主键'
-        StringConnectHelper sql = StringConnectHelper.newInstance("{columnName} {typeAndLength} {null} {default}")
+        StringConnectHelper sql = StringConnectHelper.newInstance("\"{columnName}\" {typeAndLength} {null} {default}")
                 .replace("{columnName}", columnMetadata.getName())
                 .replace("{typeAndLength}", () -> columnMetadata.getType().getDefaultFullType());
 

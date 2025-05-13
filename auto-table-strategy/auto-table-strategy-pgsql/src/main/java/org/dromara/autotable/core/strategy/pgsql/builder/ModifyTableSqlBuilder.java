@@ -39,12 +39,12 @@ public class ModifyTableSqlBuilder {
         // 删除主键
         String primaryKeyName = pgsqlCompareTableInfo.getDropPrimaryKeyName();
         if (StringUtils.hasText(primaryKeyName)) {
-            alterTableSqlList.add(String.format("  DROP CONSTRAINT %s", primaryKeyName));
+            alterTableSqlList.add(String.format("  DROP CONSTRAINT \"%s\"", primaryKeyName));
         }
         // 删除列
         List<String> dropColumnList = pgsqlCompareTableInfo.getDropColumnList();
         dropColumnList.stream()
-                .map(columnName -> String.format("  DROP COLUMN %s", columnName))
+                .map(columnName -> String.format("  DROP COLUMN \"%s\"", columnName))
                 .forEach(alterTableSqlList::add);
         // 新增列
         List<ColumnMetadata> newColumnList = pgsqlCompareTableInfo.getNewColumnMetadataList();
@@ -58,9 +58,9 @@ public class ModifyTableSqlBuilder {
             String columnName = columnMetadata.getName();
             // 类型
             String newFullType = columnMetadata.getType().getDefaultFullType();
-            alterTableSqlList.add(String.format("  ALTER COLUMN %s TYPE %s USING %s::%s", columnName, newFullType, columnName, newFullType));
+            alterTableSqlList.add(String.format("  ALTER COLUMN \"%s\" TYPE %s USING \"%s\"::%s", columnName, newFullType, columnName, newFullType));
             // 非空
-            alterTableSqlList.add(String.format("  ALTER COLUMN %s %s NOT NULL", columnName, columnMetadata.isNotNull() ? "SET" : "DROP"));
+            alterTableSqlList.add(String.format("  ALTER COLUMN \"%s\" %s NOT NULL", columnName, columnMetadata.isNotNull() ? "SET" : "DROP"));
             // 默认值
             String defaultVal = null;
             DefaultValueEnum defaultValueType = columnMetadata.getDefaultValueType();
@@ -76,22 +76,22 @@ public class ModifyTableSqlBuilder {
             }
             if (StringUtils.hasText(defaultVal)) {
                 // 设置默认值
-                alterTableSqlList.add(String.format("  ALTER COLUMN %s SET DEFAULT %s", columnName, defaultVal));
+                alterTableSqlList.add(String.format("  ALTER COLUMN \"%s\" SET DEFAULT %s", columnName, defaultVal));
             } else {
                 // 删除默认值
-                alterTableSqlList.add(String.format("  ALTER COLUMN %s DROP DEFAULT", columnName));
+                alterTableSqlList.add(String.format("  ALTER COLUMN \"%s\" DROP DEFAULT", columnName));
             }
         }
         // 添加主键
         List<ColumnMetadata> newPrimaries = pgsqlCompareTableInfo.getNewPrimaries();
         if (!newPrimaries.isEmpty()) {
-            String primaryColumns = newPrimaries.stream().map(ColumnMetadata::getName).collect(Collectors.joining(", "));
+            String primaryColumns = newPrimaries.stream().map(ColumnMetadata::getName).collect(Collectors.joining("\", \""));
             if (StringUtils.hasText(primaryKeyName)) {
                 // 修改主键
-                alterTableSqlList.add(String.format("  ADD CONSTRAINT %s PRIMARY KEY (%s)", primaryKeyName, primaryColumns));
+                alterTableSqlList.add(String.format("  ADD CONSTRAINT \"%s\" PRIMARY KEY (\"%s\")", primaryKeyName, primaryColumns));
             } else {
                 // 新增主键
-                alterTableSqlList.add(String.format("  ADD PRIMARY KEY (%s)", primaryColumns));
+                alterTableSqlList.add(String.format("  ADD PRIMARY KEY (\"%s\")", primaryColumns));
             }
         }
         // 组合sql

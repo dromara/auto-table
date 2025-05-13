@@ -172,11 +172,11 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
             }
 
             // 获取索引定义语句，进行比较  CREATE UNIQUE INDEX mpe_idx_phone_index ON "public".my_pgsql_table USING btree (phone DESC)
-            String dbIndexdef = dbIndex.getIndexdef().replace("\"", "")
+            String dbIndexDef = dbIndex.getIndexdef().replace("\"", "")
                     .replace(" NULLS FIRST", "")
                     .replace(" NULLS LAST", "") + ";";
-            String newIndexdef = CreateTableSqlBuilder.getCreateIndexSql(schema, tableName, indexMetadata).replace("\"", "");
-            if (!newIndexdef.equals(dbIndexdef)) {
+            String newIndexDef = CreateTableSqlBuilder.getCreateIndexSql(schema, tableName, indexMetadata).replace("\"", "");
+            if (!newIndexDef.equals(dbIndexDef)) {
                 pgsqlCompareTableInfo.addModifyIndex(indexMetadata);
             }
         }
@@ -322,14 +322,12 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         return Collections.singletonList(sql);
     }
 
-    public static String withSchemaName(String schema, String... names) {
-
-        String name = String.join(".", names);
+    public static String withSchemaName(String schema, String name) {
 
         if (StringUtils.hasText(schema)) {
-            return schema + "." + name;
+            return "\"" + schema + ".\"" + name + "\"";
         }
 
-        return name;
+        return "\"" + name + "\"";
     }
 }

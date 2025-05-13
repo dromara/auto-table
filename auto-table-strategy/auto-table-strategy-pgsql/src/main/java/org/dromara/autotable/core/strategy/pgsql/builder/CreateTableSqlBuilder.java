@@ -60,16 +60,16 @@ public class CreateTableSqlBuilder {
 
     public static String getCreateIndexSql(String schema, String tableName, IndexMetadata pgsqlIndexMetadata) {
         // 此处注意，pgsql的索引对比方式，靠的是定义索引的sql字符串整体对比的
-        return StringConnectHelper.newInstance("CREATE {indexType}INDEX {indexName} ON {tableName} {method} ({columns});")
+        return StringConnectHelper.newInstance("CREATE {indexType}INDEX \"{indexName}\" ON {schemaTableName} {method} ({columns});")
                 .replace("{indexType}", pgsqlIndexMetadata.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE " : "")
                 .replace("{indexName}", pgsqlIndexMetadata.getName())
-                .replace("{tableName}", PgsqlStrategy.withSchemaName(schema, tableName))
+                .replace("{schemaTableName}", PgsqlStrategy.withSchemaName(schema, tableName))
                 .replace("{method}", getMethod(pgsqlIndexMetadata.getMethod()))
                 .replace("{columns}", () -> {
                     List<IndexMetadata.IndexColumnParam> columnParams = pgsqlIndexMetadata.getColumns();
                     return columnParams.stream().map(column ->
                             // 例："name" ASC
-                            "{column}{sortMode}"
+                            "\"{column}\"{sortMode}"
                                     .replace("{column}", column.getColumn())
                                     // pgsql中，asc为默认
                                     .replace("{sortMode}", (column.getSort() == null || column.getSort() == IndexSortTypeEnum.ASC) ? "" : (" " + column.getSort().name()))
@@ -98,32 +98,28 @@ public class CreateTableSqlBuilder {
 
     public static String getAddColumnCommentSql(String schema, String tableName, String tableComment, Map<String, String> columnCommentMap, Map<String, String> indexCommentMap) {
 
-        String finalSchema = StringUtils.hasText(schema) ? (schema + ".") : "";
         List<String> commentList = new ArrayList<>();
 
         // 表备注
         if (StringUtils.hasText(tableComment)) {
-            String addTableComment = "COMMENT ON TABLE {schema}{name} IS '{comment}';"
-                    .replace("{schema}", finalSchema)
-                    .replace("{name}", tableName)
+            String addTableComment = "COMMENT ON TABLE {schemaTableName} IS '{comment}';"
+                    .replace("{schemaTableName}", PgsqlStrategy.withSchemaName(schema, tableName))
                     .replace("{comment}", tableComment);
             commentList.add(addTableComment);
         }
 
         // 字段备注
         columnCommentMap.entrySet().stream()
-                .map(columnComment -> "COMMENT ON COLUMN {schema}{tableName}.{name} IS '{comment}';"
-                        .replace("{schema}", finalSchema)
-                        .replace("{tableName}", tableName)
-                        .replace("{name}", columnComment.getKey())
+                .map(columnComment -> "COMMENT ON COLUMN {schemaTableName}.\"{columnName}\" IS '{comment}';"
+                        .replace("{schemaTableName}", PgsqlStrategy.withSchemaName(schema, tableName))
+                        .replace("{columnName}", columnComment.getKey())
                         .replace("{comment}", columnComment.getValue()))
                 .forEach(commentList::add);
 
         // 索引备注
         indexCommentMap.entrySet().stream()
-                .map(indexComment -> "COMMENT ON INDEX {schema}{name} IS '{comment}';"
-                        .replace("{schema}", finalSchema)
-                        .replace("{name}", indexComment.getKey())
+                .map(indexComment -> "COMMENT ON INDEX {schemaIndexName} IS '{comment}';"
+                        .replace("{schemaIndexName}", PgsqlStrategy.withSchemaName(schema, indexComment.getKey()))
                         .replace("{comment}", indexComment.getValue()))
                 .forEach(commentList::add);
 
@@ -168,16 +164,16 @@ public class CreateTableSqlBuilder {
                 .filter(StringUtils::hasText)
                 .collect(Collectors.joining(","));
 
-        return "CREATE TABLE {tableName} ({columnList});"
-                .replace("{tableName}", PgsqlStrategy.withSchemaName(schema, name))
-                .replace("{columnList}", addSql);
+        return "CREATE TABLE {schemaTableName} ({alterColumnList});"
+                .replace("{schemaTableName}", PgsqlStrategy.withSchemaName(schema, name))
+                .replace("{alterColumnList}", addSql);
     }
 
     private static String getPrimaryKeySql(List<String> primaries) {
-        return "PRIMARY KEY ({primaries})"
+        return "PRIMARY KEY (\"{primaries}\")"
                 .replace(
                         "{primaries}",
-                        String.join(",", primaries)
+                        String.join("\",\"", primaries)
                 );
     }
 }
