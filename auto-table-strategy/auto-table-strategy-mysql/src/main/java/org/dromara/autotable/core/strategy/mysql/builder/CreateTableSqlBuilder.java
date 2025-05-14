@@ -117,16 +117,16 @@ public class CreateTableSqlBuilder {
 
     public static String getIndexSql(IndexMetadata indexMetadata) {
         // 例子： UNIQUE INDEX `unique_name_age`(`name` ASC, `age` DESC) COMMENT '姓名、年龄索引',
-        return StringConnectHelper.newInstance("{indexType} INDEX {indexName}({columns}) {method} {indexComment}")
+        return StringConnectHelper.newInstance("{indexType} INDEX `{indexName}`({columns}) {method} {indexComment}")
                 .replace("{indexType}", indexMetadata.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE" : "")
                 .replace("{indexName}", indexMetadata.getName())
                 .replace("{columns}", () -> {
                     List<IndexMetadata.IndexColumnParam> columnParams = indexMetadata.getColumns();
                     return columnParams.stream().map(column ->
                             // 例：`name` ASC
-                            "`{column}` {sortMode}"
+                            "`{column}`{sortMode}"
                                     .replace("{column}", column.getColumn())
-                                    .replace("{sortMode}", column.getSort() != null ? column.getSort().name() : "")
+                                    .replace("{sortMode}", column.getSort() != null ? (" " + column.getSort().name()) : "")
                     ).collect(Collectors.joining(","));
                 })
                 .replace("{method}", StringUtils.hasText(indexMetadata.getMethod()) ? "USING " + indexMetadata.getMethod() : "")
@@ -135,10 +135,10 @@ public class CreateTableSqlBuilder {
     }
 
     public static String getPrimaryKeySql(List<String> primaries) {
-        return "PRIMARY KEY ({primaries})"
+        return "PRIMARY KEY (`{primaries}`)"
                 .replace(
                         "{primaries}",
-                        String.join(",", primaries)
+                        String.join("`,`", primaries)
                 );
     }
 }
