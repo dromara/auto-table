@@ -325,7 +325,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
     public static String withSchemaName(String schema, String name) {
 
         if (StringUtils.hasText(schema)) {
-            return "\"" + schema + ".\"" + name + "\"";
+            return "\"" + schema + "\".\"" + name + "\"";
         }
 
         return "\"" + name + "\"";
