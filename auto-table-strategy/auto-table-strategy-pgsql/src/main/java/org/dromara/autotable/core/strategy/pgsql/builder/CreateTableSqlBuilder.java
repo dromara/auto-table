@@ -68,7 +68,7 @@ public class CreateTableSqlBuilder {
                 .replace("{columns}", () -> {
                     List<IndexMetadata.IndexColumnParam> columnParams = pgsqlIndexMetadata.getColumns();
                     return columnParams.stream().map(column ->
-                            // 例："name" ASC
+                            // 例："name" DESC
                             "\"{column}\"{sortMode}"
                                     .replace("{column}", column.getColumn())
                                     // pgsql中，asc为默认
