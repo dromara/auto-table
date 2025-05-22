@@ -65,7 +65,7 @@ public class TableMetadataHandler {
             return autoTable.dialect();
         }
 
-        // 调用第三方ORM实现
+        // 调用第三方实现
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableDialect(clazz);
     }
 
@@ -83,7 +83,7 @@ public class TableMetadataHandler {
             return autoTable.schema();
         }
 
-        // 调用第三方ORM实现
+        // 调用第三方实现
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableSchema(clazz);
     }
 
@@ -95,30 +95,26 @@ public class TableMetadataHandler {
      */
     public static String getTableName(Class<?> clazz) {
 
-        String tableName = null;
-
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
 
         AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
         if (autoTable != null && StringUtils.hasText(autoTable.value())) {
-            tableName = autoTable.value();
+            return autoTable.value();
         }
 
-        // 调用第三方ORM实现
-        if (tableName == null) {
-            tableName = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableName(clazz);
+        // 调用第三方实现
+        String tableName = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableName(clazz);
+        if (StringUtils.hasText(tableName)) {
+            return tableName;
         }
 
         // 兜底，使用下划线命名
-        if (tableName == null) {
-            tableName = StringUtils.camelToUnderline(clazz.getSimpleName());
-        }
-
-        return tableName;
+        return StringUtils.camelToUnderline(clazz.getSimpleName());
     }
 
     /**
      * 获取bean上的表注释
+     *
      * @param clazz bean
      * @return 表注释
      */
@@ -129,17 +125,17 @@ public class TableMetadataHandler {
             return replaceSingleQuote(autoTable.comment());
         }
 
+        // 调用第三方实现
         String adapterTableComment = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableComment(clazz);
-        if (adapterTableComment != null) {
+        if (StringUtils.hasText(adapterTableComment)) {
             return replaceSingleQuote(adapterTableComment);
         }
 
         return null;
     }
 
+
     /************               字段相关                **************/
-
-
     public static boolean isIncludeField(Field field, Class<?> clazz) {
 
         Ignore ignore = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, Ignore.class);
@@ -147,7 +143,7 @@ public class TableMetadataHandler {
             return false;
         }
 
-        // 调用第三方ORM实现
+        // 调用第三方实现
         boolean isIgnoreField = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isIgnoreField(field, clazz);
         return !isIgnoreField;
     }
@@ -159,7 +155,7 @@ public class TableMetadataHandler {
             return true;
         }
 
-        // 调用第三方ORM实现
+        // 调用第三方实现
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isPrimary(field, clazz);
     }
 
@@ -170,11 +166,18 @@ public class TableMetadataHandler {
             return autoIncrement.value();
         }
 
+        // 调用第三方实现（因为布尔值在注解中无法存在true和false以外的值，所以不知道用户是否填写了值还是默认值，所以，先获取第三方自定义值）
+        Boolean isAutoIncrement = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isAutoIncrement(field, clazz);
+        if (isAutoIncrement != null) {
+            return isAutoIncrement;
+        }
+
         PrimaryKey isPrimary = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
         if (isPrimary != null) {
             return isPrimary.autoIncrement();
         }
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isAutoIncrement(field, clazz);
+
+        return false;
     }
 
     public static Boolean isNotNull(Field field, Class<?> clazz) {
@@ -192,18 +195,23 @@ public class TableMetadataHandler {
         if (column != null) {
             return column.value();
         }
+        // 调用第三方实现（因为布尔值在注解中无法存在true和false以外的值，所以不知道用户是否填写了值还是默认值，所以，先获取第三方自定义值）
+        Boolean notNull = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isNotNull(field, clazz);
+        if (notNull != null) {
+            return notNull;
+        }
         AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
         if (autoColumn != null) {
             return autoColumn.notNull();
         }
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isNotNull(field, clazz);
+        return false;
     }
 
     /**
      * 获取字段类型
      *
-     * @param field  字段
-     * @param clazz  实体
+     * @param field 字段
+     * @param clazz 实体
      * @return 字段类型
      */
     public static ColumnType getColumnType(Field field, Class<?> clazz) {
@@ -214,7 +222,7 @@ public class TableMetadataHandler {
         }
 
         AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
+        if (autoColumn != null && (StringUtils.hasText(autoColumn.type()) || autoColumn.length() > 0 || autoColumn.decimalLength() > 0)) {
             return new ColumnType() {
                 @Override
                 public String value() {
@@ -243,6 +251,7 @@ public class TableMetadataHandler {
             };
         }
 
+        // 调用第三方实现
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnType(field, clazz);
     }
 
@@ -252,12 +261,13 @@ public class TableMetadataHandler {
             return replaceSingleQuote(column.value());
         }
         AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
+        if (autoColumn != null && StringUtils.hasText(autoColumn.comment())) {
             return replaceSingleQuote(autoColumn.comment());
         }
 
+        // 调用第三方实现
         String adapterColumnComment = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnComment(field, clazz);
-        if (adapterColumnComment != null) {
+        if (StringUtils.hasText(adapterColumnComment)) {
             return replaceSingleQuote(adapterColumnComment);
         }
 
@@ -301,6 +311,7 @@ public class TableMetadataHandler {
                 }
             };
         }
+        // 调用第三方实现
         return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnDefaultValue(field, clazz);
     }
 
@@ -319,24 +330,20 @@ public class TableMetadataHandler {
 
         ColumnName columnNameAnno = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnName.class);
         if (columnNameAnno != null) {
-            String columnName = columnNameAnno.value();
-            if (StringUtils.hasText(columnName)) {
-                return columnName;
-            }
+            return columnNameAnno.value();
         }
         AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
-            String columnName = autoColumn.value();
-            if (StringUtils.hasText(columnName)) {
-                return columnName;
-            }
+        if (autoColumn != null && StringUtils.hasText(autoColumn.value())) {
+            return autoColumn.value();
         }
 
+        // 调用第三方实现
         String realColumnName = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnName(clazz, field);
         if (StringUtils.hasText(realColumnName)) {
             return realColumnName;
         }
 
+        // 兜底
         return StringUtils.camelToUnderline(field.getName());
     }
 
