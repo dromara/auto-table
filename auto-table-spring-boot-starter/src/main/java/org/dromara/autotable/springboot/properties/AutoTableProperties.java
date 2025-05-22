@@ -105,9 +105,9 @@ public class AutoTableProperties {
 
         PropertyConfig.MysqlConfig mysqlConfig = new PropertyConfig.MysqlConfig();
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
-        mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
-        mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
-        mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
+        mysqlConfig.setTableDefaultCollation(this.mysql.getTableDefaultCollation());
+        mysqlConfig.setColumnDefaultCharset(this.mysql.getColumnDefaultCharset());
+        mysqlConfig.setColumnDefaultCollation(this.mysql.getColumnDefaultCollation());
         propertyConfig.setMysql(mysqlConfig);
 
         PropertyConfig.PgsqlConfig pgsqlConfig = new PropertyConfig.PgsqlConfig();
