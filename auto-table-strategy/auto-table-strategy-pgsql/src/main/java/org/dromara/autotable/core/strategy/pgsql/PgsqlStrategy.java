@@ -127,14 +127,12 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
     }
 
     @Override
-    public boolean checkTableNotExist(String schema, String tableName) {
-
+    public List<String> listAllTables(String schema) {
         return DataSourceManager.useConnection(connection -> {
             try {
-                boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE", "PARTITIONED TABLE"}, true);
-                return !exist;
+                return Utils.getTables(connection, schema, new String[]{"TABLE", "PARTITIONED TABLE"});
             } catch (SQLException e) {
-                throw new RuntimeException("判断数据库是否存在出错", e);
+                throw new RuntimeException("查询所有表出错", e);
             }
         });
     }

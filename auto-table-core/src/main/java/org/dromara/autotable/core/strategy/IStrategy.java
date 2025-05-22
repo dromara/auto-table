@@ -32,7 +32,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      *
      * @param entityClass 待处理的实体
      */
-    default void start(Class<?> entityClass) {
+    default TABLE_META start(Class<?> entityClass) {
 
         AutoTableGlobalConfig.getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
@@ -41,6 +41,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         this.start(tableMetadata);
 
         AutoTableGlobalConfig.getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
+
+        return tableMetadata;
     }
 
     /**
@@ -228,13 +230,22 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @return 表详情
      */
     default boolean checkTableNotExist(String schema, String tableName) {
-        // 获取Configuration对象
+        List<String> tables = listAllTables(schema);
+        boolean exist = tables.stream().anyMatch(name -> name.equalsIgnoreCase(tableName));
+        return !exist;
+    }
+
+    /**
+     * 查询所有表
+     *
+     * @return 表名集合
+     */
+    default List<String> listAllTables(String schema) {
         return DataSourceManager.useConnection(connection -> {
             try {
-                boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
-                return !exist;
+                return Utils.getTables(connection, schema, new String[]{"TABLE"});
             } catch (SQLException e) {
-                throw new RuntimeException("判断数据库是否存在出错", e);
+                throw new RuntimeException("查询所有表出错", e);
             }
         });
     }

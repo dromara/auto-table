@@ -8,14 +8,15 @@ import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
+import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
-import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
 import org.dromara.autotable.core.interceptor.BuildTableMetadataInterceptor;
 import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
@@ -58,6 +59,7 @@ public class AutoTableAutoConfig {
             ObjectProvider<CreateTableFinishCallback> createTableFinishCallback,
             ObjectProvider<ModifyTableFinishCallback> modifyTableFinishCallback,
             ObjectProvider<CompareTableFinishCallback> compareTableFinishCallbacks,
+            ObjectProvider<DeleteTableFinishCallback> deleteTableFinishCallbacks,
             ObjectProvider<RunBeforeCallback> runBeforeCallbacks,
             ObjectProvider<RunAfterCallback> runAfterCallbacks,
             ObjectProvider<ValidateFinishCallback> validateFinishCallback,
@@ -116,6 +118,8 @@ public class AutoTableAutoConfig {
         AutoTableGlobalConfig.setModifyTableFinishCallbacks(modifyTableFinishCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的比对表回调
         AutoTableGlobalConfig.setCompareTableFinishCallbacks(compareTableFinishCallbacks.orderedStream().collect(Collectors.toList()));
+        // 配置自定义的删除表回调
+        AutoTableGlobalConfig.setDeleteTableFinishCallbacks(deleteTableFinishCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的单个表执行前回调
         AutoTableGlobalConfig.setRunBeforeCallbacks(runBeforeCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的单个表执行后回调

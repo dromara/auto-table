@@ -2,10 +2,8 @@ package org.dromara.autotable.core.recordsql;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
-import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
-import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.core.utils.BeanClassUtil;
@@ -45,10 +43,13 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
                 connection.setAutoCommit(false);
                 for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
                     String schema = autoTableExecuteSqlLog.getTableSchema();
-                    boolean exists = Utils.tableIsExists(connection, schema, finalTableName, new String[]{"TABLE"}, true);
-                    if (!exists) {
+
+                    String databaseDialect = AutoTableGlobalConfig.getDatasourceHandler().getDatabaseDialect(DataSourceManager.getDatasourceName());
+                    IStrategy<?, ?> createTableStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+
+                    if (createTableStrategy.checkTableNotExist(schema, finalTableName)) {
                         // 初始化表
-                        initTable(connection, finalTableName);
+                        initTable(createTableStrategy, connection, finalTableName);
                         log.info("初始化sql记录表：{}", finalTableName);
                     }
                     // 插入数据
@@ -126,13 +127,8 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         preparedStatement.executeUpdate();
     }
 
-    private static void initTable(Connection connection, String customTableName) throws SQLException {
+    private static void initTable(IStrategy<?, ?> createTableStrategy, Connection connection, String customTableName) throws SQLException {
 
-        IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.getDatasourceHandler();
-        String datasourceName = DataSourceManager.getDatasourceName();
-        String databaseDialect = datasourceHandler.getDatabaseDialect(datasourceName);
-
-        IStrategy<?, ?> createTableStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
         // 使用相应的策略创建数据库表
         List<String> initTableSql = createTableStrategy.createTable(AutoTableExecuteSqlLog.class, tableMetadata -> {
             if (!Objects.equals(customTableName, tableMetadata.getTableName())) {

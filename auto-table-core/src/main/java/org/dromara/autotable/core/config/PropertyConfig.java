@@ -35,6 +35,14 @@ public class PropertyConfig {
      */
     private String indexPrefix = "auto_idx_";
     /**
+     * 自动删除没有声明的表：强烈不建议开启，会发生丢失数据等不可逆的操作。
+     */
+    private Boolean autoDropTable = false;
+    /**
+     * 自动删除没有声明的表的过程中，跳过指定的表，不做删除。
+     */
+    private String[] autoDropTableIgnores = new String[]{};
+    /**
      * 自动删除名称不匹配的字段：强烈不建议开启，会发生丢失数据等不可逆的操作。
      */
     private Boolean autoDropColumn = false;

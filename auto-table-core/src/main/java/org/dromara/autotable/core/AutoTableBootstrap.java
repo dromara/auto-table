@@ -2,12 +2,18 @@ package org.dromara.autotable.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.core.utils.SpiLoader;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,12 +68,49 @@ public class AutoTableBootstrap {
     private static void start(String databaseDialect, Set<Class<?>> entityClasses) {
         IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
         if (databaseStrategy != null) {
+            Map<String, Set<String>> registerTableNameMap = new HashMap<>();
             for (Class<?> entityClass : entityClasses) {
                 log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);
-                databaseStrategy.start(entityClass);
+                TableMetadata tableMetadata = databaseStrategy.start(entityClass);
+                // 记录声明过的表
+                registerTableNameMap.computeIfAbsent(tableMetadata.getSchema(), k -> new HashSet<>()).add(tableMetadata.getTableName());
             }
+
+            // 删除没有声明的表
+            deleteUnregisterTables(registerTableNameMap, databaseStrategy);
         } else {
             log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
+        }
+    }
+
+    private static void deleteUnregisterTables(Map<String, Set<String>> registerTableNameMap, IStrategy<?, ?> databaseStrategy) {
+        if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropTable()) {
+            registerTableNameMap.forEach((schema, tableNames) -> {
+                List<String> allTableNames = databaseStrategy.listAllTables(schema);
+
+                // 剔除掉指定不删除的表
+                String[] autoDropTableIgnores = AutoTableGlobalConfig.getAutoTableProperties().getAutoDropTableIgnores();
+                if (autoDropTableIgnores != null) {
+                    allTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
+                }
+
+                // 剔除掉声明过的表
+                allTableNames.removeAll(tableNames);
+
+                // 删除剩余的表
+                allTableNames.forEach(tableName -> {
+                    log.info("表{}{}没有声明，执行删除！", StringUtils.hasText(schema) ? schema + "." : "", tableName);
+                    DataSourceManager.useConnection(connection -> {
+                        String sql = databaseStrategy.dropTable(schema, tableName);
+                        try (Statement statement = connection.createStatement()) {
+                            statement.execute(sql);
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    AutoTableGlobalConfig.getDeleteTableFinishCallbacks().forEach(fn -> fn.afterDeleteTables(schema, tableName));
+                });
+            });
         }
     }
 

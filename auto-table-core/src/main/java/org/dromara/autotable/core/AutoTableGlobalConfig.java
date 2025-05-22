@@ -6,6 +6,7 @@ import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
+import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
@@ -148,6 +149,13 @@ public class AutoTableGlobalConfig {
     private static List<ModifyTableFinishCallback> modifyTableFinishCallbacks = new ArrayList<>();
 
     /**
+     * 删除表回调
+     */
+    @Setter
+    @Getter
+    private static List<DeleteTableFinishCallback> deleteTableFinishCallbacks = new ArrayList<>();
+
+    /**
      * 单个表执行前回调
      */
     @Setter
@@ -162,14 +170,14 @@ public class AutoTableGlobalConfig {
     private static List<RunAfterCallback> runAfterCallbacks = new ArrayList<>();
 
     /**
-     * 执行结束回调
+     * 所有准备工作完成，执行前回调
      */
     @Setter
     @Getter
     private static List<AutoTableReadyCallback> autoTableReadyCallbacks = new ArrayList<>();
 
     /**
-     * 执行结束回调
+     * 所有表执行结束回调
      */
     @Setter
     @Getter
