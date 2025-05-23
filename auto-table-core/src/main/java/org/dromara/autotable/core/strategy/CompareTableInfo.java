@@ -21,7 +21,7 @@ public abstract class CompareTableInfo {
      */
     protected String schema;
 
-    public CompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public CompareTableInfo(@NonNull String name, String schema) {
         this.name = name;
         this.schema = schema;
     }

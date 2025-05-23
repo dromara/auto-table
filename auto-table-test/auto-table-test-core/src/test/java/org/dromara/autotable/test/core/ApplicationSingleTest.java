@@ -58,6 +58,9 @@ public class ApplicationSingleTest {
         AutoTableBootstrap.start();
     }
 
+    /**
+     * 测试自定义添加列，是否引发表更新的问题
+     */
     @Test
     public void testMysqlConsumeAddColumn() {
 
@@ -75,6 +78,7 @@ public class ApplicationSingleTest {
         AutoTableGlobalConfig.setCompareTableFinishCallbacks(
                 Collections.singletonList((databaseDialect, tableMetadata, compareTableInfo) -> {
                     boolean needModify = compareTableInfo.needModify();
+                    // 判断是否需要更新
                     assert !needModify;
                 })
         );

@@ -40,7 +40,7 @@ public class MyBuildTableMetadataInterceptor implements BuildTableMetadataInterc
                 mysqlColumnMetadata.setName("tenant_id")
                         .setComment("所属租户id")
                         .setNotNull(true)
-                        .setType(new DatabaseTypeAndLength(MysqlTypeConstant.BIGINT, 20,null,new ArrayList<>()))
+                        .setType(new DatabaseTypeAndLength(MysqlTypeConstant.BIGINT, null,null,new ArrayList<>()))
                         .setDefaultValue("0");
                 //加载到AutoTable扫描的实体类中
                 columnMetadataList.add(mysqlColumnMetadata);

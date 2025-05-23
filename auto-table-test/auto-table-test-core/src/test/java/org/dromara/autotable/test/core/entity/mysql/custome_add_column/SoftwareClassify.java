@@ -9,58 +9,58 @@ import org.dromara.autotable.annotation.PrimaryKey;
 import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;
 
 /**
- * @Description 应用分类表
  * @author qian_gs
+ * @Description 应用分类表
  * @since 2025-04-23 09:07:09
  */
 @Getter
 @Setter
 @TenantTable
 @Accessors(chain = true)
-@AutoTable(value = "software_classify",comment = "应用分类表")
+@AutoTable(value = "software_classify", comment = "应用分类表")
 public class SoftwareClassify {
 
     /**
      * 主键id
      */
     @PrimaryKey
-    @AutoColumn(value = "id", comment = "主键id",type = MysqlTypeConstant.VARCHAR, length = 64,notNull=true)
+    @AutoColumn(value = "id", comment = "主键id", type = MysqlTypeConstant.VARCHAR, length = 64, notNull = true)
     private String id;
 
     /**
      * 排序号
      */
-    @AutoColumn(value = "order_no", comment = "排序号",type = MysqlTypeConstant.VARCHAR, length = 32)
+    @AutoColumn(value = "order_no", comment = "排序号", type = MysqlTypeConstant.VARCHAR, length = 32)
     private String orderNo;
 
     /**
      * 名称
      */
-    @AutoColumn(value = "classify_name", comment = "名称",type = MysqlTypeConstant.VARCHAR, length = 255)
+    @AutoColumn(value = "classify_name", comment = "名称", type = MysqlTypeConstant.VARCHAR, length = 255)
     private String classifyName;
 
     /**
      * 编码
      */
-    @AutoColumn(value = "classify_no", comment = "编码",type = MysqlTypeConstant.VARCHAR, length = 255)
+    @AutoColumn(value = "classify_no", comment = "编码", type = MysqlTypeConstant.VARCHAR, length = 255)
     private String classifyNo;
 
     /**
      * 描述
      */
-    @AutoColumn(value = "classify_description", comment = "描述",type = MysqlTypeConstant.VARCHAR, length = 255)
+    @AutoColumn(value = "classify_description", comment = "描述", type = MysqlTypeConstant.VARCHAR, length = 255)
     private String classifyDescription;
 
     /**
      * 图标
      */
-    @AutoColumn(value = "classify_icon", comment = "图标",type = MysqlTypeConstant.VARCHAR, length = 255)
+    @AutoColumn(value = "classify_icon", comment = "图标", type = MysqlTypeConstant.VARCHAR, length = 255)
     private String classifyIcon;
 
     /**
      * 删除状态->DelStatusEnum
      */
-    @AutoColumn(value = "del_status", comment = "删除状态",type = MysqlTypeConstant.CHAR, length = 1)
+    @AutoColumn(value = "del_status", comment = "删除状态", type = MysqlTypeConstant.CHAR, length = 1)
     private String delStatus;
 
     /**

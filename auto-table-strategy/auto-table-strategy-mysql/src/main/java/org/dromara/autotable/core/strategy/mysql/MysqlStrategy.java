@@ -389,6 +389,10 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
             isTypeDiff = !fullType.equalsIgnoreCase(dbColumnType);
         }
 
+        if(isTypeDiff) {
+            return true;
+        }
+
 
         /* 判断限定符是否相同 */
         boolean dbHasQualifier = dbColumnTypeArr.size() > 1;
@@ -406,7 +410,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
             }
         }
 
-        return isTypeDiff || isQualifierDiff;
+        return isQualifierDiff;
     }
 
     private static boolean isCommentChanged(InformationSchemaColumn informationSchemaColumn, MysqlColumnMetadata mysqlColumnMetadata) {
