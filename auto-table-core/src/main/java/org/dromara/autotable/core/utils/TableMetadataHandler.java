@@ -144,8 +144,13 @@ public class TableMetadataHandler {
         }
 
         // 调用第三方实现
-        boolean isIgnoreField = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isIgnoreField(field, clazz);
-        return !isIgnoreField;
+        Boolean isIgnoreField = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isIgnoreField(field, clazz);
+        if(isIgnoreField != null) {
+            return !isIgnoreField;
+        }
+
+        // 所有字段均不被排除
+        return true;
     }
 
     public static boolean isPrimary(Field field, Class<?> clazz) {
@@ -156,7 +161,12 @@ public class TableMetadataHandler {
         }
 
         // 调用第三方实现
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isPrimary(field, clazz);
+        Boolean primary = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isPrimary(field, clazz);
+        if (primary != null) {
+            return primary;
+        }
+
+        return false;
     }
 
     public static boolean isAutoIncrement(Field field, Class<?> clazz) {
