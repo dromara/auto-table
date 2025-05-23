@@ -47,7 +47,7 @@ public class DorisHelper {
     }
 
     public static String getIndexName(String indexName, String column, String type) {
-        String indexPrefix = AutoTableGlobalConfig.getAutoTableProperties().getIndexPrefix();
+        String indexPrefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getIndexPrefix();
         if (StringUtils.hasText(indexName)) {
             return indexPrefix + indexName;
         }
@@ -55,8 +55,8 @@ public class DorisHelper {
     }
 
     public static String getRollupName(String name, List<String> columns) {
-        String rollupPrefix = AutoTableGlobalConfig.getAutoTableProperties().getDoris().getRollupPrefix();
-        int maxLength = AutoTableGlobalConfig.getAutoTableProperties().getDoris().getRollupAutoNameMaxLength();
+        String rollupPrefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getDoris().getRollupPrefix();
+        int maxLength = AutoTableGlobalConfig.instance().getAutoTableProperties().getDoris().getRollupAutoNameMaxLength();
         if (StringUtils.hasText(name)) {
             return rollupPrefix + name;
         }

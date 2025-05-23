@@ -8,23 +8,21 @@ import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.Version;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApplicationAllTest {
 
-    @Before
+    @BeforeEach
     public void init() {
 
         // 配置信息
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         // create模式
         autoTableProperties.setMode(RunMode.create);
         // 开启 删除不存在的列
@@ -32,7 +30,13 @@ public class ApplicationAllTest {
         // 父类字段加到子类的前面
         autoTableProperties.setSuperInsertPosition(PropertyConfig.SuperInsertPosition.after);
 
-        AutoTableGlobalConfig.setAutoTableProperties(autoTableProperties);
+        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties);
+    }
+
+    @AfterEach
+    void cleanup() {
+        // 清除当前线程中的配置，防止下一个测试复用
+        AutoTableGlobalConfig.clear();
     }
 
     @Test
@@ -41,7 +45,7 @@ public class ApplicationAllTest {
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
         // 指定扫描包
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
                 "org.dromara.autotable.test.core.entity.mysql"
         });
@@ -52,11 +56,11 @@ public class ApplicationAllTest {
         recordSqlProperties.setVersion(Version.VALUE);
         // 自定义，以Flyway的格式记录sql
         recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.custom);
-        AutoTableGlobalConfig.getAutoTableProperties().setRecordSql(recordSqlProperties);
-        AutoTableGlobalConfig.setCustomRecordSqlHandler(new RecordSqlFlywayHandler("/Users/don/Downloads/sqlLogs"));
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
+        AutoTableGlobalConfig.instance().setCustomRecordSqlHandler(new RecordSqlFlywayHandler("/Users/don/Downloads/sqlLogs"));
 
         // 开始
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 开始
         AutoTableBootstrap.start();
     }
@@ -67,7 +71,7 @@ public class ApplicationAllTest {
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
         // 指定扫描包
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
                 "org.dromara.autotable.test.core.entity.mysql"
         });
@@ -79,10 +83,10 @@ public class ApplicationAllTest {
         // 自定义，以文件形式记录sql
         recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.file);
         recordSqlProperties.setFolderPath("/Users/don/Downloads/sqlLogs");
-        AutoTableGlobalConfig.getAutoTableProperties().setRecordSql(recordSqlProperties);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
 
         // 开始
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 开始
         AutoTableBootstrap.start();
     }
@@ -92,9 +96,9 @@ public class ApplicationAllTest {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
                 "org.dromara.autotable.test.core.entity.mysql"
         });
@@ -102,9 +106,9 @@ public class ApplicationAllTest {
         AutoTableBootstrap.start();
 
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
         // 测试所有的公共测试类
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common_update",
                 "org.dromara.autotable.test.core.entity.mysql_update",
         });
@@ -117,9 +121,9 @@ public class ApplicationAllTest {
 
         initSqlSessionFactory("mybatis-config-pgsql.xml");
 
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 测试所有的公共测试类
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
                 "org.dromara.autotable.test.core.entity.pgsql",
         });
@@ -128,9 +132,9 @@ public class ApplicationAllTest {
 
 
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
         // 测试所有的公共测试类
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common_update",
                 "org.dromara.autotable.test.core.entity.pgsql_update",
         });
@@ -146,17 +150,17 @@ public class ApplicationAllTest {
         testRecordSqlByDB();
 
         // 测试
-        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class<?>[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class<?>[]{
                 org.dromara.autotable.test.core.entity.pgsql.TestIndexSort.class
         });
 
         /* 新建表 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 开始
         AutoTableBootstrap.start();
 
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
         // 开始
         AutoTableBootstrap.start();
     }
@@ -168,9 +172,9 @@ public class ApplicationAllTest {
 
         testRecordSqlByDB();
 
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 测试所有的公共测试类
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
                 "org.dromara.autotable.test.core.entity.h2",
         });
@@ -179,9 +183,9 @@ public class ApplicationAllTest {
 
 
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
         // 测试所有的公共测试类
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common_update",
                 "org.dromara.autotable.test.core.entity.h2_update",
         });
@@ -194,8 +198,8 @@ public class ApplicationAllTest {
 
         initSqlSessionFactory("mybatis-config-sqlite.xml");
 
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common",
                 "org.dromara.autotable.test.core.entity.sqlite",
         });
@@ -204,8 +208,8 @@ public class ApplicationAllTest {
 
 
         /* 修改表的逻辑 */
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
-        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
                 "org.dromara.autotable.test.core.entity.common_update",
                 "org.dromara.autotable.test.core.entity.sqlite_update",
         });
@@ -222,7 +226,7 @@ public class ApplicationAllTest {
         // 以数据库的方式记录sql
         recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
         recordSqlProperties.setTableName("my_record_sql");
-        AutoTableGlobalConfig.getAutoTableProperties().setRecordSql(recordSqlProperties);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
     }
 
     private void initSqlSessionFactory(String resource) {

@@ -51,7 +51,7 @@ public class RecordSqlFileHandler implements RecordSqlHandler {
      */
     protected Path getFilePath(AutoTableExecuteSqlLog autoTableExecuteSqlLog) {
 
-        PropertyConfig.RecordSqlProperties recordSql = AutoTableGlobalConfig.getAutoTableProperties().getRecordSql();
+        PropertyConfig.RecordSqlProperties recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql();
 
         String folderPath = recordSql.getFolderPath();
 
@@ -68,7 +68,7 @@ public class RecordSqlFileHandler implements RecordSqlHandler {
     /**
      * 希望自定义文件名称的话，可以重写此方法
      */
-    private String getFileName(AutoTableExecuteSqlLog autoTableExecuteSqlLog) {
+    protected String getFileName(AutoTableExecuteSqlLog autoTableExecuteSqlLog) {
 
         StringBuilder fileName = new StringBuilder();
         // 添加版本号

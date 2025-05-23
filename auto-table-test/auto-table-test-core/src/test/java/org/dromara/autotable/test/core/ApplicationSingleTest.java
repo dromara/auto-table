@@ -16,10 +16,8 @@ import org.dromara.autotable.core.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
 import org.dromara.autotable.test.core.entity.mysql.custome_add_column.MyBuildTableMetadataInterceptor;
 import org.dromara.autotable.test.core.entity.pgsql.TestNoColumnComment;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,18 +25,22 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-@Disabled
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApplicationSingleTest {
+
+    @AfterEach
+    void cleanup() {
+        // 清除当前线程中的配置，防止下一个测试复用
+        AutoTableGlobalConfig.clear();
+    }
 
     @Test
     public void testMysqlColumnSort() {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
-        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
                 org.dromara.autotable.test.core.entity.mysql.TestColumnSort.class
         });
 
@@ -50,7 +52,7 @@ public class ApplicationSingleTest {
             assert "id".equals(columnMetadataList.get(0).getName());
             assert "update_time".equals(columnMetadataList.get(columnMetadataList.size() - 1).getName());
         };
-        AutoTableGlobalConfig.setCreateTableInterceptors(Collections.singletonList(
+        AutoTableGlobalConfig.instance().setCreateTableInterceptors(Collections.singletonList(
                 createTableInterceptor
         ));
 
@@ -66,23 +68,23 @@ public class ApplicationSingleTest {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
 
-        AutoTableGlobalConfig.setBuildTableMetadataInterceptors(Collections.singletonList(new MyBuildTableMetadataInterceptor()));
+        AutoTableGlobalConfig.instance().setBuildTableMetadataInterceptors(Collections.singletonList(new MyBuildTableMetadataInterceptor()));
         // 指定扫描包
-        AutoTableGlobalConfig.getAutoTableProperties().setModelClass(new Class[]{
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
                 org.dromara.autotable.test.core.entity.mysql.custome_add_column.SoftwareClassify.class
         });
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 开始
         AutoTableBootstrap.start();
 
-        AutoTableGlobalConfig.setCompareTableFinishCallbacks(
+        AutoTableGlobalConfig.instance().setCompareTableFinishCallbacks(
                 Collections.singletonList((databaseDialect, tableMetadata, compareTableInfo) -> {
                     boolean needModify = compareTableInfo.needModify();
                     // 判断是否需要更新
                     assert !needModify;
                 })
         );
-        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
         // 开始
         AutoTableBootstrap.start();
     }
@@ -93,7 +95,7 @@ public class ApplicationSingleTest {
         initSqlSessionFactory("mybatis-config-h2.xml");
 
         /* 修改表的逻辑 */
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
 
         autoTableProperties.setMode(RunMode.create);
         // 开启 删除不存在的列
@@ -114,7 +116,7 @@ public class ApplicationSingleTest {
         initSqlSessionFactory("mybatis-config-pgsql.xml");
 
         /* 修改表的逻辑 */
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
 
         autoTableProperties.setMode(RunMode.update);
         // 测试所有的公共测试类
@@ -131,7 +133,7 @@ public class ApplicationSingleTest {
         initSqlSessionFactory("mybatis-config-pgsql.xml");
 
         /* 修改表的逻辑 */
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
 
         autoTableProperties.setMode(RunMode.update);
         // 测试所有的公共测试类

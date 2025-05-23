@@ -7,18 +7,22 @@ import org.dromara.autotable.test.core.scan.a.b.B;
 import org.dromara.autotable.test.core.scan.a.b.c.C;
 import org.dromara.autotable.test.core.scan.a.b.c.d.D;
 import org.dromara.autotable.test.core.scan.a.b1.B1;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApplicationScanClassTest {
+
+    @AfterEach
+    void cleanup() {
+        // 清除当前线程中的配置，防止下一个测试复用
+        AutoTableGlobalConfig.clear();
+    }
 
     @Test
     public void scan1() {
-        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.getAutoTableClassScanner();
+        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.instance().getAutoTableClassScanner();
         Set<Class<?>> scan = autoTableClassScanner.scan(new String[]{"org.dromara.autotable.test.core.scan.a"});
         assert scan != null;
         assert scan.size() == 5;
@@ -31,7 +35,7 @@ public class ApplicationScanClassTest {
 
     @Test
     public void scan2() {
-        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.getAutoTableClassScanner();
+        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.instance().getAutoTableClassScanner();
         Set<Class<?>> scan = autoTableClassScanner.scan(new String[]{"org.dromara.autotable.test.core.scan.a.**"});
         assert scan != null;
         assert scan.size() == 4;
@@ -43,7 +47,7 @@ public class ApplicationScanClassTest {
 
     @Test
     public void scan3() {
-        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.getAutoTableClassScanner();
+        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.instance().getAutoTableClassScanner();
         Set<Class<?>> scan = autoTableClassScanner.scan(new String[]{"org.dromara.autotable.test.core.scan.a.b"});
         assert scan != null;
         assert scan.size() == 3;
@@ -54,7 +58,7 @@ public class ApplicationScanClassTest {
 
     @Test
     public void scan4() {
-        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.getAutoTableClassScanner();
+        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.instance().getAutoTableClassScanner();
         Set<Class<?>> scan = autoTableClassScanner.scan(new String[]{"org.dromara.autotable.test.core.scan.*.b"});
         assert scan != null;
         assert scan.size() == 3;
@@ -65,7 +69,7 @@ public class ApplicationScanClassTest {
 
     @Test
     public void scan5() {
-        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.getAutoTableClassScanner();
+        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.instance().getAutoTableClassScanner();
         Set<Class<?>> scan = autoTableClassScanner.scan(new String[]{"org.dromara.autotable.test.core.scan.*.b.*"});
         assert scan != null;
         assert scan.size() == 2;
@@ -75,7 +79,7 @@ public class ApplicationScanClassTest {
 
     @Test
     public void scan6() {
-        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.getAutoTableClassScanner();
+        AutoTableClassScanner autoTableClassScanner = AutoTableGlobalConfig.instance().getAutoTableClassScanner();
         Set<Class<?>> scan = autoTableClassScanner.scan(new String[]{"org.dromara.autotable.test.core.scan.*.b*"});
         assert scan != null;
         assert scan.size() == 1;

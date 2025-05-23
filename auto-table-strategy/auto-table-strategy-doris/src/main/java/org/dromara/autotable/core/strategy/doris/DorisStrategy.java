@@ -177,8 +177,8 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
     @Override
     public List<String> modifyTable(DorisCompareTableInfo compareTableInfo) {
         // 获取AutoTable全局配置中关于Doris的更新限制设置
-        long updateLimitTableDataLength = AutoTableGlobalConfig.getAutoTableProperties().getDoris().getUpdateLimitTableDataLength();
-        boolean updateBackupOldTable = AutoTableGlobalConfig.getAutoTableProperties().getDoris().isUpdateBackupOldTable();
+        long updateLimitTableDataLength = AutoTableGlobalConfig.instance().getAutoTableProperties().getDoris().getUpdateLimitTableDataLength();
+        boolean updateBackupOldTable = AutoTableGlobalConfig.instance().getAutoTableProperties().getDoris().isUpdateBackupOldTable();
 
         // 获取当前时间，用于生成临时表名和备份表名
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));

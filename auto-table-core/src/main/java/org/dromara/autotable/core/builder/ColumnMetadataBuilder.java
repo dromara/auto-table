@@ -73,7 +73,7 @@ public class ColumnMetadataBuilder {
     }
 
     protected DatabaseTypeAndLength getTypeAndLength(String databaseDialect, Class<?> clazz, Field field) {
-        return AutoTableGlobalConfig.getJavaTypeToDatabaseTypeConverter().convert(databaseDialect, clazz, field);
+        return AutoTableGlobalConfig.instance().getJavaTypeToDatabaseTypeConverter().convert(databaseDialect, clazz, field);
     }
 
     protected String getDefaultValue(DatabaseTypeAndLength typeAndLength, ColumnDefault columnDefault) {

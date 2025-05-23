@@ -40,7 +40,7 @@ public class DorisMetadataBuilder {
         String tableComment = TableMetadataHandler.getTableComment(clazz);
 
         // 查找DorisTable注解
-        DorisTable dorisTable = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(clazz, DorisTable.class);
+        DorisTable dorisTable = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(clazz, DorisTable.class);
         if (dorisTable == null) {
             throw new IllegalStateException(clazz.getSimpleName() + "缺少@" + DorisTable.class.getSimpleName());
         }
@@ -55,7 +55,7 @@ public class DorisMetadataBuilder {
                     DorisColumnMetadata columnMetadata = new DorisColumnMetadata(delegation);
                     columnMetadata.setFieldName(field.getName());
                     columnMetadata.setPosition(position);
-                    DorisColumn dorisColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, DorisColumn.class);
+                    DorisColumn dorisColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, DorisColumn.class);
                     if (dorisColumn == null) {
                         return columnMetadata;
                     }

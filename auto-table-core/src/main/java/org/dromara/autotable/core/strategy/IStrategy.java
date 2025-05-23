@@ -34,13 +34,13 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     default TABLE_META start(Class<?> entityClass) {
 
-        AutoTableGlobalConfig.getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
+        AutoTableGlobalConfig.instance().getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
         TABLE_META tableMetadata = this.analyseClass(entityClass);
 
         this.start(tableMetadata);
 
-        AutoTableGlobalConfig.getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
+        AutoTableGlobalConfig.instance().getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
 
         return tableMetadata;
     }
@@ -52,9 +52,9 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     default void start(TABLE_META tableMetadata) {
         // 拦截表信息，供用户自定义修改
-        AutoTableGlobalConfig.getBuildTableMetadataInterceptors().forEach(fn -> fn.intercept(this.databaseDialect(), tableMetadata));
+        AutoTableGlobalConfig.instance().getBuildTableMetadataInterceptors().forEach(fn -> fn.intercept(this.databaseDialect(), tableMetadata));
 
-        RunMode runMode = AutoTableGlobalConfig.getAutoTableProperties().getMode();
+        RunMode runMode = AutoTableGlobalConfig.instance().getAutoTableProperties().getMode();
 
         switch (runMode) {
             case validate:
@@ -86,7 +86,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         // 检查数据库数据模型与实体是否一致
         boolean tableNotExist = this.checkTableNotExist(schema, tableName);
         if (tableNotExist) {
-            AutoTableGlobalConfig.getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(false, this.databaseDialect(), null));
+            AutoTableGlobalConfig.instance().getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(false, this.databaseDialect(), null));
             throw new RuntimeException(String.format("启动失败，%s中不存在表%s", this.databaseDialect(), tableMetadata.getTableName()));
         }
 
@@ -94,10 +94,10 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         COMPARE_TABLE_INFO compareTableInfo = this.compareTable(tableMetadata);
         if (compareTableInfo.needModify()) {
             log.warn("{}表结构不一致：\n{}", tableMetadata.getTableName(), compareTableInfo.validateFailedMessage());
-            AutoTableGlobalConfig.getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(false, this.databaseDialect(), compareTableInfo));
+            AutoTableGlobalConfig.instance().getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(false, this.databaseDialect(), compareTableInfo));
             throw new RuntimeException(String.format("启动失败，%s数据表%s与实体不匹配", this.databaseDialect(), tableMetadata.getTableName()));
         }
-        AutoTableGlobalConfig.getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(true, this.databaseDialect(), compareTableInfo));
+        AutoTableGlobalConfig.instance().getValidateFinishCallbacks().forEach(fn -> fn.validateFinish(true, this.databaseDialect(), compareTableInfo));
     }
 
     /**
@@ -145,14 +145,14 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
         // 当表存在，比对数据库表结构与表元数据的差异
         COMPARE_TABLE_INFO compareTableInfo = this.compareTable(tableMetadata);
-        AutoTableGlobalConfig.getCompareTableFinishCallbacks().forEach(fn -> fn.afterCompareTable(this.databaseDialect(), tableMetadata, compareTableInfo));
+        AutoTableGlobalConfig.instance().getCompareTableFinishCallbacks().forEach(fn -> fn.afterCompareTable(this.databaseDialect(), tableMetadata, compareTableInfo));
         if (compareTableInfo.needModify()) {
             // 修改表信息
             log.info("修改表：{}", (StringUtils.hasText(schema) ? schema + "." : "") + tableName);
-            AutoTableGlobalConfig.getModifyTableInterceptors().forEach(fn -> fn.beforeModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo));
+            AutoTableGlobalConfig.instance().getModifyTableInterceptors().forEach(fn -> fn.beforeModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo));
             List<String> sqlList = this.modifyTable(compareTableInfo);
             this.executeSql(tableMetadata, sqlList);
-            AutoTableGlobalConfig.getModifyTableFinishCallbacks().forEach(fn -> fn.afterModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo));
+            AutoTableGlobalConfig.instance().getModifyTableFinishCallbacks().forEach(fn -> fn.afterModifyTable(this.databaseDialect(), tableMetadata, compareTableInfo));
         }
     }
 
@@ -167,10 +167,10 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         String tableName = tableMetadata.getTableName();
         log.info("创建表：{}", (StringUtils.hasText(schema) ? schema + "." : "") + tableName);
 
-        AutoTableGlobalConfig.getCreateTableInterceptors().forEach(fn -> fn.beforeCreateTable(this.databaseDialect(), tableMetadata));
+        AutoTableGlobalConfig.instance().getCreateTableInterceptors().forEach(fn -> fn.beforeCreateTable(this.databaseDialect(), tableMetadata));
         List<String> sqlList = this.createTable(tableMetadata);
         this.executeSql(tableMetadata, sqlList);
-        AutoTableGlobalConfig.getCreateTableFinishCallbacks().forEach(fn -> fn.afterCreateTable(this.databaseDialect(), tableMetadata));
+        AutoTableGlobalConfig.instance().getCreateTableFinishCallbacks().forEach(fn -> fn.afterCreateTable(this.databaseDialect(), tableMetadata));
     }
 
     /**
@@ -188,7 +188,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                 connection.setAutoCommit(false);
 
                 try (Statement statement = connection.createStatement()) {
-                    boolean recordSql = AutoTableGlobalConfig.getAutoTableProperties().getRecordSql().isEnable();
+                    boolean recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql().isEnable();
                     for (String sql : sqlList) {
                         // sql末尾添加;
                         if (!sql.endsWith(";")) {

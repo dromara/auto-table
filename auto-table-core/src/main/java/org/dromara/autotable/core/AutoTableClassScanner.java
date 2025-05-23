@@ -41,9 +41,9 @@ public abstract class AutoTableClassScanner {
         Set<Class<? extends Annotation>> excludeAnnotations = getExcludeAnnotations();
 
         // 经过自定义的拦截器，修改最终影响自动建表的注解
-        AutoTableGlobalConfig.getAutoTableAnnotationInterceptors().forEach(fn -> fn.intercept(includeAnnotations, excludeAnnotations));
+        AutoTableGlobalConfig.instance().getAutoTableAnnotationInterceptors().forEach(fn -> fn.intercept(includeAnnotations, excludeAnnotations));
 
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
 
         return Arrays.stream(basePackages)
                 .map(basePackage -> {

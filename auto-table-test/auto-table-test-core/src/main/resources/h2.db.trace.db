@@ -3026,3 +3026,26 @@ java.sql.SQLClientInfoException: Client info name 'ApplicationName' not supporte
 2025-04-23 21:04:10.437792+08:00 jdbc[4]: exception
 org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "ALTER TABLE PUBLIC.test_h2 DROP COLUMN [*]null;"; expected "identifier"; SQL statement:
 ALTER TABLE PUBLIC.test_h2 DROP COLUMN null; [42001-224]
+2025-05-23 14:50:53.771799+08:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "CREATE TABLE PUBLIC.test_column_zerofill (phone INTEGER[*](13)   );"; expected "ARRAY, INVISIBLE, VISIBLE, NOT NULL, DEFAULT, GENERATED, ON UPDATE, NOT NULL, DEFAULT ON NULL, SEQUENCE, SELECTIVITY, COMMENT, CONSTRAINT, COMMENT, PRIMARY KEY, UNIQUE, NOT NULL, CHECK, REFERENCES, ,, )"; SQL statement:
+CREATE TABLE PUBLIC.test_column_zerofill (phone INTEGER(13)   ); [42001-224]
+2025-05-23 15:12:05.224000+08:00 jdbc[6]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "CREATE TABLE PUBLIC.test_column_auto_increment (num INTEGER[*](13) NOT NULL  auto_increment);"; expected "ARRAY, INVISIBLE, VISIBLE, NOT NULL, DEFAULT, GENERATED, ON UPDATE, NOT NULL, DEFAULT ON NULL, SEQUENCE, SELECTIVITY, COMMENT, CONSTRAINT, COMMENT, PRIMARY KEY, UNIQUE, NOT NULL, CHECK, REFERENCES, ,, )"; SQL statement:
+CREATE TABLE PUBLIC.test_column_auto_increment (num INTEGER(13) NOT NULL  auto_increment); [42001-224]
+2025-05-23 15:13:09.301156+08:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "CREATE TABLE PUBLIC.test_column_zerofill (phone INTEGER[*](13)   );"; expected "ARRAY, INVISIBLE, VISIBLE, NOT NULL, DEFAULT, GENERATED, ON UPDATE, NOT NULL, DEFAULT ON NULL, SEQUENCE, SELECTIVITY, COMMENT, CONSTRAINT, COMMENT, PRIMARY KEY, UNIQUE, NOT NULL, CHECK, REFERENCES, ,, )"; SQL statement:
+CREATE TABLE PUBLIC.test_column_zerofill (phone INTEGER(13)   ); [42001-224]
+2025-05-23 15:22:27.079548+08:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientConnectionException: Database is already closed (to disable automatic closing at VM shutdown, add ";DB_CLOSE_ON_EXIT=FALSE" to the db URL) [90121-224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.checkClosed(JdbcConnection.java:1425)
+	at org.h2.jdbc.JdbcConnection.getAutoCommit(JdbcConnection.java:465)
+	at org.apache.ibatis.datasource.pooled.PooledDataSource.forceCloseAll(PooledDataSource.java:367)
+	at org.apache.ibatis.datasource.pooled.PooledDataSource.finalize(PooledDataSource.java:625)
+	at java.base/java.lang.System$2.invokeFinalize(System.java:2384)
+	at java.base/java.lang.ref.Finalizer.runFinalizer(Finalizer.java:96)
+	at java.base/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:174)

@@ -26,7 +26,7 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
     @Override
     public void record(List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs) {
 
-        PropertyConfig.RecordSqlProperties recordSqlConfig = AutoTableGlobalConfig.getAutoTableProperties().getRecordSql();
+        PropertyConfig.RecordSqlProperties recordSqlConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql();
 
         // 优先使用自定义的表名，没有则根据统一的风格定义表名
         String tableName = recordSqlConfig.getTableName();
@@ -44,8 +44,8 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
                 for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
                     String schema = autoTableExecuteSqlLog.getTableSchema();
 
-                    String databaseDialect = AutoTableGlobalConfig.getDatasourceHandler().getDatabaseDialect(DataSourceManager.getDatasourceName());
-                    IStrategy<?, ?> createTableStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+                    String databaseDialect = AutoTableGlobalConfig.instance().getDatasourceHandler().getDatabaseDialect(DataSourceManager.getDatasourceName());
+                    IStrategy<?, ?> createTableStrategy = AutoTableGlobalConfig.instance().getStrategy(databaseDialect);
 
                     if (createTableStrategy.checkTableNotExist(schema, finalTableName)) {
                         // 初始化表

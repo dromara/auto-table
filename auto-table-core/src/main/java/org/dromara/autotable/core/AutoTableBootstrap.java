@@ -30,7 +30,7 @@ public class AutoTableBootstrap {
 
     public static void start() {
 
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
 
         // 判断模式，none或者禁用，不启动
         if (autoTableProperties.getMode() == RunMode.none || !autoTableProperties.getEnable()) {
@@ -49,10 +49,10 @@ public class AutoTableBootstrap {
         // 扫描所有的类，过滤出指定注解的实体
         Set<Class<?>> classes = findAllEntityClass(autoTableProperties);
 
-        AutoTableGlobalConfig.getAutoTableReadyCallbacks().forEach(fn -> fn.ready(classes));
+        AutoTableGlobalConfig.instance().getAutoTableReadyCallbacks().forEach(fn -> fn.ready(classes));
 
         // 获取对应的数据源，根据不同数据库方言，执行不同的处理
-        IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.getDatasourceHandler();
+        IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.instance().getDatasourceHandler();
         datasourceHandler.handleAnalysis(classes, (databaseDialect, entityClasses) -> {
 
             // 同一个数据源下，检查重名的表
@@ -61,12 +61,12 @@ public class AutoTableBootstrap {
             // 查找对应的数据源策略并执行
             start(databaseDialect, entityClasses);
         });
-        AutoTableGlobalConfig.getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
+        AutoTableGlobalConfig.instance().getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
         log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
     }
 
     private static void start(String databaseDialect, Set<Class<?>> entityClasses) {
-        IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.getStrategy(databaseDialect);
+        IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.instance().getStrategy(databaseDialect);
         if (databaseStrategy != null) {
             Map<String, Set<String>> registerTableNameMap = new HashMap<>();
             for (Class<?> entityClass : entityClasses) {
@@ -84,12 +84,12 @@ public class AutoTableBootstrap {
     }
 
     private static void deleteUnregisterTables(Map<String, Set<String>> registerTableNameMap, IStrategy<?, ?> databaseStrategy) {
-        if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropTable()) {
+        if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable()) {
             registerTableNameMap.forEach((schema, tableNames) -> {
                 List<String> allTableNames = databaseStrategy.listAllTables(schema);
 
                 // 剔除掉指定不删除的表
-                String[] autoDropTableIgnores = AutoTableGlobalConfig.getAutoTableProperties().getAutoDropTableIgnores();
+                String[] autoDropTableIgnores = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTableIgnores();
                 if (autoDropTableIgnores != null) {
                     allTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
                 }
@@ -108,7 +108,7 @@ public class AutoTableBootstrap {
                             throw new RuntimeException(e);
                         }
                     });
-                    AutoTableGlobalConfig.getDeleteTableFinishCallbacks().forEach(fn -> fn.afterDeleteTables(schema, tableName));
+                    AutoTableGlobalConfig.instance().getDeleteTableFinishCallbacks().forEach(fn -> fn.afterDeleteTables(schema, tableName));
                 });
             });
         }
@@ -131,7 +131,7 @@ public class AutoTableBootstrap {
         Class<?>[] modelClass = autoTableProperties.getModelClass();
         Set<Class<?>> classes = new HashSet<>(Arrays.asList(modelClass));
         String[] packs = getModelPackage(autoTableProperties);
-        Set<Class<?>> packClasses = AutoTableGlobalConfig.getAutoTableClassScanner().scan(packs);
+        Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(packs);
         classes.addAll(packClasses);
         return classes;
     }
@@ -143,7 +143,7 @@ public class AutoTableBootstrap {
         } else {
             for (IStrategy provider : strategies) {
                 log.info("注册数据库策略：{}", provider.databaseDialect());
-                AutoTableGlobalConfig.addStrategy(provider);
+                AutoTableGlobalConfig.instance().addStrategy(provider);
             }
         }
     }

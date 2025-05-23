@@ -11,27 +11,30 @@ import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.test.core.entity.mysql.TestColumnCharset;
 import org.dromara.autotable.test.core.entity.mysql.TestColumnSort;
 import org.dromara.autotable.test.core.entity.mysql.TestMysqlDefineColumn;
-import org.junit.Assert;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
-@Disabled
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApplicationDropTableTest {
 
+    @AfterEach
+    void cleanup() {
+        // 清除当前线程中的配置，防止下一个测试复用
+        AutoTableGlobalConfig.clear();
+    }
+
     @Test
-    public void testMysqlColumnSort() {
+    public void test() {
 
         initSqlSessionFactory("mybatis-config-mysql-drop-table.xml");
 
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         autoTableProperties.setMode(RunMode.create);
         // 指定扫描包
         Class[] modelClass = {
@@ -41,15 +44,17 @@ public class ApplicationDropTableTest {
         };
         autoTableProperties.setModelClass(modelClass);
 
-        AutoTableGlobalConfig.setAutoTableReadyCallbacks(Collections.singletonList(tableClasses -> {
+        AutoTableGlobalConfig.instance().setAutoTableReadyCallbacks(Collections.singletonList(tableClasses -> {
+            // 确认三张表
             boolean sameSize = tableClasses.size() == modelClass.length;
+            Assertions.assertTrue(sameSize, "表数量不一致，请检查 " + modelClass.length + " vs " + tableClasses.size());
             boolean containsAll = tableClasses.containsAll(Arrays.asList(modelClass));
-            Assert.assertTrue(sameSize && containsAll);
+            Assertions.assertTrue(containsAll, tableClasses.stream().map(Class::getSimpleName).collect(Collectors.joining(",")) + " 不完全包含 " + Arrays.stream(modelClass).map(Class::getSimpleName).collect(Collectors.joining(",")));
         }));
 
         // 开始创建
         AutoTableBootstrap.start();
-        AutoTableGlobalConfig.setAutoTableReadyCallbacks(Collections.emptyList());
+        AutoTableGlobalConfig.instance().setAutoTableReadyCallbacks(Collections.emptyList());
 
 
         /* 开始修改表，同时删掉一个对象，观察数据库是否执行了删除指定的表 */
@@ -62,8 +67,9 @@ public class ApplicationDropTableTest {
         autoTableProperties.setModelClass(new Class[]{
                 modelClass[0],
         });
-        AutoTableGlobalConfig.setDeleteTableFinishCallbacks(Collections.singletonList((schema, tableName) -> {
-            Assert.assertEquals(StringUtils.camelToUnderline(modelClass[1].getSimpleName()), tableName);
+        AutoTableGlobalConfig.instance().setDeleteTableFinishCallbacks(Collections.singletonList((schema, tableName) -> {
+            // 确认删除一张表
+            Assertions.assertEquals(StringUtils.camelToUnderline(modelClass[1].getSimpleName()), tableName);
         }));
         // 开始修改表
         AutoTableBootstrap.start();
