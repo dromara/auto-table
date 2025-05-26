@@ -50,15 +50,6 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-            <!-- 发布插件 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>${maven-deploy-plugin.version}</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
             <!--跳过加密-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
