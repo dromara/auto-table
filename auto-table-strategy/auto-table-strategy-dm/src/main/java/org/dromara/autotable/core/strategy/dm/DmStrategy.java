@@ -169,7 +169,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
         }
 
         // 处理需要删除的字段
-        if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropColumn()) {
+        if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
             compareInfo.addDropColumns(columnMap.keySet());
         }
 
@@ -268,7 +268,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
         }
 
         // 处理需要删除的索引
-        if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropIndex()) {
+        if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropIndex()) {
             compareInfo.addDropIndexes(indexMap.keySet());
         }
     }
