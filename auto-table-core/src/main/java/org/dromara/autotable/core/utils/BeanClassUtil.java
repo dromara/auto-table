@@ -61,7 +61,7 @@ public class BeanClassUtil {
     public static List<Field> sortAllFieldForColumn(Class<?> beanClass) {
 
         // 获取父类追加到子类位置的配置
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         PropertyConfig.SuperInsertPosition superInsertPosition = autoTableProperties.getSuperInsertPosition();
 
         List<Field> fieldList = new ArrayList<>();
@@ -72,7 +72,7 @@ public class BeanClassUtil {
         List<Field> sortFieldList = new ArrayList<>(Collections.nCopies(fieldList.size(), null));
         // 未指定排序的字段。sortFieldList + unSortFieldList = fieldList
         List<Field> unSortFieldList = new ArrayList<>();
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
         for (Field field : fieldList) {
             AutoColumn autoColumn = autoTableAnnotationFinder.find(field, AutoColumn.class);
             // 记录指定排序的字段到指定位置

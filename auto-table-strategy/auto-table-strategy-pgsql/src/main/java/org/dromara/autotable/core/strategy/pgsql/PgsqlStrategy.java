@@ -127,14 +127,12 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
     }
 
     @Override
-    public boolean checkTableNotExist(String schema, String tableName) {
-
+    public List<String> listAllTables(String schema) {
         return DataSourceManager.useConnection(connection -> {
             try {
-                boolean exist = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE", "PARTITIONED TABLE"}, true);
-                return !exist;
+                return Utils.getTables(connection, schema, new String[]{"TABLE", "PARTITIONED TABLE"});
             } catch (SQLException e) {
-                throw new RuntimeException("判断数据库是否存在出错", e);
+                throw new RuntimeException("查询所有表出错", e);
             }
         });
     }
@@ -172,11 +170,11 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
             }
 
             // 获取索引定义语句，进行比较  CREATE UNIQUE INDEX mpe_idx_phone_index ON "public".my_pgsql_table USING btree (phone DESC)
-            String dbIndexdef = dbIndex.getIndexdef().replace("\"", "")
+            String dbIndexDef = dbIndex.getIndexdef().replace("\"", "")
                     .replace(" NULLS FIRST", "")
                     .replace(" NULLS LAST", "") + ";";
-            String newIndexdef = CreateTableSqlBuilder.getCreateIndexSql(schema, tableName, indexMetadata).replace("\"", "");
-            if (!newIndexdef.equals(dbIndexdef)) {
+            String newIndexDef = CreateTableSqlBuilder.getCreateIndexSql(schema, tableName, indexMetadata).replace("\"", "");
+            if (!newIndexDef.equals(dbIndexDef)) {
                 pgsqlCompareTableInfo.addModifyIndex(indexMetadata);
             }
         }
@@ -184,7 +182,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         // 需要删除的索引
         Set<String> needDropIndexes = pgsqlDbIndexMap.keySet();
         if (!needDropIndexes.isEmpty()) {
-            PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+            PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
             // 删除autotable创建的索引
             if (autoTableProperties.getAutoDropIndex()) {
                 List<String> autoTableCreateIndexes = needDropIndexes.stream().filter(indexName -> indexName.startsWith(autoTableProperties.getIndexPrefix())).collect(Collectors.toList());
@@ -243,7 +241,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         Set<String> needRemoveColumns = pgsqlFieldDetailMap.keySet();
         if (!needRemoveColumns.isEmpty()) {
             // 根据配置，决定是否删除库上的多余字段
-            if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropColumn()) {
+            if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
                 pgsqlCompareTableInfo.addDropColumns(needRemoveColumns);
             }
         }
@@ -322,14 +320,12 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         return Collections.singletonList(sql);
     }
 
-    public static String withSchemaName(String schema, String... names) {
-
-        String name = String.join(".", names);
+    public static String withSchemaName(String schema, String name) {
 
         if (StringUtils.hasText(schema)) {
-            return schema + "." + name;
+            return "\"" + schema + "\".\"" + name + "\"";
         }
 
-        return name;
+        return "\"" + name + "\"";
     }
 }

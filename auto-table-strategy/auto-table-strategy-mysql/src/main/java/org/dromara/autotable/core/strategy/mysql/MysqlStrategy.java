@@ -200,7 +200,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
         // 因为上一步循环，在基于Bean上索引匹配上表中的索引后，就立即删除了表上对应的索引，所以剩下的索引都是Bean上没有声明的索引，需要根据配置判断，是否删掉多余的索引
         Set<String> needDropIndexes = tableIndexes.keySet();
         if (!needDropIndexes.isEmpty()) {
-            PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+            PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
             // 删除autotable创建的索引
             if (autoTableProperties.getAutoDropIndex()) {
                 List<String> autoTableCreateIndexes = needDropIndexes.stream().filter(indexName -> indexName.startsWith(autoTableProperties.getIndexPrefix())).collect(Collectors.toList());
@@ -296,7 +296,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                 }
             } else {
                 // 没有取到对应字段，说明库中存在的字段，Bean上不存在，根据配置，决定是否删除库上的多余字段
-                if (AutoTableGlobalConfig.getAutoTableProperties().getAutoDropColumn()) {
+                if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
                     mysqlCompareTableInfo.getDropColumnList().add(columnName);
                 }
             }
@@ -389,6 +389,10 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
             isTypeDiff = !fullType.equalsIgnoreCase(dbColumnType);
         }
 
+        if(isTypeDiff) {
+            return true;
+        }
+
 
         /* 判断限定符是否相同 */
         boolean dbHasQualifier = dbColumnTypeArr.size() > 1;
@@ -406,7 +410,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
             }
         }
 
-        return isTypeDiff || isQualifierDiff;
+        return isQualifierDiff;
     }
 
     private static boolean isCommentChanged(InformationSchemaColumn informationSchemaColumn, MysqlColumnMetadata mysqlColumnMetadata) {

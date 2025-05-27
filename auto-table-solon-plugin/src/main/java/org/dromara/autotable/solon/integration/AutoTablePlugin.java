@@ -24,7 +24,9 @@ import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
+import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
@@ -69,7 +71,7 @@ public class AutoTablePlugin implements Plugin {
         AutoTableProperties autoTableProperties = context.beanMake(AutoTableProperties.class).get();
 
         // 设置全局的配置
-        AutoTableGlobalConfig.setAutoTableProperties(autoTableProperties.toConfig());
+        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties.toConfig());
 
         // 资源加载完成后启动AutoTable
         context.lifecycle(-100, () -> resourceLoadFinish(context));
@@ -84,7 +86,7 @@ public class AutoTablePlugin implements Plugin {
 
         // 注入自定义的注解扫描器
         AutoTableAnnotationFinder annotationFinder = context.getBean(AutoTableAnnotationFinder.class);
-        AutoTableGlobalConfig.setAutoTableAnnotationFinder(ObjUtil.defaultIfNull(annotationFinder, new CustomAnnotationFinder()));
+        AutoTableGlobalConfig.instance().setAutoTableAnnotationFinder(ObjUtil.defaultIfNull(annotationFinder, new CustomAnnotationFinder()));
 
         // 资源全部加载完成后
         DataSource dataSource = context.getWrap(DataSource.class).get();
@@ -96,43 +98,47 @@ public class AutoTablePlugin implements Plugin {
         }
 
         // 配置 自定义的IStrategy
-        this.getAndSetBean(context, IStrategy.class, AutoTableGlobalConfig::addStrategy);
+        this.getAndSetBean(context, IStrategy.class, AutoTableGlobalConfig.instance()::addStrategy);
         // 配置 class扫描器
-        this.getAndSetBean(context, AutoTableClassScanner.class, AutoTableGlobalConfig::setAutoTableClassScanner);
+        this.getAndSetBean(context, AutoTableClassScanner.class, AutoTableGlobalConfig.instance()::setAutoTableClassScanner);
         // 配置 ORM框架适配器
-        this.getAndSetBean(context, AutoTableMetadataAdapter.class, AutoTableGlobalConfig::setAutoTableMetadataAdapter);
+        this.getAndSetBean(context, AutoTableMetadataAdapter.class, AutoTableGlobalConfig.instance()::setAutoTableMetadataAdapter);
         // 配置 数据库类型转换
-        this.getAndSetBean(context, JavaTypeToDatabaseTypeConverter.class, AutoTableGlobalConfig::setJavaTypeToDatabaseTypeConverter);
+        this.getAndSetBean(context, JavaTypeToDatabaseTypeConverter.class, AutoTableGlobalConfig.instance()::setJavaTypeToDatabaseTypeConverter);
         // 配置 自定义记录sql的方式
-        this.getAndSetBean(context, RecordSqlHandler.class, AutoTableGlobalConfig::setCustomRecordSqlHandler);
+        this.getAndSetBean(context, RecordSqlHandler.class, AutoTableGlobalConfig.instance()::setCustomRecordSqlHandler);
         // IDataSourceHandler
-        this.getAndSetBean(context, IDataSourceHandler.class, AutoTableGlobalConfig::setDatasourceHandler);
+        this.getAndSetBean(context, IDataSourceHandler.class, AutoTableGlobalConfig.instance()::setDatasourceHandler);
 
         /* 拦截器 */
         // AutoTableAnnotationInterceptor
-        this.getAndSetBeans(context, AutoTableAnnotationInterceptor.class, AutoTableGlobalConfig::setAutoTableAnnotationInterceptors);
+        this.getAndSetBeans(context, AutoTableAnnotationInterceptor.class, AutoTableGlobalConfig.instance()::setAutoTableAnnotationInterceptors);
         // BuildTableMetadataInterceptor
-        this.getAndSetBeans(context, BuildTableMetadataInterceptor.class, AutoTableGlobalConfig::setBuildTableMetadataInterceptors);
+        this.getAndSetBeans(context, BuildTableMetadataInterceptor.class, AutoTableGlobalConfig.instance()::setBuildTableMetadataInterceptors);
         // CreateTableInterceptor
-        this.getAndSetBeans(context, CreateTableInterceptor.class, AutoTableGlobalConfig::setCreateTableInterceptors);
+        this.getAndSetBeans(context, CreateTableInterceptor.class, AutoTableGlobalConfig.instance()::setCreateTableInterceptors);
         // ModifyTableInterceptor
-        this.getAndSetBeans(context, ModifyTableInterceptor.class, AutoTableGlobalConfig::setModifyTableInterceptors);
+        this.getAndSetBeans(context, ModifyTableInterceptor.class, AutoTableGlobalConfig.instance()::setModifyTableInterceptors);
 
         /* 回调事件 */
         // CreateTableFinishCallback
-        this.getAndSetBeans(context, CreateTableFinishCallback.class, AutoTableGlobalConfig::setCreateTableFinishCallbacks);
+        this.getAndSetBeans(context, CreateTableFinishCallback.class, AutoTableGlobalConfig.instance()::setCreateTableFinishCallbacks);
         // ModifyTableFinishCallback
-        this.getAndSetBeans(context, ModifyTableFinishCallback.class, AutoTableGlobalConfig::setModifyTableFinishCallbacks);
+        this.getAndSetBeans(context, ModifyTableFinishCallback.class, AutoTableGlobalConfig.instance()::setModifyTableFinishCallbacks);
+        // CompareTableFinishCallback
+        this.getAndSetBeans(context, CompareTableFinishCallback.class, AutoTableGlobalConfig.instance()::setCompareTableFinishCallbacks);
+        // DeleteTableFinishCallback
+        this.getAndSetBeans(context, DeleteTableFinishCallback.class, AutoTableGlobalConfig.instance()::setDeleteTableFinishCallbacks);
         // RunBeforeCallback
-        this.getAndSetBeans(context, RunBeforeCallback.class, AutoTableGlobalConfig::setRunBeforeCallbacks);
+        this.getAndSetBeans(context, RunBeforeCallback.class, AutoTableGlobalConfig.instance()::setRunBeforeCallbacks);
         // RunAfterCallback
-        this.getAndSetBeans(context, RunAfterCallback.class, AutoTableGlobalConfig::setRunAfterCallbacks);
+        this.getAndSetBeans(context, RunAfterCallback.class, AutoTableGlobalConfig.instance()::setRunAfterCallbacks);
         // 加载完成回调
-        this.getAndSetBeans(context, AutoTableReadyCallback.class, AutoTableGlobalConfig::setAutoTableReadyCallbacks);
+        this.getAndSetBeans(context, AutoTableReadyCallback.class, AutoTableGlobalConfig.instance()::setAutoTableReadyCallbacks);
         // 验证完成回调
-        this.getAndSetBeans(context, ValidateFinishCallback.class, AutoTableGlobalConfig::setValidateFinishCallbacks);
+        this.getAndSetBeans(context, ValidateFinishCallback.class, AutoTableGlobalConfig.instance()::setValidateFinishCallbacks);
         // 完成回调
-        this.getAndSetBeans(context, AutoTableFinishCallback.class, AutoTableGlobalConfig::setAutoTableFinishCallbacks);
+        this.getAndSetBeans(context, AutoTableFinishCallback.class, AutoTableGlobalConfig.instance()::setAutoTableFinishCallbacks);
 
         //最后启动
         AutoTableBootstrap.start();

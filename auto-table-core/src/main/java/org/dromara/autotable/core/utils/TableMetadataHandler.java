@@ -39,7 +39,7 @@ public class TableMetadataHandler {
     public static List<TableIndex> getTableIndexes(Class<?> clazz) {
         List<TableIndex> tableIndices = new ArrayList<>();
         // 获取自定义的注解查找器
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
         TableIndexes tableIndexes = autoTableAnnotationFinder.find(clazz, TableIndexes.class);
         if (tableIndexes != null) {
             Collections.addAll(tableIndices, tableIndexes.value());
@@ -59,14 +59,14 @@ public class TableMetadataHandler {
      */
     public static String getTableDialect(Class<?> clazz) {
 
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
         AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
-        if (autoTable != null) {
+        if (autoTable != null && StringUtils.hasText(autoTable.dialect())) {
             return autoTable.dialect();
         }
 
-        // 调用第三方ORM实现
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableDialect(clazz);
+        // 调用第三方实现
+        return AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getTableDialect(clazz);
     }
 
     /**
@@ -77,14 +77,14 @@ public class TableMetadataHandler {
      */
     public static String getTableSchema(Class<?> clazz) {
 
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
         AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
-        if (autoTable != null) {
+        if (autoTable != null && StringUtils.hasText(autoTable.schema())) {
             return autoTable.schema();
         }
 
-        // 调用第三方ORM实现
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableSchema(clazz);
+        // 调用第三方实现
+        return AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getTableSchema(clazz);
     }
 
     /**
@@ -95,86 +95,99 @@ public class TableMetadataHandler {
      */
     public static String getTableName(Class<?> clazz) {
 
-        String tableName = null;
-
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
 
         AutoTable autoTable = autoTableAnnotationFinder.find(clazz, AutoTable.class);
         if (autoTable != null && StringUtils.hasText(autoTable.value())) {
-            tableName = autoTable.value();
+            return autoTable.value();
         }
 
-        // 调用第三方ORM实现
-        if (tableName == null) {
-            tableName = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableName(clazz);
+        // 调用第三方实现
+        String tableName = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getTableName(clazz);
+        if (StringUtils.hasText(tableName)) {
+            return tableName;
         }
 
         // 兜底，使用下划线命名
-        if (tableName == null) {
-            tableName = StringUtils.camelToUnderline(clazz.getSimpleName());
-        }
-
-        return tableName;
+        return StringUtils.camelToUnderline(clazz.getSimpleName());
     }
 
     /**
      * 获取bean上的表注释
+     *
      * @param clazz bean
      * @return 表注释
      */
     public static String getTableComment(Class<?> clazz) {
 
-        AutoTable autoTable = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(clazz, AutoTable.class);
+        AutoTable autoTable = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(clazz, AutoTable.class);
         if (autoTable != null && StringUtils.hasText(autoTable.comment())) {
             return replaceSingleQuote(autoTable.comment());
         }
 
-        String adapterTableComment = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getTableComment(clazz);
-        if (adapterTableComment != null) {
+        // 调用第三方实现
+        String adapterTableComment = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getTableComment(clazz);
+        if (StringUtils.hasText(adapterTableComment)) {
             return replaceSingleQuote(adapterTableComment);
         }
 
         return null;
     }
 
+
     /************               字段相关                **************/
-
-
     public static boolean isIncludeField(Field field, Class<?> clazz) {
 
-        Ignore ignore = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, Ignore.class);
+        Ignore ignore = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, Ignore.class);
         if (ignore != null) {
             return false;
         }
 
-        // 调用第三方ORM实现
-        boolean isIgnoreField = AutoTableGlobalConfig.getAutoTableMetadataAdapter().isIgnoreField(field, clazz);
-        return !isIgnoreField;
+        // 调用第三方实现
+        Boolean isIgnoreField = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().isIgnoreField(field, clazz);
+        if(isIgnoreField != null) {
+            return !isIgnoreField;
+        }
+
+        // 所有字段均不被排除
+        return true;
     }
 
     public static boolean isPrimary(Field field, Class<?> clazz) {
 
-        PrimaryKey isPrimary = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
+        PrimaryKey isPrimary = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
         if (isPrimary != null) {
             return true;
         }
 
-        // 调用第三方ORM实现
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isPrimary(field, clazz);
+        // 调用第三方实现
+        Boolean primary = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().isPrimary(field, clazz);
+        if (primary != null) {
+            return primary;
+        }
+
+        return false;
     }
 
     public static boolean isAutoIncrement(Field field, Class<?> clazz) {
 
-        AutoIncrement autoIncrement = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoIncrement.class);
+        AutoIncrement autoIncrement = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoIncrement.class);
         if (autoIncrement != null) {
             return autoIncrement.value();
         }
 
-        PrimaryKey isPrimary = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
+        // 调用第三方实现（因为布尔值在注解中无法存在true和false以外的值，所以不知道用户是否填写了值还是默认值，所以，先获取第三方自定义值）
+        Boolean isAutoIncrement = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().isAutoIncrement(field, clazz);
+        if (isAutoIncrement != null) {
+            return isAutoIncrement;
+        }
+
+        PrimaryKey isPrimary = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
         if (isPrimary != null) {
             return isPrimary.autoIncrement();
         }
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isAutoIncrement(field, clazz);
+
+        return false;
     }
 
     public static Boolean isNotNull(Field field, Class<?> clazz) {
@@ -188,33 +201,38 @@ public class TableMetadataHandler {
             return true;
         }
 
-        ColumnNotNull column = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnNotNull.class);
+        ColumnNotNull column = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, ColumnNotNull.class);
         if (column != null) {
             return column.value();
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        // 调用第三方实现（因为布尔值在注解中无法存在true和false以外的值，所以不知道用户是否填写了值还是默认值，所以，先获取第三方自定义值）
+        Boolean notNull = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().isNotNull(field, clazz);
+        if (notNull != null) {
+            return notNull;
+        }
+        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
         if (autoColumn != null) {
             return autoColumn.notNull();
         }
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().isNotNull(field, clazz);
+        return false;
     }
 
     /**
      * 获取字段类型
      *
-     * @param field  字段
-     * @param clazz  实体
+     * @param field 字段
+     * @param clazz 实体
      * @return 字段类型
      */
     public static ColumnType getColumnType(Field field, Class<?> clazz) {
 
-        ColumnType columnType = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnType.class);
+        ColumnType columnType = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, ColumnType.class);
         if (columnType != null) {
             return columnType;
         }
 
-        AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
+        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        if (autoColumn != null && (StringUtils.hasText(autoColumn.type()) || autoColumn.length() > 0 || autoColumn.decimalLength() > 0)) {
             return new ColumnType() {
                 @Override
                 public String value() {
@@ -243,21 +261,23 @@ public class TableMetadataHandler {
             };
         }
 
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnType(field, clazz);
+        // 调用第三方实现
+        return AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getColumnType(field, clazz);
     }
 
     public static String getColumnComment(Field field, Class<?> clazz) {
-        ColumnComment column = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnComment.class);
+        ColumnComment column = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, ColumnComment.class);
         if (column != null) {
             return replaceSingleQuote(column.value());
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
+        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        if (autoColumn != null && StringUtils.hasText(autoColumn.comment())) {
             return replaceSingleQuote(autoColumn.comment());
         }
 
-        String adapterColumnComment = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnComment(field, clazz);
-        if (adapterColumnComment != null) {
+        // 调用第三方实现
+        String adapterColumnComment = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getColumnComment(field, clazz);
+        if (StringUtils.hasText(adapterColumnComment)) {
             return replaceSingleQuote(adapterColumnComment);
         }
 
@@ -278,11 +298,11 @@ public class TableMetadataHandler {
     }
 
     public static ColumnDefault getColumnDefaultValue(Field field, Class<?> clazz) {
-        ColumnDefault columnDefault = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnDefault.class);
+        ColumnDefault columnDefault = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, ColumnDefault.class);
         if (columnDefault != null) {
             return columnDefault;
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
         if (autoColumn != null && (autoColumn.defaultValueType() != DefaultValueEnum.UNDEFINED || StringUtils.hasText(autoColumn.defaultValue()))) {
             return new ColumnDefault() {
                 @Override
@@ -301,11 +321,12 @@ public class TableMetadataHandler {
                 }
             };
         }
-        return AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnDefaultValue(field, clazz);
+        // 调用第三方实现
+        return AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getColumnDefaultValue(field, clazz);
     }
 
     public static Index getIndex(Field field) {
-        return AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, Index.class);
+        return AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, Index.class);
     }
 
     /**
@@ -317,26 +338,22 @@ public class TableMetadataHandler {
      */
     public static String getColumnName(Class<?> clazz, Field field) {
 
-        ColumnName columnNameAnno = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, ColumnName.class);
+        ColumnName columnNameAnno = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, ColumnName.class);
         if (columnNameAnno != null) {
-            String columnName = columnNameAnno.value();
-            if (StringUtils.hasText(columnName)) {
-                return columnName;
-            }
+            return columnNameAnno.value();
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, AutoColumn.class);
-        if (autoColumn != null) {
-            String columnName = autoColumn.value();
-            if (StringUtils.hasText(columnName)) {
-                return columnName;
-            }
+        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        if (autoColumn != null && StringUtils.hasText(autoColumn.value())) {
+            return autoColumn.value();
         }
 
-        String realColumnName = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnName(clazz, field);
+        // 调用第三方实现
+        String realColumnName = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getColumnName(clazz, field);
         if (StringUtils.hasText(realColumnName)) {
             return realColumnName;
         }
 
+        // 兜底
         return StringUtils.camelToUnderline(field.getName());
     }
 

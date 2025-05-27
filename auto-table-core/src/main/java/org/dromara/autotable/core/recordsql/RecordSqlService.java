@@ -12,7 +12,7 @@ public class RecordSqlService {
 
     public static void record(List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs) {
 
-        PropertyConfig.RecordSqlProperties recordSql = AutoTableGlobalConfig.getAutoTableProperties().getRecordSql();
+        PropertyConfig.RecordSqlProperties recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql();
 
         RecordSqlHandler recordSqlHandler;
         PropertyConfig.RecordSqlProperties.TypeEnum recordType = recordSql.getRecordType();
@@ -25,7 +25,7 @@ public class RecordSqlService {
                 break;
             case custom:
             default:
-                recordSqlHandler = AutoTableGlobalConfig.getCustomRecordSqlHandler();
+                recordSqlHandler = AutoTableGlobalConfig.instance().getCustomRecordSqlHandler();
                 break;
         }
 

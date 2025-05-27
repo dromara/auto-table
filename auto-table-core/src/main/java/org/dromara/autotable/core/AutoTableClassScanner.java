@@ -41,9 +41,9 @@ public abstract class AutoTableClassScanner {
         Set<Class<? extends Annotation>> excludeAnnotations = getExcludeAnnotations();
 
         // 经过自定义的拦截器，修改最终影响自动建表的注解
-        AutoTableGlobalConfig.getAutoTableAnnotationInterceptors().forEach(fn -> fn.intercept(includeAnnotations, excludeAnnotations));
+        AutoTableGlobalConfig.instance().getAutoTableAnnotationInterceptors().forEach(fn -> fn.intercept(includeAnnotations, excludeAnnotations));
 
-        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.getAutoTableAnnotationFinder();
+        AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
 
         return Arrays.stream(basePackages)
                 .map(basePackage -> {
@@ -71,7 +71,15 @@ public abstract class AutoTableClassScanner {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String path = packageName.replace('.', '/');
         String basePackage = path.split("/\\*")[0];
-        Pattern checkPattern = Pattern.compile("(" + packageName.replace(".", "\\/").replace("**", "[A-Za-z0-9$_/]+").replace("*", "[A-Za-z0-9$_]+") + "[A-Za-z0-9$_/]+)\\.class$");
+        String patternPackage = packageName
+                // 多级路径
+                .replace("**", "[A-Za-z0-9$_/]+")
+                // 单级路径
+                .replace("*", "[A-Za-z0-9$_]+");
+        if (!patternPackage.endsWith("/")) {
+            patternPackage += "/";
+        }
+        Pattern checkPattern = Pattern.compile("(" + patternPackage + "[A-Za-z0-9$_/]+)\\.class$");
 
         Enumeration<URL> resources = classLoader.getResources(basePackage);
         Set<Class<?>> classes = new HashSet<>();
@@ -88,7 +96,7 @@ public abstract class AutoTableClassScanner {
         return classes;
     }
 
-    protected Set<Class<?>> findLocalClasses(Pattern checkPattern, File directory, Function<Class<?>, Boolean> checker) throws ClassNotFoundException, IOException {
+    protected Set<Class<?>> findLocalClasses(Pattern checkPattern, File directory, Function<Class<?>, Boolean> checker) throws IOException {
         Set<Class<?>> classes = new HashSet<>();
         if (!directory.exists()) {
             return classes;

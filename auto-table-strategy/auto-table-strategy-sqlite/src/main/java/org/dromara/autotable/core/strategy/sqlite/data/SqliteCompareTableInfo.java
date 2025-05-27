@@ -37,7 +37,7 @@ public class SqliteCompareTableInfo extends CompareTableInfo {
      */
     private List<String> deleteIndexList = new ArrayList<>();
 
-    public SqliteCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public SqliteCompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

@@ -4,7 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
+import org.dromara.autotable.core.callback.CompareTableFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
+import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
@@ -36,32 +38,52 @@ import java.util.Map;
 public class AutoTableGlobalConfig {
 
     /**
+     * 方便单元测试，此处为每个线程创建一个配置实例
+     */
+    private static final ThreadLocal<AutoTableGlobalConfig> instance = ThreadLocal.withInitial(AutoTableGlobalConfig::new);
+
+    /**
+     * 获取当前线程的配置
+     */
+    public static AutoTableGlobalConfig instance() {
+        return instance.get();
+    }
+
+    /**
+     * 清除当前线程的配置
+     */
+    public static void clear() {
+        instance.remove();
+    }
+
+    /**
      * 全局配置
      */
     @Setter
     @Getter
-    private static PropertyConfig autoTableProperties = new PropertyConfig();
+    private PropertyConfig autoTableProperties = new PropertyConfig();
 
     /**
      * class扫描器
      */
     @Setter
     @Getter
-    private static AutoTableClassScanner autoTableClassScanner = new AutoTableClassScanner() {};
+    private AutoTableClassScanner autoTableClassScanner = new AutoTableClassScanner() {
+    };
 
     /**
      * 数据源处理器
      */
     @Setter
     @Getter
-    private static IDataSourceHandler datasourceHandler = new DefaultDataSourceHandler();
+    private IDataSourceHandler datasourceHandler = new DefaultDataSourceHandler();
 
     /**
      * 自定义注解查找器
      */
     @Setter
     @Getter
-    private static AutoTableAnnotationFinder autoTableAnnotationFinder = new AutoTableAnnotationFinder() {
+    private AutoTableAnnotationFinder autoTableAnnotationFinder = new AutoTableAnnotationFinder() {
     };
 
     /**
@@ -69,7 +91,7 @@ public class AutoTableGlobalConfig {
      */
     @Setter
     @Getter
-    private static AutoTableMetadataAdapter autoTableMetadataAdapter = new AutoTableMetadataAdapter() {
+    private AutoTableMetadataAdapter autoTableMetadataAdapter = new AutoTableMetadataAdapter() {
     };
 
     /**
@@ -77,7 +99,7 @@ public class AutoTableGlobalConfig {
      */
     @Setter
     @Getter
-    private static JavaTypeToDatabaseTypeConverter javaTypeToDatabaseTypeConverter = new JavaTypeToDatabaseTypeConverter() {
+    private JavaTypeToDatabaseTypeConverter javaTypeToDatabaseTypeConverter = new JavaTypeToDatabaseTypeConverter() {
     };
 
     /**
@@ -85,7 +107,7 @@ public class AutoTableGlobalConfig {
      */
     @Setter
     @Getter
-    private static RecordSqlHandler customRecordSqlHandler = sqlLog -> {
+    private RecordSqlHandler customRecordSqlHandler = sqlLog -> {
     };
 
     /* 拦截器与回调监听 ↓↓↓↓↓↓↓↓↓↓↓↓↓ */
@@ -95,92 +117,106 @@ public class AutoTableGlobalConfig {
      */
     @Setter
     @Getter
-    private static List<AutoTableAnnotationInterceptor> autoTableAnnotationInterceptors = new ArrayList<>();
+    private List<AutoTableAnnotationInterceptor> autoTableAnnotationInterceptors = new ArrayList<>();
 
     /**
      * 创建表拦截
      */
     @Setter
     @Getter
-    private static List<BuildTableMetadataInterceptor> buildTableMetadataInterceptors = new ArrayList<>();
+    private List<BuildTableMetadataInterceptor> buildTableMetadataInterceptors = new ArrayList<>();
 
     /**
      * 创建表拦截
      */
     @Setter
     @Getter
-    private static List<CreateTableInterceptor> createTableInterceptors = new ArrayList<>();
+    private List<CreateTableInterceptor> createTableInterceptors = new ArrayList<>();
+
+    /**
+     * 比对完回调
+     */
+    @Setter
+    @Getter
+    private List<CompareTableFinishCallback> CompareTableFinishCallbacks = new ArrayList<>();
 
     /**
      * 修改表拦截
      */
     @Setter
     @Getter
-    private static List<ModifyTableInterceptor> modifyTableInterceptors = new ArrayList<>();
+    private List<ModifyTableInterceptor> modifyTableInterceptors = new ArrayList<>();
 
     /**
      * 验证完成回调
      */
     @Setter
     @Getter
-    private static List<ValidateFinishCallback> validateFinishCallbacks = new ArrayList<>();
+    private List<ValidateFinishCallback> validateFinishCallbacks = new ArrayList<>();
 
     /**
      * 创建表回调
      */
     @Setter
     @Getter
-    private static List<CreateTableFinishCallback> createTableFinishCallbacks = new ArrayList<>();
+    private List<CreateTableFinishCallback> createTableFinishCallbacks = new ArrayList<>();
 
     /**
      * 修改表回调
      */
     @Setter
     @Getter
-    private static List<ModifyTableFinishCallback> modifyTableFinishCallbacks = new ArrayList<>();
+    private List<ModifyTableFinishCallback> modifyTableFinishCallbacks = new ArrayList<>();
+
+    /**
+     * 删除表回调
+     */
+    @Setter
+    @Getter
+    private List<DeleteTableFinishCallback> deleteTableFinishCallbacks = new ArrayList<>();
 
     /**
      * 单个表执行前回调
      */
     @Setter
     @Getter
-    private static List<RunBeforeCallback> runBeforeCallbacks = new ArrayList<>();
+    private List<RunBeforeCallback> runBeforeCallbacks = new ArrayList<>();
 
     /**
      * 单个表执行后回调
      */
     @Setter
     @Getter
-    private static List<RunAfterCallback> runAfterCallbacks = new ArrayList<>();
+    private List<RunAfterCallback> runAfterCallbacks = new ArrayList<>();
 
     /**
-     * 执行结束回调
+     * 所有准备工作完成，执行前回调
      */
     @Setter
     @Getter
-    private static List<AutoTableReadyCallback> autoTableReadyCallbacks = new ArrayList<>();
+    private List<AutoTableReadyCallback> autoTableReadyCallbacks = new ArrayList<>();
 
     /**
-     * 执行结束回调
+     * 所有表执行结束回调
      */
     @Setter
     @Getter
-    private static List<AutoTableFinishCallback> autoTableFinishCallbacks = new ArrayList<>();
+    private List<AutoTableFinishCallback> autoTableFinishCallbacks = new ArrayList<>();
 
     /* 拦截器与回调监听 ↑↑↑↑↑↑↑↑↑ */
 
-    private final static Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> STRATEGY_MAP = new HashMap<>();
+    private final Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> STRATEGY_MAP = new HashMap<>();
 
-    public static void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo> strategy) {
+    public void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo> strategy) {
         STRATEGY_MAP.put(strategy.databaseDialect(), strategy);
         JavaTypeToDatabaseTypeConverter.addTypeMapping(strategy.databaseDialect(), strategy.typeMapping());
     }
 
-    public static IStrategy<?, ?> getStrategy(String databaseDialect) {
+    public IStrategy<?, ?> getStrategy(String databaseDialect) {
         return STRATEGY_MAP.get(databaseDialect);
     }
 
-    public static Collection<IStrategy<?, ?>> getAllStrategy() {
+    public Collection<IStrategy<?, ?>> getAllStrategy() {
         return STRATEGY_MAP.values();
     }
 

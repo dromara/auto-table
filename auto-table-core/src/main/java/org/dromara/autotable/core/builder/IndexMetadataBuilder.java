@@ -111,13 +111,13 @@ public class IndexMetadataBuilder {
     }
 
     private static String getIndexNameWithPrefix(String indexName) {
-        String indexPrefix = AutoTableGlobalConfig.getAutoTableProperties().getIndexPrefix();
+        String indexPrefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getIndexPrefix();
         String fullIndexName = indexPrefix + indexName;
         return replaceDoubleQuote(fullIndexName);
     }
 
     protected String getEncryptIndexName(String tableNamePart, String filedNamePart) {
-        String prefix = AutoTableGlobalConfig.getAutoTableProperties().getIndexPrefix();
+        String prefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getIndexPrefix();
         String fullIndexName = prefix + tableNamePart + "_" + filedNamePart;
         int maxLength = 63;
         if (fullIndexName.length() > maxLength) {

@@ -6,7 +6,7 @@
 
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table</artifactId>
-    <version>2.4.0</version>
+    <version>2.4.5</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Mybatis下，自动维护数据库表结构的框架</description>
     <url>${projectUrl}</url><!--填入开发者信息，姓名、邮箱、项目地址-->
@@ -51,7 +51,7 @@
 
         <mybatis.version>3.5.14</mybatis.version>
         <spring.version>5.3.31</spring.version>
-        <solon.version>3.0.5</solon.version>
+        <solon.version>3.2.1</solon.version>
         <hutool.version>5.8.26</hutool.version>
         <spring-boot.version>2.7.18</spring-boot.version>
         <mybatis-spring.version>2.1.2</mybatis-spring.version>
@@ -170,9 +170,11 @@
                     <charset>UTF-8</charset><!-- utf-8读取文件 -->
                     <encoding>UTF-8</encoding><!-- utf-8进行编码代码 -->
                     <docencoding>UTF-8</docencoding><!-- utf-8进行编码文档 -->
-                    <additionalJOptions>-Xdoclint:none</additionalJOptions> <!-- 忽略所有警告 -->
-                    <show>private</show> <!-- 只生成 public 的 Javadoc -->
                     <failOnError>false</failOnError> <!-- 即使有错误也不让构建失败 -->
+                    <quiet>true</quiet> <!-- 安静输出 -->
+                    <additionalJOptions>
+                        -Xdoclint:none
+                    </additionalJOptions><!-- 禁用 doclint 检查 -->
                 </configuration>
                 <executions>
                     <execution>

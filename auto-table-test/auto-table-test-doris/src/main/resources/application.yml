@@ -1,0 +1,30 @@
+auto-table:
+  enable: true
+  auto-drop-column: true
+  mode: create
+  record-sql:
+    # 开启SQL记录
+    enable: true
+    # 当前版本（此处可保持与计划上线的版本号一致，方便管理SQL文件）
+    version: 1.0.0
+    # 记录到数据库
+    record-type: custom
+  doris:
+    update-backup-old-table: true
+
+
+
+server:
+  port: 9999
+
+
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.0.87:9030/test?useSSL=false&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+logging:
+  level:
+    org.dromara: info
+    com.zaxxer.hikari: trace

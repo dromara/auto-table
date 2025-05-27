@@ -114,9 +114,8 @@ public interface AutoTableMetadataAdapter {
      * @param clazz 类
      * @return 是否忽略
      */
-    default boolean isIgnoreField(Field field, Class<?> clazz) {
-        // 默认所有字段均不被排除
-        return false;
+    default Boolean isIgnoreField(Field field, Class<?> clazz) {
+        return null;
     }
 
     /**
@@ -126,9 +125,8 @@ public interface AutoTableMetadataAdapter {
      * @param clazz 类
      * @return 是否是主键
      */
-    default boolean isPrimary(Field field, Class<?> clazz) {
-        // 默认不是主键
-        return false;
+    default Boolean isPrimary(Field field, Class<?> clazz) {
+        return null;
     }
 
     /**
@@ -138,9 +136,8 @@ public interface AutoTableMetadataAdapter {
      * @param clazz 类
      * @return 是否是自增的主键
      */
-    default boolean isAutoIncrement(Field field, Class<?> clazz) {
-        // 默认都不是自增的
-        return false;
+    default Boolean isAutoIncrement(Field field, Class<?> clazz) {
+        return null;
     }
 
     /**
@@ -150,7 +147,7 @@ public interface AutoTableMetadataAdapter {
      * @param clazz 实体类
      * @return 字段是否非空
      */
-    default boolean isNotNull(Field field, Class<?> clazz) {
-        return false;
+    default Boolean isNotNull(Field field, Class<?> clazz) {
+        return null;
     }
 }

@@ -30,10 +30,10 @@ public class TestApplication {
         recordSqlProperties.setVersion(Version.VALUE);
         autoTableProperties.setRecordSql(recordSqlProperties);
 
-        AutoTableGlobalConfig.setAutoTableProperties(autoTableProperties);
+        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties);
 
         // 设置数据源处理器
-        AutoTableGlobalConfig.setDatasourceHandler(new DynamicDataSourceHandler());
+        AutoTableGlobalConfig.instance().setDatasourceHandler(new DynamicDataSourceHandler());
 
         AutoTableBootstrap.start();
     }

@@ -31,12 +31,12 @@ public class MysqlTableMetadataBuilder {
         // 设置表字符集
         String charset;
         String collate;
-        MysqlCharset mysqlCharsetAnno = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(clazz, MysqlCharset.class);
+        MysqlCharset mysqlCharsetAnno = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(clazz, MysqlCharset.class);
         if (mysqlCharsetAnno != null) {
             charset = mysqlCharsetAnno.charset();
             collate = mysqlCharsetAnno.collate();
         } else {
-            PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+            PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
             charset = autoTableProperties.getMysql().getTableDefaultCharset();
             collate = autoTableProperties.getMysql().getTableDefaultCollation();
         }
@@ -48,7 +48,7 @@ public class MysqlTableMetadataBuilder {
         }
 
         // 获取表引擎
-        MysqlEngine mysqlEngine = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(clazz, MysqlEngine.class);
+        MysqlEngine mysqlEngine = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(clazz, MysqlEngine.class);
         if (mysqlEngine != null) {
             mysqlTableMetadata.setEngine(mysqlEngine.value());
         }

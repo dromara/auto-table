@@ -90,7 +90,7 @@ public class MysqlColumnMetadataBuilder extends ColumnMetadataBuilder {
             Class<?> enumType = field.getType();
             if (enumType.isEnum()) {
                 // 调用第三方框架获取枚举的可选值
-                List<String> values = AutoTableGlobalConfig.getAutoTableMetadataAdapter().getColumnEnumValues(enumType);
+                List<String> values = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getColumnEnumValues(enumType);
                 if (values.isEmpty()) {
                     values = Arrays.stream(enumType.getEnumConstants()).map(Object::toString).collect(Collectors.toList());
                 }
@@ -113,7 +113,7 @@ public class MysqlColumnMetadataBuilder extends ColumnMetadataBuilder {
 
         String charset = null;
         String collate = null;
-        MysqlColumnCharset mysqlColumnCharsetAnno = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, MysqlColumnCharset.class);
+        MysqlColumnCharset mysqlColumnCharsetAnno = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, MysqlColumnCharset.class);
         if (mysqlColumnCharsetAnno != null) {
             charset = mysqlColumnCharsetAnno.value();
             if (StringUtils.hasText(mysqlColumnCharsetAnno.collate())) {
@@ -123,7 +123,7 @@ public class MysqlColumnMetadataBuilder extends ColumnMetadataBuilder {
             // 字符类型的添加默认的字符集和排序规则
             DatabaseTypeAndLength type = mysqlColumnMetadata.getType();
             if (MysqlTypeHelper.isCharString(type)) {
-                PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+                PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
                 charset = autoTableProperties.getMysql().getColumnDefaultCharset();
                 collate = autoTableProperties.getMysql().getColumnDefaultCollation();
             }
@@ -140,13 +140,13 @@ public class MysqlColumnMetadataBuilder extends ColumnMetadataBuilder {
     private void extractColumnQualifier(Field field, MysqlColumnMetadata mysqlColumnMetadata) {
 
         // 无符号
-        MysqlColumnUnsigned mysqlColumnUnsigned = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, MysqlColumnUnsigned.class);
+        MysqlColumnUnsigned mysqlColumnUnsigned = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, MysqlColumnUnsigned.class);
         if (mysqlColumnUnsigned != null) {
             mysqlColumnMetadata.setUnsigned(true);
         }
 
         // 零填充（自带无符号）
-        MysqlColumnZerofill mysqlColumnZerofill = AutoTableGlobalConfig.getAutoTableAnnotationFinder().find(field, MysqlColumnZerofill.class);
+        MysqlColumnZerofill mysqlColumnZerofill = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, MysqlColumnZerofill.class);
         if (mysqlColumnZerofill != null) {
             mysqlColumnMetadata.setUnsigned(true);
             mysqlColumnMetadata.setZerofill(true);

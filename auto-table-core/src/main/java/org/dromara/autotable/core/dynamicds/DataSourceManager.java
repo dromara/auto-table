@@ -42,16 +42,16 @@ public class DataSourceManager {
         }
     }
 
-    public static void setDataSource(@NonNull DataSource sqlSessionFactory) {
-        DataSourceManager.DATA_SOURCE_THREAD_LOCAL.set(sqlSessionFactory);
+    public static void setDataSource(@NonNull DataSource dataSource) {
+        DataSourceManager.DATA_SOURCE_THREAD_LOCAL.set(dataSource);
     }
 
     public static DataSource getDataSource() {
-        DataSource sessionFactory = DATA_SOURCE_THREAD_LOCAL.get();
-        if (sessionFactory == null) {
+        DataSource dataSource = DATA_SOURCE_THREAD_LOCAL.get();
+        if (dataSource == null) {
             throw new RuntimeException("当前数据源下，未找到对应的SqlSessionFactory");
         }
-        return sessionFactory;
+        return dataSource;
     }
 
     public static void cleanDataSource() {

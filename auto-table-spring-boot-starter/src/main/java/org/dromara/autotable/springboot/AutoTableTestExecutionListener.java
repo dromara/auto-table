@@ -25,7 +25,7 @@ public class AutoTableTestExecutionListener implements TestExecutionListener {
         // 初始化应用上下文，会阻塞等待上下文加载完，此处会优先加载注解的配置
         ApplicationContext applicationContext = testContext.getApplicationContext();
 
-        PropertyConfig autoTableProperties = AutoTableGlobalConfig.getAutoTableProperties();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         String[] modelPackage = autoTableProperties.getModelPackage();
         Class<?>[] modelClass = autoTableProperties.getModelClass();
         // 当注解没有相关的配置的时候，则使用启动类的包名

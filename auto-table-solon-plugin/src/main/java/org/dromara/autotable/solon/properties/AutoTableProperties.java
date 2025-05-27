@@ -48,6 +48,14 @@ public class AutoTableProperties {
      */
     private String indexPrefix = "auto_idx_";
     /**
+     * 自动删除没有声明的表：强烈不建议开启，会发生丢失数据等不可逆的操作。
+     */
+    private Boolean autoDropTable = false;
+    /**
+     * 自动删除没有声明的表的过程中，跳过指定的表，不做删除。
+     */
+    private String[] autoDropTableIgnores = new String[]{};
+    /**
      * 自动删除名称不匹配的字段：强烈不建议开启，会发生丢失数据等不可逆的操作。
      */
     private Boolean autoDropColumn = false;
@@ -75,6 +83,16 @@ public class AutoTableProperties {
     private Mysql mysql = new Mysql();
 
     /**
+     * pgsql配置
+     */
+    private Pgsql pgsql = new Pgsql();
+
+    /**
+     * doris配置
+     */
+    private DorisConfig doris = new DorisConfig();
+
+    /**
      * 记录执行的SQL
      */
     private RecordSqlProperties recordSql = new RecordSqlProperties();
@@ -87,6 +105,8 @@ public class AutoTableProperties {
         propertyConfig.setModelPackage(this.modelPackage);
         propertyConfig.setModelClass(this.modelClass);
         propertyConfig.setIndexPrefix(this.indexPrefix);
+        propertyConfig.setAutoDropTable(this.autoDropTable);
+        propertyConfig.setAutoDropTableIgnores(this.autoDropTableIgnores);
         propertyConfig.setAutoDropColumn(this.autoDropColumn);
         propertyConfig.setAutoDropIndex(this.autoDropIndex);
         propertyConfig.setAutoDropCustomIndex(this.autoDropCustomIndex);
@@ -102,6 +122,17 @@ public class AutoTableProperties {
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
         mysqlConfig.setTableDefaultCharset(this.mysql.getTableDefaultCharset());
         propertyConfig.setMysql(mysqlConfig);
+
+        PropertyConfig.PgsqlConfig pgsqlConfig = new PropertyConfig.PgsqlConfig();
+        pgsqlConfig.setPkAutoIncrementType(PropertyConfig.PgsqlConfig.PgsqlPkAutoIncrementType.valueOf(this.pgsql.getPkAutoIncrementType().name()));
+        propertyConfig.setPgsql(pgsqlConfig);
+
+        PropertyConfig.DorisConfig dorisConfig = new PropertyConfig.DorisConfig();
+        dorisConfig.setRollupPrefix(this.doris.getRollupPrefix());
+        dorisConfig.setRollupAutoNameMaxLength(this.doris.getRollupAutoNameMaxLength());
+        dorisConfig.setUpdateLimitTableDataLength(this.doris.getUpdateLimitTableDataLength());
+        dorisConfig.setUpdateBackupOldTable(this.doris.isUpdateBackupOldTable());
+        propertyConfig.setDoris(dorisConfig);
 
         PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
         recordSqlProperties.setEnable(this.recordSql.enable);
@@ -132,6 +163,25 @@ public class AutoTableProperties {
          * 列默认排序规则
          */
         private String columnDefaultCollation;
+    }
+
+    @Data
+    public static class Pgsql {
+        /**
+         * 主键自增方式
+         */
+        private PgsqlPkAutoIncrementType pkAutoIncrementType = PgsqlPkAutoIncrementType.byDefault;
+
+        public static enum PgsqlPkAutoIncrementType {
+            /**
+             * 更安全，避免手动干预
+             */
+            always,
+            /**
+             * 更灵活，适合需要手动插值的情况
+             */
+            byDefault,
+        }
     }
 
     @Data
@@ -186,5 +236,28 @@ public class AutoTableProperties {
          * 在子类的前面
          */
         before
+    }
+
+    @Data
+    public static class DorisConfig {
+        /**
+         * 自己定义的物化视图前缀
+         */
+        private String rollupPrefix = "auto_rlp_";
+        /**
+         * 物化视图自动生成名字的最大长度
+         */
+        private int rollupAutoNameMaxLength = 100;
+
+        /**
+         * 更新表时，允许更新表的最大容量上限，默认为1G，当表容量大于1G时,不执行更新
+         */
+        private long updateLimitTableDataLength = 1073741824;
+
+        /**
+         * 更新时,是否备份旧表
+         */
+        private boolean updateBackupOldTable = false;
+
     }
 }
