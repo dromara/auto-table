@@ -9,6 +9,6 @@ import org.dromara.autotable.annotation.pgsql.PgsqlTypeConstant;
 @AutoTable(comment = "包含特殊字符','¥#(|)\"")
 public class TestCommentSpecialCharacter {
     // 测试备注中的单引号'bug
-    @AutoColumn(type = PgsqlTypeConstant.TEXT, comment = "包含特殊字符','¥#(|)\"")
+    @AutoColumn(comment = "包含特殊字符','¥#(|)\"")
     private String testColumn;
 }
