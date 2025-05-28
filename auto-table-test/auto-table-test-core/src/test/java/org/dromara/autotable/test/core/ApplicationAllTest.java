@@ -213,6 +213,30 @@ public class ApplicationAllTest {
         AutoTableBootstrap.start();
     }
 
+    @Test
+    public void testOracleCreate() {
+//
+        initSqlSessionFactory("mybatis-config-oracle.xml");
+//
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+                "org.dromara.autotable.test.core.entity.common",
+                "org.dromara.autotable.test.core.entity.oracle",
+        });
+        // 开始
+        AutoTableBootstrap.start();
+
+
+        /* 修改表的逻辑 */
+        AutoTableGlobalConfig.getAutoTableProperties().setMode(RunMode.update);
+        AutoTableGlobalConfig.getAutoTableProperties().setModelPackage(new String[]{
+                "org.dromara.autotable.test.core.entity.common_update",
+//                "org.dromara.autotable.test.core.entity.sqlite_update",
+        });
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
     private void testRecordSqlByDB() {
 
         // 记录sql
