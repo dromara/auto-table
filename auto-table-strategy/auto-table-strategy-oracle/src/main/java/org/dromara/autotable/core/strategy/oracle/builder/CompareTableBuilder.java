@@ -108,7 +108,7 @@ public class CompareTableBuilder {
             } else {
                 // 5. 检查索引定义是否有变化（如字段、唯一性等）
                 IndexMetadata dbIndex = dbIndexMap.get(entityIndexName);
-                boolean uniqueChanged = entityIndex.isUnique() != dbIndex.isUnique();
+                boolean uniqueChanged = entityIndex.getType() != dbIndex.getType();
                 // 字段顺序和内容是否一致
                 List<String> entityColumns = entityIndex.getColumns().stream().map(it -> it.getSort() + "-" + it.getColumn()).collect(Collectors.toList());
                 List<String> dbColumns = dbIndex.getColumns().stream().map(it -> it.getSort() + "-" + it.getColumn()).collect(Collectors.toList());
