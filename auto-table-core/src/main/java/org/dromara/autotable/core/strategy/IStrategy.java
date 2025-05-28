@@ -27,6 +27,10 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
     Logger log = LoggerFactory.getLogger(IStrategy.class);
 
+    default String sqlSeparator() {
+        return ";";
+    }
+
     /**
      * 开始分析实体集合
      *
@@ -182,6 +186,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void executeSql(TABLE_META tableMetadata, List<String> sqlList) {
 
         List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs = new ArrayList<>();
+        final String sqlSeparator = sqlSeparator();
+
         DataSourceManager.useConnection(connection -> {
             try {
                 // 批量的SQL 改为手动提交模式
@@ -190,9 +196,9 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                 try (Statement statement = connection.createStatement()) {
                     boolean recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql().isEnable();
                     for (String sql : sqlList) {
-                        // sql末尾添加;
-                        if (!sql.endsWith(";")) {
-                            sql += ";";
+                        // sql末尾添加分隔符
+                        if (StringUtils.hasText(sqlSeparator) && !sql.endsWith(sqlSeparator)) {
+                            sql += sqlSeparator;
                         }
 
                         long executionTime = System.currentTimeMillis();
