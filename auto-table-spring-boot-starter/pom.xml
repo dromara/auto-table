@@ -9,6 +9,7 @@
         <version>2.4.5</version>
     </parent>
 
+    <name>auto-table-spring-boot-starter</name>
     <artifactId>auto-table-spring-boot-starter</artifactId>
 
     <dependencies>

@@ -9,6 +9,7 @@
         <version>2.4.5</version>
     </parent>
 
+    <name>auto-table-strategy-doris</name>
     <artifactId>auto-table-strategy-doris</artifactId>
 
     <dependencies>

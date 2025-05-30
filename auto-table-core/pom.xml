@@ -9,6 +9,7 @@
         <version>2.4.5</version>
     </parent>
 
+    <name>auto-table-core</name>
     <artifactId>auto-table-core</artifactId>
 
     <dependencies>
