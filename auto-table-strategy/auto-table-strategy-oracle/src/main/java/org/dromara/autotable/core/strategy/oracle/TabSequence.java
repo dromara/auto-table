@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * 索引信息
+ * 序列信息
  */
 @Data
 public class TabSequence {
