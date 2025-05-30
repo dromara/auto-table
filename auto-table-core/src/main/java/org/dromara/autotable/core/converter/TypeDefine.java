@@ -37,7 +37,4 @@ public class TypeDefine implements DefaultTypeEnumInterface {
         return TypeDefine.of(typeName, length, null);
     }
 
-    public static TypeDefine ofNumber(int length, int decimalLength) {
-        return TypeDefine.of("number", length, decimalLength);
-    }
 }
