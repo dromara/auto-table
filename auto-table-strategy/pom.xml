@@ -10,6 +10,7 @@
     </parent>
     <packaging>pom</packaging>
 
+    <name>auto-table-strategy</name>
     <artifactId>auto-table-strategy</artifactId>
 
     <modules>

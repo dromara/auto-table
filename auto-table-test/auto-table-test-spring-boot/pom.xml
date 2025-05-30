@@ -9,6 +9,7 @@
         <version>2.4.5</version>
     </parent>
 
+    <name>auto-table-test-spring-boot</name>
     <artifactId>auto-table-test-spring-boot</artifactId>
 
     <dependencyManagement>

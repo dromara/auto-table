@@ -8,6 +8,7 @@
         <version>2.4.5</version>
     </parent>
 
+    <name>auto-table-test-doris</name>
     <artifactId>auto-table-test-doris</artifactId>
 
     <dependencyManagement>

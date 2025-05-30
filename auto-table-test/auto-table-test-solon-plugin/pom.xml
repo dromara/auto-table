@@ -9,6 +9,7 @@
         <version>2.4.5</version>
     </parent>
 
+    <name>auto-table-test-solon-plugin</name>
     <artifactId>auto-table-test-solon-plugin</artifactId>
 
     <dependencies>
