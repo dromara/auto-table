@@ -49,6 +49,19 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     }
 
     /**
+     * sql包装，如果sql以分号结尾，则不添加分号，否则添加分号
+     * @param rawSql 原始sql
+     * @return 包装后的sql
+     */
+    default String wrapSql(String rawSql) {
+        String trimmed = rawSql.trim();
+        if (!trimmed.endsWith(";")) {
+            return trimmed + ";";
+        }
+        return trimmed;
+    }
+
+    /**
      * 开始分析实体集合
      *
      * @param entityClass 待处理的实体
@@ -208,6 +221,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void executeSql(TABLE_META tableMetadata, List<String> sqlList) {
 
         List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs = new ArrayList<>();
+
         DataSourceManager.useConnection(connection -> {
             try {
                 // 批量的SQL 改为手动提交模式
@@ -216,10 +230,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                 try (Statement statement = connection.createStatement()) {
                     boolean recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql().isEnable();
                     for (String sql : sqlList) {
-                        // sql末尾添加;
-                        if (!sql.endsWith(";")) {
-                            sql += ";";
-                        }
+                        // sql包装
+                        sql = wrapSql(sql);
 
                         long executionTime = System.currentTimeMillis();
                         statement.execute(sql);
