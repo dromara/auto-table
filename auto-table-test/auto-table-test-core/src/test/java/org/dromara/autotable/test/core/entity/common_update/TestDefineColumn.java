@@ -2,11 +2,15 @@ package org.dromara.autotable.test.core.entity.common_update;
 
 import lombok.Data;
 import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.AutoColumns;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.ColumnComment;
 import org.dromara.autotable.annotation.ColumnDefault;
 import org.dromara.autotable.annotation.ColumnType;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
+import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;
+import org.dromara.autotable.annotation.pgsql.PgsqlTypeConstant;
+import org.dromara.autotable.core.constants.DatabaseDialect;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -43,8 +47,12 @@ public class TestDefineColumn {
     // @AutoColumn(comment = "激活状态")
     protected Boolean active;
 
-    @ColumnComment("个人简介")
+    @ColumnComment("这是个人简介")
     @ColumnDefault("这个人很懒～，没有什么可说的。123～abc~")
+    @AutoColumns({
+            @AutoColumn(type = MysqlTypeConstant.VARCHAR, length = 1000, dialect = DatabaseDialect.MySQL),
+            @AutoColumn(type = PgsqlTypeConstant.TEXT, dialect = DatabaseDialect.PostgreSQL),
+    })
     protected String description;
 
     @ColumnDefault("CURRENT_TIMESTAMP")

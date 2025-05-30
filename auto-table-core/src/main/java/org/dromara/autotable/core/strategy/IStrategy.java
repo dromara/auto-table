@@ -28,11 +28,35 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     Logger log = LoggerFactory.getLogger(IStrategy.class);
 
     /**
+     * 当前运行的数据库策略
+     */
+    ThreadLocal<IStrategy<?, ?>> STRATEGY_THREAD_LOCAL = new ThreadLocal<>();
+
+    static void setCurrentStrategy(@NonNull IStrategy<?, ?> dataSource) {
+        STRATEGY_THREAD_LOCAL.set(dataSource);
+    }
+
+    static IStrategy<?, ?> getCurrentStrategy() {
+        IStrategy<?, ?> iStrategy = STRATEGY_THREAD_LOCAL.get();
+        if (iStrategy == null) {
+            throw new RuntimeException("当前线程没有设置IStrategy");
+        }
+        return iStrategy;
+    }
+
+    static void clean() {
+        STRATEGY_THREAD_LOCAL.remove();
+    }
+
+    /**
      * 开始分析实体集合
      *
      * @param entityClass 待处理的实体
      */
     default TABLE_META start(Class<?> entityClass) {
+
+        // 设置当前策略
+        IStrategy.setCurrentStrategy(this);
 
         AutoTableGlobalConfig.instance().getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
@@ -42,6 +66,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
         AutoTableGlobalConfig.instance().getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
 
+        // 清理当前策略
+        IStrategy.clean();
         return tableMetadata;
     }
 
@@ -272,6 +298,15 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     String databaseDialect();
 
     /**
+     * 分析Bean，得到元数据信息
+     *
+     * @param beanClass 待分析的class
+     * @return 表元信息
+     */
+    @NonNull
+    TABLE_META analyseClass(Class<?> beanClass);
+
+    /**
      * java字段类型与数据库类型映射关系
      *
      * @return 映射
@@ -286,15 +321,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @return SQL
      */
     String dropTable(String schema, String tableName);
-
-    /**
-     * 分析Bean，得到元数据信息
-     *
-     * @param beanClass 待分析的class
-     * @return 表元信息
-     */
-    @NonNull
-    TABLE_META analyseClass(Class<?> beanClass);
 
     /**
      * 生成创建表SQL

@@ -117,7 +117,7 @@ public class ApplicationAllTest {
     }
 
     @Test
-    public void testPgsqlCreate() {
+    public void testPgsqlCreateAndUpdate() {
 
         initSqlSessionFactory("mybatis-config-pgsql.xml");
 
