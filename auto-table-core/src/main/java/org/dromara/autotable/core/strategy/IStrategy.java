@@ -27,10 +27,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
     Logger log = LoggerFactory.getLogger(IStrategy.class);
 
-    default String sqlSeparator() {
-        return ";";
-    }
-
     /**
      * 当前运行的数据库策略
      */
@@ -50,6 +46,19 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
     static void clean() {
         STRATEGY_THREAD_LOCAL.remove();
+    }
+
+    /**
+     * sql包装，如果sql以分号结尾，则不添加分号，否则添加分号
+     * @param rawSql 原始sql
+     * @return 包装后的sql
+     */
+    default String wrapSql(String rawSql) {
+        String trimmed = rawSql.trim();
+        if (!trimmed.endsWith(";")) {
+            return trimmed + ";";
+        }
+        return trimmed;
     }
 
     /**
@@ -212,7 +221,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void executeSql(TABLE_META tableMetadata, List<String> sqlList) {
 
         List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs = new ArrayList<>();
-        final String sqlSeparator = sqlSeparator();
 
         DataSourceManager.useConnection(connection -> {
             try {
@@ -222,10 +230,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                 try (Statement statement = connection.createStatement()) {
                     boolean recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql().isEnable();
                     for (String sql : sqlList) {
-                        // sql末尾添加分隔符
-                        if (StringUtils.hasText(sqlSeparator) && !sql.endsWith(sqlSeparator)) {
-                            sql += sqlSeparator;
-                        }
+                        // sql包装
+                        sql = wrapSql(sql);
 
                         long executionTime = System.currentTimeMillis();
                         statement.execute(sql);

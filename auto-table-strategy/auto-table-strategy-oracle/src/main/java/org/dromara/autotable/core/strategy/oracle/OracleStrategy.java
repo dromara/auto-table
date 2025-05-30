@@ -8,8 +8,8 @@ import org.dromara.autotable.core.builder.DefaultTableMetadataBuilder;
 import org.dromara.autotable.core.builder.IndexMetadataBuilder;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
+import org.dromara.autotable.core.converter.DatabaseTypeDefine;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
-import org.dromara.autotable.core.converter.TypeDefine;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
@@ -18,7 +18,14 @@ import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,23 +42,28 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         return DatabaseDialect.Oracle;
     }
 
+    /**
+     * oracle数据库sql包装
+     * @param rawSql 原始sql
+     * @return 包装后的sql
+     */
     @Override
-    public String sqlSeparator() {
-        return "";
+    public String wrapSql(String rawSql) {
+        return rawSql;
     }
 
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        TypeDefine strType = TypeDefine.of("VARCHAR2", 255);
-        TypeDefine boolType = TypeDefine.of("NUMBER", 1, 0);
-        TypeDefine shortType = TypeDefine.of("NUMBER", 5, 0);
-        TypeDefine intType = TypeDefine.of("NUMBER", 10, 0);
-        TypeDefine longType = TypeDefine.of("NUMBER", 19, 0);
-        TypeDefine floatType = TypeDefine.of("BINARY_FLOAT");
-        TypeDefine doubleType = TypeDefine.of("BINARY_DOUBLE");
-        TypeDefine bigDecimalType = TypeDefine.of("NUMBER", 38, 18);
-        TypeDefine timestampType = TypeDefine.of("TIMESTAMP", 6);
-        TypeDefine dateType = TypeDefine.of("DATE");
+        DatabaseTypeDefine strType = DatabaseTypeDefine.of("VARCHAR2", 255);
+        DatabaseTypeDefine boolType = DatabaseTypeDefine.of("NUMBER", 1, 0);
+        DatabaseTypeDefine shortType = DatabaseTypeDefine.of("NUMBER", 5, 0);
+        DatabaseTypeDefine intType = DatabaseTypeDefine.of("NUMBER", 10, 0);
+        DatabaseTypeDefine longType = DatabaseTypeDefine.of("NUMBER", 19, 0);
+        DatabaseTypeDefine floatType = DatabaseTypeDefine.of("BINARY_FLOAT");
+        DatabaseTypeDefine doubleType = DatabaseTypeDefine.of("BINARY_DOUBLE");
+        DatabaseTypeDefine bigDecimalType = DatabaseTypeDefine.of("NUMBER", 38, 18);
+        DatabaseTypeDefine timestampType = DatabaseTypeDefine.of("TIMESTAMP", 6);
+        DatabaseTypeDefine dateType = DatabaseTypeDefine.of("DATE");
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
             put(String.class, strType);
             put(Character.class, strType);

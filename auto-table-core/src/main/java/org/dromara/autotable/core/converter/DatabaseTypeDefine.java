@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class TypeDefine implements DefaultTypeEnumInterface {
+public class DatabaseTypeDefine implements DefaultTypeEnumInterface {
     private final String typeName;
     private final Integer length;
     private final Integer decimalLength;
@@ -25,16 +25,16 @@ public class TypeDefine implements DefaultTypeEnumInterface {
         return typeName;
     }
 
-    public static TypeDefine of(String typeName, Integer length, Integer decimalLength) {
-        return new TypeDefine(typeName, length, decimalLength);
+    public static DatabaseTypeDefine of(String typeName, Integer length, Integer decimalLength) {
+        return new DatabaseTypeDefine(typeName, length, decimalLength);
     }
 
-    public static TypeDefine of(String typeName) {
-        return TypeDefine.of(typeName, null, null);
+    public static DatabaseTypeDefine of(String typeName) {
+        return DatabaseTypeDefine.of(typeName, null, null);
     }
 
-    public static TypeDefine of(String typeName, int length) {
-        return TypeDefine.of(typeName, length, null);
+    public static DatabaseTypeDefine of(String typeName, int length) {
+        return DatabaseTypeDefine.of(typeName, length, null);
     }
 
 }
