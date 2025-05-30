@@ -2,6 +2,7 @@ package org.dromara.autotable.core.strategy.oracle;
 
 import lombok.NonNull;
 import org.dromara.autotable.annotation.enums.IndexSortTypeEnum;
+import org.dromara.autotable.annotation.oracle.OracleTypeConstant;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.builder.ColumnMetadataBuilder;
 import org.dromara.autotable.core.builder.DefaultTableMetadataBuilder;
@@ -18,14 +19,7 @@ import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,6 +38,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
     /**
      * oracle数据库sql包装
+     *
      * @param rawSql 原始sql
      * @return 包装后的sql
      */
@@ -54,16 +49,16 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        DatabaseTypeDefine strType = DatabaseTypeDefine.of("VARCHAR2", 255);
-        DatabaseTypeDefine boolType = DatabaseTypeDefine.of("NUMBER", 1, 0);
-        DatabaseTypeDefine shortType = DatabaseTypeDefine.of("NUMBER", 5, 0);
-        DatabaseTypeDefine intType = DatabaseTypeDefine.of("NUMBER", 10, 0);
-        DatabaseTypeDefine longType = DatabaseTypeDefine.of("NUMBER", 19, 0);
-        DatabaseTypeDefine floatType = DatabaseTypeDefine.of("BINARY_FLOAT");
-        DatabaseTypeDefine doubleType = DatabaseTypeDefine.of("BINARY_DOUBLE");
-        DatabaseTypeDefine bigDecimalType = DatabaseTypeDefine.of("NUMBER", 38, 18);
-        DatabaseTypeDefine timestampType = DatabaseTypeDefine.of("TIMESTAMP", 6);
-        DatabaseTypeDefine dateType = DatabaseTypeDefine.of("DATE");
+        DatabaseTypeDefine strType = DatabaseTypeDefine.of(OracleTypeConstant.VARCHAR2, 255);
+        DatabaseTypeDefine boolType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 1, 0);
+        DatabaseTypeDefine shortType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 5, 0);
+        DatabaseTypeDefine intType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 10, 0);
+        DatabaseTypeDefine longType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 19, 0);
+        DatabaseTypeDefine floatType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_FLOAT);
+        DatabaseTypeDefine doubleType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_DOUBLE);
+        DatabaseTypeDefine bigDecimalType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 38, 18);
+        DatabaseTypeDefine timestampType = DatabaseTypeDefine.of(OracleTypeConstant.TIMESTAMP, 6);
+        DatabaseTypeDefine dateType = DatabaseTypeDefine.of(OracleTypeConstant.DATE);
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
             put(String.class, strType);
             put(Character.class, strType);
