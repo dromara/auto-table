@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor
 public class DatabaseTypeDefine implements DefaultTypeEnumInterface {
+
     private final String typeName;
     private final Integer length;
     private final Integer decimalLength;
