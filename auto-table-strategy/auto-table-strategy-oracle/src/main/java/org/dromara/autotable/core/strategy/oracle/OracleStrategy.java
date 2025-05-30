@@ -130,11 +130,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         List<String> columnSqlList = columnMetadataList.stream()
                 .map(it -> OracleHelper.SQL.toColumnSql(tableName, it))
                 .collect(Collectors.toList());
-        String createTable = String.format("CREATE TABLE %s (%s)"
-                , tableName
-                , String.join(",\n", columnSqlList)
-        );
-        result.add(createTable);
+        result.add(String.format("CREATE TABLE %s (%s)", tableName, String.join(",\n", columnSqlList)));
 
         // 构建主键约束
         if (primaryKey != null) {
@@ -160,16 +156,27 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         OracleCompareTableInfo compareTableInfo = new OracleCompareTableInfo(tableMetadata.getTableName(), tableMetadata.getSchema());
         String tableName = tableMetadata.getTableName();
         String newTableComment = Optional.ofNullable(tableMetadata.getComment()).orElse("");
+
+        // 实体主键
+        ColumnMetadata newPrimaryKey = tableMetadata.getColumnMetadataList()
+                .stream()
+                .filter(ColumnMetadata::isPrimary)
+                .findAny()
+                .orElse(null);
+
+        // 实体字段信息
         List<ColumnMetadata> newColumnList = tableMetadata.getColumnMetadataList();
         Set<String> newColumnNameSet = newColumnList.stream()
                 .map(ColumnMetadata::getName)
                 .map(String::toLowerCase)
                 .collect(Collectors.toSet());
+        // 实体索引信息
         List<IndexMetadata> newIndexList = tableMetadata.getIndexMetadataList();
         Set<String> newIndexNameSet = newIndexList.stream()
                 .map(IndexMetadata::getName)
                 .map(String::toLowerCase)
                 .collect(Collectors.toSet());
+        // 数据库字段信息
         String oldTableComment = Optional.of(TabComment.search(tableName))
                 .map(TabComment::getComments)
                 .orElse("");
@@ -188,16 +195,12 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         Map<String, TabColumn> oldColumnMap = oldColumnList
                 .stream()
                 .collect(Collectors.toMap(it -> it.getColumn_name().toLowerCase(), Function.identity()));
-
-        // 记录sequence信息
-        ColumnMetadata primaryKey = newColumnList.stream()
-                .filter(ColumnMetadata::isPrimary)
+        // 数据库主键信息
+        TabColumn oldPrimaryKey = oldColumnList.stream()
+                .filter(it -> "P".equals(it.getConstraint_type()))
                 .findAny()
                 .orElse(null);
-        compareTableInfo.setNeedSequence(primaryKey != null && primaryKey.isAutoIncrement());
-        TabSequence oldSequence = TabSequence.search(tableName);
-        compareTableInfo.setHasSequence(oldSequence != null);
-
+        // 数据库索引信息
         Map<String, List<TabIndex>> oldIndexMap = TabIndex.search(tableName)
                 .stream()
                 .peek(it -> {
@@ -208,30 +211,23 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                 })
                 .collect(Collectors.groupingBy(it -> it.getIndex_name().toLowerCase()));
 
-
-
+        // 记录序列信息
+        compareTableInfo.setNeedSequence(newPrimaryKey != null && newPrimaryKey.isAutoIncrement());
+        TabSequence oldSequence = TabSequence.search(tableName);
+        compareTableInfo.setHasSequence(oldSequence != null);
 
         // 判断表注释
         if (!newTableComment.equals(oldTableComment)) {
             compareTableInfo.setTableComment(newTableComment);
         }
-        // 主键
-        ColumnMetadata newPrimaryKey = newColumnList
-                .stream()
-                .filter(ColumnMetadata::isPrimary)
-                .findAny()
-                .orElse(null);
-        TabColumn oldPrimaryKey = oldColumnList.stream()
-                .filter(it -> "P".equals(it.getConstraint_type()))
-                .findAny()
-                .orElse(null);
-        // 删除旧主键
+
+        // 是否需要删除旧主键
         if (oldPrimaryKey != null) {
             if (newPrimaryKey == null || !newPrimaryKey.getName().equalsIgnoreCase(oldPrimaryKey.getColumn_name())) {
                 compareTableInfo.setDeletePrimaryKey(oldPrimaryKey);
             }
         }
-        // 新增主键
+        // 是否需要新增主键
         if (newPrimaryKey != null) {
             if (oldPrimaryKey == null || !newPrimaryKey.getName().equalsIgnoreCase(oldPrimaryKey.getColumn_name())) {
                 compareTableInfo.setCreatePrimaryKey(newPrimaryKey);
@@ -251,9 +247,9 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                 .collect(Collectors.toList());
         compareTableInfo.setDeleteColumnList(deleteColumnList);
 
+
+        // 记录需要修改的字段
         Set<String> updateColumnSet = new HashSet<>();
-
-
         // 修改字段
         List<String> updateColumnList = newColumnList.stream()
                 .filter(it -> oldColumnMap.containsKey(it.getName().toLowerCase()))
@@ -262,7 +258,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     String newColumnSql = newColumn.getName();
                     boolean change = false;
 
-                    // 类型修改
+                    // 类型是否修改
                     String newType = newColumn.getType().getDefaultFullType();
                     String oldType = oldColumn.getFullType();
                     if (!newType.equalsIgnoreCase(oldType)) {
@@ -272,7 +268,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     }
 
 
-                    // 默认值修改
+                    // 默认值是否修改
                     String newDefaultValue = OracleHelper.SQL.formatDefaultValue(tableName, newColumn);
                     String oldDefaultValue = String.valueOf(oldColumn.getData_default_vc()).trim();
                     if (!newDefaultValue.equalsIgnoreCase(oldDefaultValue)) {
@@ -282,7 +278,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     }
 
 
-                    // 可空修改
+                    // 可空配置是否修改
                     boolean newNullAble = !newColumn.isNotNull();
                     boolean oldNullAble = "Y".equals(oldColumn.getNullable());
                     if (newNullAble != oldNullAble) {
@@ -300,7 +296,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                 .collect(Collectors.toList());
         compareTableInfo.setUpdateColumnList(updateColumnList);
 
-        // 修改字段注释
+        // 字段注释是否修改
         List<ColumnMetadata> updateColumnCommentList = newColumnList.stream()
                 .filter(it -> oldColumnMap.containsKey(it.getName().toLowerCase()))
                 .filter(newColumn -> {
@@ -317,7 +313,9 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         // 新增索引列表
         List<IndexMetadata> createIndexList = new ArrayList<>();
 
+        // 遍历实体索引
         for (IndexMetadata newIndex : newIndexList) {
+            // 索引名称
             String indexName = newIndex.getName().toLowerCase();
             List<IndexMetadata.IndexColumnParam> newIndexColumns = newIndex.getColumns();
             List<String> newIndexColumnNames = newIndex.getColumns()
@@ -325,7 +323,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     .map(IndexMetadata.IndexColumnParam::getColumn)
                     .map(String::toLowerCase)
                     .collect(Collectors.toList());
-            // 索引字段有更新操作,需要删除索引+重建索引
+            // 索引字段有更新操作,需要删除关联的索引+重建索引
             if (updateColumnSet.stream().anyMatch(newIndexColumnNames::contains)) {
                 createIndexList.add(newIndex);
                 if (oldIndexMap.containsKey(indexName)) {
