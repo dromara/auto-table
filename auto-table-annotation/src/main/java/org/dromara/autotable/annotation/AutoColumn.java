@@ -85,7 +85,6 @@ public @interface AutoColumn {
 
     /**
      * @return 自定义数据库方言，参考 {@link org.dromara.autotable.core.constants.DatabaseDialect} 常量
-     * 默认从数据源链接中获取
      */
     String dialect() default "";
 }
