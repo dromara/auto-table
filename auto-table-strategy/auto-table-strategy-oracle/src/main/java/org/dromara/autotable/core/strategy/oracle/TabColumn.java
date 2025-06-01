@@ -1,14 +1,10 @@
 package org.dromara.autotable.core.strategy.oracle;
 
 import lombok.Data;
-import org.dromara.autotable.annotation.enums.DefaultValueEnum;
-import org.dromara.autotable.core.strategy.ColumnMetadata;
-import org.dromara.autotable.core.utils.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * 字段信息
@@ -67,44 +63,19 @@ public class TabColumn {
         return fullType;
     }
 
-    public boolean hasChangeType(ColumnMetadata newColumn) {
-        String newType = newColumn.getType().getDefaultFullType();
-        String oldType = this.getFullType();
-        return !newType.equals(oldType);
-    }
 
-    public boolean hasChangeNull(ColumnMetadata newColumn) {
-        boolean newNullAble = !newColumn.isNotNull();
-        boolean oldNullAble = "Y".equals(this.nullable);
-        return newNullAble == oldNullAble;
-    }
-
-
-    public boolean hasChangeDefaultValue(ColumnMetadata newColumn) {
-        String newValue = Optional.ofNullable(newColumn.getDefaultValue()).orElse("");
-        String oldValue = Optional.ofNullable(this.data_default_vc).orElse("");
-        if (DefaultValueEnum.NULL.equals(newColumn.getDefaultValueType())) {
-            return StringUtils.hasText(oldValue);
-        }
-        if (DefaultValueEnum.EMPTY_STRING.equals(newColumn.getDefaultValueType())) {
-            return !"''".equals(oldValue);
-        }
-        if (oldValue.startsWith("'")) {
-            oldValue = oldValue.substring(1, oldValue.length() - 1);
-            return !newValue.equals(oldValue);
-        }
-        return !newValue.equalsIgnoreCase(oldValue);
-    }
-
-    public boolean hasChangeComment(ColumnMetadata newColumn) {
-        String newComment = Optional.ofNullable(newColumn.getComment()).orElse("");
-        String oldComment = Optional.ofNullable(this.comments).orElse("");
-        return !newComment.equals(oldComment);
-    }
-
-
+    /**
+     * 根据表名查询表的列信息
+     *
+     * @param tableName 表名，用于查询列信息的唯一标识
+     * @return 返回一个TabColumn对象的列表，每个对象包含表中每一列的详细信息
+     */
     public static List<TabColumn> search(String tableName) {
+        // 初始化参数，用于在SQL查询中传递表名
         Map<String, Object> params = Collections.singletonMap("tableName", tableName);
+
+        // SQL查询语句，用于从数据库中获取指定表的列信息
+        // 包含了表名、列名、数据类型、长度、精度、小数位数、是否可为空、列ID、默认值、注释以及主键信息
         String sql = "SELECT tc.table_name\n" +
                 "     , tc.column_name\n" +
                 "     , tc.data_type\n" +
@@ -130,6 +101,8 @@ public class TabColumn {
                 "                         ON tc.table_name = pk.table_name AND tc.column_name = pk.column_name\n" +
                 "      WHERE UPPER(tc.table_name) = UPPER(':tableName')\n" +
                 "      ORDER BY tc.column_id";
+
+        // 执行SQL查询，并将结果映射到TabColumn对象列表中
         return OracleHelper.DB.queryList(sql, params, TabColumn.class);
     }
 

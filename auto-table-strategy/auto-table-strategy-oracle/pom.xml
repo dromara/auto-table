@@ -9,6 +9,7 @@
         <version>2.4.6</version>
     </parent>
 
+    <name>auto-table-strategy-oracle</name>
     <artifactId>auto-table-strategy-oracle</artifactId>
 
     <dependencies>

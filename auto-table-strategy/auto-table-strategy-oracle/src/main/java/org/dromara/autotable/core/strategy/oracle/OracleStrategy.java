@@ -47,42 +47,70 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         return rawSql;
     }
 
+    /**
+     * 重写typeMapping方法以提供自定义的数据库类型映射
+     * 此方法定义了Java类型到数据库类型的映射规则，用于指导ORM框架如何处理不同类型的字段
+     *
+     * @return 返回一个映射，键是Java类型，值是对应的数据库类型定义
+     */
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
+        // 定义字符串类型映射，使用Oracle的VARCHAR2类型，长度为255
         DatabaseTypeDefine strType = DatabaseTypeDefine.of(OracleTypeConstant.VARCHAR2, 255);
+        // 定义布尔类型映射，使用Oracle的NUMBER类型，长度为1，精度为0
         DatabaseTypeDefine boolType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 1, 0);
+        // 定义短整型类型映射，使用Oracle的NUMBER类型，长度为5，精度为0
         DatabaseTypeDefine shortType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 5, 0);
+        // 定义整型类型映射，使用Oracle的NUMBER类型，长度为10，精度为0
         DatabaseTypeDefine intType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 10, 0);
+        // 定义长整型类型映射，使用Oracle的NUMBER类型，长度为19，精度为0
         DatabaseTypeDefine longType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 19, 0);
+        // 定义浮点类型映射，使用Oracle的BINARY_FLOAT类型
         DatabaseTypeDefine floatType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_FLOAT);
+        // 定义双精度浮点类型映射，使用Oracle的BINARY_DOUBLE类型
         DatabaseTypeDefine doubleType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_DOUBLE);
+        // 定义大十进制数类型映射，使用Oracle的NUMBER类型，长度为38，精度为18
         DatabaseTypeDefine bigDecimalType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 38, 18);
+        // 定义时间戳类型映射，使用Oracle的TIMESTAMP类型，精度为6
         DatabaseTypeDefine timestampType = DatabaseTypeDefine.of(OracleTypeConstant.TIMESTAMP, 6);
+        // 定义日期类型映射，使用Oracle的DATE类型
         DatabaseTypeDefine dateType = DatabaseTypeDefine.of(OracleTypeConstant.DATE);
+
+        // 创建并初始化一个HashMap，存储Java类型到数据库类型定义的映射
+        // 初始容量设为32，根据经验估计的映射数量来减少哈希表的扩容操作
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
+            // 映射Java字符串和字符类型到数据库的字符串类型
             put(String.class, strType);
             put(Character.class, strType);
             put(char.class, strType);
 
+            // 映射Java布尔类型到数据库的布尔类型
             put(Boolean.class, boolType);
             put(boolean.class, boolType);
 
+            // 映射Java短整型到数据库的短整型
             put(Short.class, shortType);
             put(short.class, shortType);
 
+            // 映射Java整型到数据库的整型
             put(Integer.class, intType);
             put(int.class, intType);
 
+            // 映射Java大整数和长整型到数据库的长整型
             put(BigInteger.class, longType);
             put(Long.class, longType);
             put(long.class, longType);
 
+            // 映射Java浮点型到数据库的浮点型
             put(Float.class, floatType);
             put(float.class, floatType);
+            // 映射Java双精度浮点型到数据库的双精度浮点型
             put(Double.class, doubleType);
             put(double.class, doubleType);
+            // 映射Java大十进制数到数据库的大十进制数
             put(BigDecimal.class, bigDecimalType);
 
+            // 映射Java的各种日期和时间类型到数据库的日期和时间类型
             put(java.util.Date.class, timestampType);
             put(java.sql.Time.class, timestampType);
             put(java.sql.Date.class, dateType);
@@ -94,18 +122,33 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     }
 
 
+    /**
+     * 生成删除指定表及其对应序列的PL/SQL代码
+     * 此方法根据提供的模式和表名，生成一段PL/SQL代码，用于检查并删除表，以及检查并删除与表名对应的序列
+     * 主要目的是在数据库中安全地删除表及其相关序列，避免手动删除时可能出现的错误
+     *
+     * @param schema 模式名称，本方法中未使用该参数，但保留以符合可能的接口要求
+     * @param tableName 表名称，用于确定要删除的表和序列
+     * @return 返回一段PL/SQL代码，用于删除指定的表和序列
+     */
     @Override
     public String dropTable(String schema, String tableName) {
+        // 生成一段PL/SQL代码，用于检查并删除指定的表和序列
+        // 首先声明两个变量，用于存储表和序列的数量
         return String.format("DECLARE\n" +
                 "    table_count INTEGER;\n" +
                 "    seq_count   INTEGER;\n" +
                 "BEGIN\n" +
+                // 检查用户表中是否存在指定名称的表
                 "    SELECT COUNT(*) INTO table_count FROM user_tables WHERE upper(table_name) = upper('%s');\n" +
                 "    IF table_count > 0 THEN\n" +
+                // 如果表存在，则执行删除操作
                 "        EXECUTE IMMEDIATE 'DROP TABLE %s';\n" +
                 "    END IF;\n" +
+                // 检查用户序列中是否存在以'seq_'为前缀的指定名称的序列
                 "    SELECT COUNT(*) INTO seq_count FROM user_sequences WHERE upper(sequence_name) = upper('seq_%s');\n" +
                 "    IF seq_count > 0 THEN\n" +
+                // 如果序列存在，则执行删除操作
                 "        EXECUTE IMMEDIATE 'DROP SEQUENCE seq_%s';\n" +
                 "    END IF;" +
                 "END;", tableName, tableName, tableName, tableName);
