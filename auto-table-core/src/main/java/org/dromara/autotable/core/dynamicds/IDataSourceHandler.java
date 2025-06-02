@@ -40,9 +40,11 @@ public interface IDataSourceHandler {
             }
             this.useDataSource(dataSource);
             DataSourceManager.setDatasourceName(dataSource);
+            // 常规情况下，同一个数据源下，也只会有一种数据库方言（Dialect），所以Map的大小应该只有一个
+            // 非常规情况，暂未遇到
             Map<String, Set<Class<?>>> groupByDialect = entityClasses.stream().collect(
                     Collectors.groupingBy(
-                            // 获取数据库方言
+                            // 获取数据库方言，可能来自实体类注解，或者数据库连接
                             entityClass -> this.getDatabaseDialect(dataSource, entityClass),
                             Collectors.toSet()
                     )
@@ -104,21 +106,21 @@ public interface IDataSourceHandler {
     }
 
     /**
-     * 切换指定的数据源
+     * 多数据源场景：切换指定的数据源
      *
      * @param dataSourceName 数据源名称
      */
     void useDataSource(String dataSourceName);
 
     /**
-     * 清除当前数据源
+     * 多数据源场景：清除当前数据源
      *
      * @param dataSourceName 数据源名称
      */
     void clearDataSource(String dataSourceName);
 
     /**
-     * 获取指定类的数据库数据源
+     * 多数据源场景：获取指定类的数据库数据源
      *
      * @param clazz 指定类
      * @return 数据源名称，表分组的依据，届时，根据该值分组所有的表，同一数据源下的统一处理
