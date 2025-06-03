@@ -8,6 +8,7 @@ import org.dromara.autotable.annotation.AutoColumns;
 import org.dromara.autotable.annotation.Ignore;
 import org.dromara.autotable.annotation.doris.DorisTable;
 import org.dromara.autotable.annotation.doris.DorisTypeConstant;
+import org.dromara.autotable.annotation.oracle.OracleTypeConstant;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 
 /**
@@ -35,6 +36,7 @@ public class AutoTableExecuteSqlLog {
     @AutoColumns({
             @AutoColumn(length = 5000)
             , @AutoColumn(dialect = DatabaseDialect.Doris, type = DorisTypeConstant.STRING)
+            , @AutoColumn(dialect = DatabaseDialect.Oracle, type = OracleTypeConstant.VARCHAR2, length = 4000)
     })
     private String sqlStatement;
 
