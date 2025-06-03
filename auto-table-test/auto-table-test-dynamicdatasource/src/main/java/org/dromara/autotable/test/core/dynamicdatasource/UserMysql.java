@@ -1,14 +1,10 @@
 package org.dromara.autotable.test.core.dynamicdatasource;
 
-import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.ColumnComment;
-import org.dromara.autotable.annotation.ColumnDefault;
-import org.dromara.autotable.annotation.ColumnType;
-import org.dromara.autotable.annotation.PrimaryKey;
+import lombok.Data;
+import org.dromara.autotable.annotation.*;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.annotation.mysql.MysqlColumnCharset;
 import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;
-import lombok.Data;
 
 /**
  * @author don

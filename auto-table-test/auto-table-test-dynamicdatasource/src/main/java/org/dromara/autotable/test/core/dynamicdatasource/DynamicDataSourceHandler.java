@@ -1,10 +1,10 @@
 package org.dromara.autotable.test.core.dynamicdatasource;
 
-import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
-import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import lombok.NonNull;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 
 import javax.sql.DataSource;
 import java.io.InputStream;
@@ -17,10 +17,7 @@ import java.util.Map;
 public class DynamicDataSourceHandler implements IDataSourceHandler {
 
     private static final Map<String, String> CONFIG_MAP = new HashMap<String, String>() {{
-        put("mysql", "mybatis-config.xml");
-        put("pgsql", "mybatis-config-pgsql.xml");
-        put("sqlite", "mybatis-config-sqlite.xml");
-        put("h2", "mybatis-config-h2.xml");
+        put("dm", "mybatis-config-dmsql.xml");
     }};
     private static final Map<String, DataSource> STRING_DATA_SOURCE_MAP = new HashMap<>();
 

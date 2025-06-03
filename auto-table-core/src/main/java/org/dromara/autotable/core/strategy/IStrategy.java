@@ -32,10 +32,20 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     ThreadLocal<IStrategy<?, ?>> STRATEGY_THREAD_LOCAL = new ThreadLocal<>();
 
+    /**
+     * 设置当前线程的策略
+     *
+     * @param dataSource 数据源
+     */
     static void setCurrentStrategy(@NonNull IStrategy<?, ?> dataSource) {
         STRATEGY_THREAD_LOCAL.set(dataSource);
     }
 
+    /**
+     * 获取当前线程的策略
+     *
+     * @return 当前线程的策略
+     */
     static IStrategy<?, ?> getCurrentStrategy() {
         IStrategy<?, ?> iStrategy = STRATEGY_THREAD_LOCAL.get();
         if (iStrategy == null) {
@@ -44,12 +54,16 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         return iStrategy;
     }
 
+    /**
+     * 清理当前线程的策略
+     */
     static void clean() {
         STRATEGY_THREAD_LOCAL.remove();
     }
 
     /**
      * sql包装，如果sql以分号结尾，则不添加分号，否则添加分号
+     *
      * @param rawSql 原始sql
      * @return 包装后的sql
      */

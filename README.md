@@ -42,7 +42,8 @@ AutoTable分别在表名、字段名、主键、主键策略、枚举处理、�
 | ✅ H2         | 2.2.220    |                                     |
 | ✅ Doris      | 2.0        | 成员[@lizhian](../../../../lizhian)开发 |
 | ☑️ Oracle    | 未知         | 成员[@lizhian](../../../../lizhian)开发 |
-| ☑️ 达梦        | 未知         | 成员[@minfc](../../../../minfc)开发测试中  |
+| ☑️ 达梦        | dm8(大小写不敏感,兼容mysql模式) | 成员[@minfc](https://gitee.com/minfc)开发测试中     |
+| ✅ 人大金仓      | V009R001C002B0014     | 成员[@minfc](https://gitee.com/minfc)开发     |
 | 其他数据库        | 暂未支持       | 期待你的PR😉                            |
 
 ## 流程图

@@ -389,7 +389,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
             isTypeDiff = !fullType.equalsIgnoreCase(dbColumnType);
         }
 
-        if(isTypeDiff) {
+        if (isTypeDiff) {
             return true;
         }
 
