@@ -1,6 +1,7 @@
 package org.dromara.autotable.core.utils;
 
 import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.AutoColumns;
 import org.dromara.autotable.annotation.AutoIncrement;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.ColumnComment;
@@ -16,10 +17,12 @@ import org.dromara.autotable.annotation.TableIndexes;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.strategy.IStrategy;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -145,7 +148,7 @@ public class TableMetadataHandler {
 
         // 调用第三方实现
         Boolean isIgnoreField = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().isIgnoreField(field, clazz);
-        if(isIgnoreField != null) {
+        if (isIgnoreField != null) {
             return !isIgnoreField;
         }
 
@@ -210,7 +213,7 @@ public class TableMetadataHandler {
         if (notNull != null) {
             return notNull;
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        AutoColumn autoColumn = findAutoColumn(field);
         if (autoColumn != null) {
             return autoColumn.notNull();
         }
@@ -231,7 +234,7 @@ public class TableMetadataHandler {
             return columnType;
         }
 
-        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        AutoColumn autoColumn = findAutoColumn(field);
         if (autoColumn != null && (StringUtils.hasText(autoColumn.type()) || autoColumn.length() > 0 || autoColumn.decimalLength() > 0)) {
             return new ColumnType() {
                 @Override
@@ -265,12 +268,45 @@ public class TableMetadataHandler {
         return AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().getColumnType(field, clazz);
     }
 
+    private static AutoColumn findAutoColumn(Field field) {
+
+        /* 优先从独立定义注解找 */
+        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        String databaseDialect = IStrategy.getCurrentStrategy().databaseDialect();
+        if (autoColumn != null) {
+            String dialect = autoColumn.dialect();
+            // 列数据库策略定义，没有指定或者指定的与当前相同，则返回
+            if (StringUtils.noText(dialect) || dialect.equals(databaseDialect)) {
+                return autoColumn;
+            }
+            // 列数据库策略定义，与当前不同，则返回null
+            autoColumn = null;
+        }
+
+        /* 再从聚合注解找 */
+        AutoColumns autoColumns = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumns.class);
+        if (autoColumns != null) {
+            // 优先找数据库策略相同的
+            autoColumn = Arrays.stream(autoColumns.value())
+                    .filter(ac -> databaseDialect.equals(ac.dialect()))
+                    .findFirst().orElse(null);
+            if (autoColumn == null) {
+                // 找不到再找不指定数据库策略的
+                autoColumn = Arrays.stream(autoColumns.value())
+                        .filter(ac -> StringUtils.noText(ac.dialect()))
+                        .findFirst().orElse(null);
+            }
+        }
+
+        return autoColumn;
+    }
+
     public static String getColumnComment(Field field, Class<?> clazz) {
         ColumnComment column = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, ColumnComment.class);
         if (column != null) {
             return replaceSingleQuote(column.value());
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        AutoColumn autoColumn = findAutoColumn(field);
         if (autoColumn != null && StringUtils.hasText(autoColumn.comment())) {
             return replaceSingleQuote(autoColumn.comment());
         }
@@ -302,7 +338,7 @@ public class TableMetadataHandler {
         if (columnDefault != null) {
             return columnDefault;
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        AutoColumn autoColumn = findAutoColumn(field);
         if (autoColumn != null && (autoColumn.defaultValueType() != DefaultValueEnum.UNDEFINED || StringUtils.hasText(autoColumn.defaultValue()))) {
             return new ColumnDefault() {
                 @Override
@@ -342,7 +378,7 @@ public class TableMetadataHandler {
         if (columnNameAnno != null) {
             return columnNameAnno.value();
         }
-        AutoColumn autoColumn = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, AutoColumn.class);
+        AutoColumn autoColumn = findAutoColumn(field);
         if (autoColumn != null && StringUtils.hasText(autoColumn.value())) {
             return autoColumn.value();
         }

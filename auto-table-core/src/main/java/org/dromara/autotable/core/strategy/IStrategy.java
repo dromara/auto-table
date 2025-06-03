@@ -28,11 +28,62 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     Logger log = LoggerFactory.getLogger(IStrategy.class);
 
     /**
+     * 当前运行的数据库策略
+     */
+    ThreadLocal<IStrategy<?, ?>> STRATEGY_THREAD_LOCAL = new ThreadLocal<>();
+
+    /**
+     * 设置当前线程的策略
+     *
+     * @param dataSource 数据源
+     */
+    static void setCurrentStrategy(@NonNull IStrategy<?, ?> dataSource) {
+        STRATEGY_THREAD_LOCAL.set(dataSource);
+    }
+
+    /**
+     * 获取当前线程的策略
+     *
+     * @return 当前线程的策略
+     */
+    static IStrategy<?, ?> getCurrentStrategy() {
+        IStrategy<?, ?> iStrategy = STRATEGY_THREAD_LOCAL.get();
+        if (iStrategy == null) {
+            throw new RuntimeException("当前线程没有设置IStrategy");
+        }
+        return iStrategy;
+    }
+
+    /**
+     * 清理当前线程的策略
+     */
+    static void clean() {
+        STRATEGY_THREAD_LOCAL.remove();
+    }
+
+    /**
+     * sql包装，如果sql以分号结尾，则不添加分号，否则添加分号
+     *
+     * @param rawSql 原始sql
+     * @return 包装后的sql
+     */
+    default String wrapSql(String rawSql) {
+        String trimmed = rawSql.trim();
+        if (!trimmed.endsWith(";")) {
+            return trimmed + ";";
+        }
+        return trimmed;
+    }
+
+    /**
      * 开始分析实体集合
      *
      * @param entityClass 待处理的实体
      */
     default TABLE_META start(Class<?> entityClass) {
+
+        // 设置当前策略
+        IStrategy.setCurrentStrategy(this);
 
         AutoTableGlobalConfig.instance().getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
@@ -42,6 +93,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
         AutoTableGlobalConfig.instance().getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
 
+        // 清理当前策略
+        IStrategy.clean();
         return tableMetadata;
     }
 
@@ -182,6 +235,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void executeSql(TABLE_META tableMetadata, List<String> sqlList) {
 
         List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs = new ArrayList<>();
+
         DataSourceManager.useConnection(connection -> {
             try {
                 // 批量的SQL 改为手动提交模式
@@ -190,10 +244,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                 try (Statement statement = connection.createStatement()) {
                     boolean recordSql = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql().isEnable();
                     for (String sql : sqlList) {
-                        // sql末尾添加;
-                        if (!sql.endsWith(";")) {
-                            sql += ";";
-                        }
+                        // sql包装
+                        sql = wrapSql(sql);
 
                         long executionTime = System.currentTimeMillis();
                         statement.execute(sql);
@@ -272,6 +324,15 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     String databaseDialect();
 
     /**
+     * 分析Bean，得到元数据信息
+     *
+     * @param beanClass 待分析的class
+     * @return 表元信息
+     */
+    @NonNull
+    TABLE_META analyseClass(Class<?> beanClass);
+
+    /**
      * java字段类型与数据库类型映射关系
      *
      * @return 映射
@@ -286,15 +347,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @return SQL
      */
     String dropTable(String schema, String tableName);
-
-    /**
-     * 分析Bean，得到元数据信息
-     *
-     * @param beanClass 待分析的class
-     * @return 表元信息
-     */
-    @NonNull
-    TABLE_META analyseClass(Class<?> beanClass);
 
     /**
      * 生成创建表SQL

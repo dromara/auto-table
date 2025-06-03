@@ -62,6 +62,7 @@ public class AutoTableBootstrap {
             start(databaseDialect, entityClasses);
         });
         AutoTableGlobalConfig.instance().getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
+        AutoTableGlobalConfig.instance().clear();
         log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
     }
 
@@ -77,41 +78,43 @@ public class AutoTableBootstrap {
             }
 
             // 删除没有声明的表
-            deleteUnregisterTables(registerTableNameMap, databaseStrategy);
+            Boolean autoDropTable = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable();
+            if (autoDropTable) {
+                deleteUnregisterTables(registerTableNameMap, databaseStrategy);
+            }
         } else {
             log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
         }
     }
 
     private static void deleteUnregisterTables(Map<String, Set<String>> registerTableNameMap, IStrategy<?, ?> databaseStrategy) {
-        if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable()) {
-            registerTableNameMap.forEach((schema, tableNames) -> {
-                List<String> allTableNames = databaseStrategy.listAllTables(schema);
 
-                // 剔除掉指定不删除的表
-                String[] autoDropTableIgnores = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTableIgnores();
-                if (autoDropTableIgnores != null) {
-                    allTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
-                }
+        registerTableNameMap.forEach((schema, tableNames) -> {
+            List<String> allTableNames = databaseStrategy.listAllTables(schema);
 
-                // 剔除掉声明过的表
-                allTableNames.removeAll(tableNames);
+            // 剔除掉指定不删除的表
+            String[] autoDropTableIgnores = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTableIgnores();
+            if (autoDropTableIgnores != null) {
+                allTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
+            }
 
-                // 删除剩余的表
-                allTableNames.forEach(tableName -> {
-                    log.info("表{}{}没有声明，执行删除！", StringUtils.hasText(schema) ? schema + "." : "", tableName);
-                    DataSourceManager.useConnection(connection -> {
-                        String sql = databaseStrategy.dropTable(schema, tableName);
-                        try (Statement statement = connection.createStatement()) {
-                            statement.execute(sql);
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    AutoTableGlobalConfig.instance().getDeleteTableFinishCallbacks().forEach(fn -> fn.afterDeleteTables(schema, tableName));
+            // 剔除掉声明过的表
+            allTableNames.removeAll(tableNames);
+
+            // 删除剩余的表
+            allTableNames.forEach(tableName -> {
+                log.info("表{}{}没有声明，执行删除！", StringUtils.hasText(schema) ? schema + "." : "", tableName);
+                DataSourceManager.useConnection(connection -> {
+                    String sql = databaseStrategy.dropTable(schema, tableName);
+                    try (Statement statement = connection.createStatement()) {
+                        statement.execute(sql);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 });
+                AutoTableGlobalConfig.instance().getDeleteTableFinishCallbacks().forEach(fn -> fn.afterDeleteTables(schema, tableName));
             });
-        }
+        });
     }
 
     private static void checkRepeatTableName(Set<Class<?>> entityClasses) {

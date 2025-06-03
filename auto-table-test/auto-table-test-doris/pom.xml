@@ -5,9 +5,10 @@
     <parent>
         <groupId>org.dromara.autotable</groupId>
         <artifactId>auto-table-test</artifactId>
-        <version>2.4.5</version>
+        <version>2.4.6</version>
     </parent>
 
+    <name>auto-table-test-doris</name>
     <artifactId>auto-table-test-doris</artifactId>
 
     <dependencyManagement>

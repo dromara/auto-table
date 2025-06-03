@@ -82,4 +82,9 @@ public @interface AutoColumn {
      * @return 序号，默认为0，1代表第一个，2代表第二个，以此类推，-1代表最后一个，-2代表倒数第二个，以此类推
      */
     int sort() default 0;
+
+    /**
+     * @return 自定义数据库方言，参考 {@link org.dromara.autotable.core.constants.DatabaseDialect} 常量
+     */
+    String dialect() default "";
 }
