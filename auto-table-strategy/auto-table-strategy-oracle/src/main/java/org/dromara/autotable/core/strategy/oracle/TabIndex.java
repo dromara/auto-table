@@ -33,29 +33,27 @@ public class TabIndex {
 
         // 定义SQL查询语句，用于从数据库中获取表的索引信息
         // 这个查询加入了多种连接条件和过滤条件，以获取准确的索引信息
-        String sql = "SELECT idx.table_name\n" +
-                "     , idx.table_type\n" +
-                "     , idx.index_name\n" +
-                "     , idx.index_type\n" +
-                "     , idx.uniqueness\n" +
-                "     , col.column_name\n" +
-                "     , col.column_position\n" +
-                "     , col.descend\n" +
-                "     , exp.column_expression\n" +
-                "FROM user_indexes idx\n" +
-                "         LEFT JOIN user_ind_columns col ON idx.table_name = col.table_name AND idx.index_name = col.index_name\n" +
-                "         LEFT JOIN user_ind_expressions exp\n" +
-                "                   ON col.table_name = exp.table_name\n" +
-                "                       AND col.index_name = exp.index_name\n" +
-                "                       AND col.column_position = exp.column_position\n" +
-                "WHERE idx.table_type = 'TABLE'\n" +
-                "  AND idx.generated = 'N'\n" +
-                "  AND idx.constraint_index = 'NO'\n" +
-                "  AND upper(idx.table_name) = upper(':tableName')\n" +
+        String sql = "SELECT idx.table_name " +
+                "     , idx.table_type " +
+                "     , idx.index_name " +
+                "     , idx.index_type " +
+                "     , idx.uniqueness " +
+                "     , col.column_name " +
+                "     , col.column_position " +
+                "     , col.descend " +
+                "     , exp.column_expression " +
+                "FROM user_indexes idx " +
+                "         LEFT JOIN user_ind_columns col ON idx.table_name = col.table_name AND idx.index_name = col.index_name " +
+                "         LEFT JOIN user_ind_expressions exp ON col.table_name = exp.table_name AND col.index_name = exp.index_name AND col.column_position = exp.column_position " +
+                "         LEFT JOIN user_constraints uc ON idx.index_name = uc.index_name " +
+                "WHERE idx.table_type = 'TABLE' " +
+                "  AND idx.generated = 'N' " +
+                "  AND uc.INDEX_NAME IS NULL " +
+                "  AND upper(idx.table_name) = upper(':tableName') " +
                 "ORDER BY idx.index_name, col.column_position";
 
         // 使用OracleHelper.DB.queryList方法执行SQL查询，并将结果映射为TabIndex对象列表
         // 这个方法将SQL查询语句、参数映射和结果需要映射的类类型作为参数
-        return OracleHelper.DB.queryList(sql, params, TabIndex.class);
+        return OracleHelper.DB.queryList(sql.replaceAll("\\s+", " "), params, TabIndex.class);
     }
 }

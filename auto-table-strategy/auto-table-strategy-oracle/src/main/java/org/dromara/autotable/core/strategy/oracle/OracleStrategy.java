@@ -127,7 +127,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
      * 此方法根据提供的模式和表名，生成一段PL/SQL代码，用于检查并删除表，以及检查并删除与表名对应的序列
      * 主要目的是在数据库中安全地删除表及其相关序列，避免手动删除时可能出现的错误
      *
-     * @param schema 模式名称，本方法中未使用该参数，但保留以符合可能的接口要求
+     * @param schema    模式名称，本方法中未使用该参数，但保留以符合可能的接口要求
      * @param tableName 表名称，用于确定要删除的表和序列
      * @return 返回一段PL/SQL代码，用于删除指定的表和序列
      */
@@ -135,28 +135,42 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     public String dropTable(String schema, String tableName) {
         // 生成一段PL/SQL代码，用于检查并删除指定的表和序列
         // 首先声明两个变量，用于存储表和序列的数量
-        return String.format("DECLARE\n" +
-                "    table_count INTEGER;\n" +
-                "    seq_count   INTEGER;\n" +
-                "BEGIN\n" +
-                // 检查用户表中是否存在指定名称的表
-                "    SELECT COUNT(*) INTO table_count FROM user_tables WHERE upper(table_name) = upper('%s');\n" +
-                "    IF table_count > 0 THEN\n" +
-                // 如果表存在，则执行删除操作
-                "        EXECUTE IMMEDIATE 'DROP TABLE %s';\n" +
-                "    END IF;\n" +
-                // 检查用户序列中是否存在以'seq_'为前缀的指定名称的序列
-                "    SELECT COUNT(*) INTO seq_count FROM user_sequences WHERE upper(sequence_name) = upper('seq_%s');\n" +
-                "    IF seq_count > 0 THEN\n" +
-                // 如果序列存在，则执行删除操作
-                "        EXECUTE IMMEDIATE 'DROP SEQUENCE seq_%s';\n" +
-                "    END IF;" +
-                "END;", tableName, tableName, tableName, tableName);
+        return String.format("DECLARE " +
+                        "    table_count INTEGER; " +
+                        "    seq_count   INTEGER; " +
+                        "BEGIN " +
+                        "    SELECT COUNT(*) INTO table_count FROM user_tables WHERE upper(table_name) = upper('%s'); " +
+                        "    IF table_count > 0 THEN " +
+                        "        EXECUTE IMMEDIATE 'DROP TABLE %s'; " +
+                        "    END IF; " +
+                        "    SELECT COUNT(*) INTO seq_count FROM user_sequences WHERE upper(sequence_name) = upper('seq_%s'); " +
+                        "    IF seq_count > 0 THEN " +
+                        "        EXECUTE IMMEDIATE 'DROP SEQUENCE seq_%s'; " +
+                        "    END IF;" +
+                        "END;", tableName, tableName, tableName, tableName)
+                .replaceAll("\\s+", " ");
     }
 
     @Override
     public @NonNull DefaultTableMetadata analyseClass(Class<?> beanClass) {
-        return tableMetadataBuilder.build(beanClass);
+        DefaultTableMetadata tableMetadata = tableMetadataBuilder.build(beanClass);
+        // 主键字段
+        ColumnMetadata primaryKey = tableMetadata.getColumnMetadataList()
+                .stream()
+                .filter(ColumnMetadata::isPrimary)
+                .findFirst()
+                .orElse(null);
+        if (primaryKey != null && primaryKey.isPrimary() && primaryKey.isAutoIncrement()) {
+            TabVersion search = TabVersion.search();
+            if (search.getMainVersion() < 12) {
+                primaryKey.setAutoIncrement(false);
+                log.warn("当前Oracle版本【{}】Oracle12以下版本不支持主键自增默认值, 将忽略【{}】主键的【autoIncrement = true】属性"
+                        , search.getVersion()
+                        , beanClass.getName()
+                );
+            }
+        }
+        return tableMetadata;
     }
 
     @Override
@@ -180,7 +194,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         List<String> columnSqlList = columnMetadataList.stream()
                 .map(it -> OracleHelper.SQL.toColumnSql(tableName, it))
                 .collect(Collectors.toList());
-        result.add(String.format("CREATE TABLE %s (%s)", tableName, String.join(",\n", columnSqlList)));
+        result.add(String.format("CREATE TABLE %s (%s)", tableName, String.join(", ", columnSqlList)));
 
         // 构建主键约束
         if (primaryKey != null) {
@@ -233,12 +247,11 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         List<TabColumn> oldColumnList = TabColumn.search(tableName)
                 .stream()
                 .peek(it -> {
-                    String dataDefaultVc = it.getData_default_vc();
+                    String dataDefault = it.getData_default();
                     String seqName = ".\"seq_" + tableName + "\".\"nextval\"";
-                    if (StringUtils.hasText(dataDefaultVc)
-                            && dataDefaultVc.toLowerCase().endsWith(seqName.toLowerCase())) {
-                        it.setData_default_vc("seq_" + tableName + ".nextval".toLowerCase());
-                        it.setData_default(it.getData_default_vc());
+                    if (StringUtils.hasText(dataDefault)
+                            && dataDefault.toLowerCase().endsWith(seqName.toLowerCase())) {
+                        it.setData_default("seq_" + tableName + ".nextval".toLowerCase());
                     }
                 })
                 .collect(Collectors.toList());
@@ -313,17 +326,17 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     String oldType = oldColumn.getFullType();
                     if (!newType.equalsIgnoreCase(oldType)) {
                         change = true;
-                        updateColumnSet.add(newColumn.getName());
+                        updateColumnSet.add(newColumn.getName().toLowerCase());
                         newColumnSql += " " + newType;
                     }
 
 
                     // 默认值是否修改
                     String newDefaultValue = OracleHelper.SQL.formatDefaultValue(tableName, newColumn);
-                    String oldDefaultValue = String.valueOf(oldColumn.getData_default_vc()).trim();
+                    String oldDefaultValue = String.valueOf(oldColumn.getData_default()).trim();
                     if (!newDefaultValue.equalsIgnoreCase(oldDefaultValue)) {
                         change = true;
-                        updateColumnSet.add(newColumn.getName());
+                        updateColumnSet.add(newColumn.getName().toLowerCase());
                         newColumnSql += " DEFAULT " + newDefaultValue;
                     }
 
@@ -333,7 +346,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     boolean oldNullAble = "Y".equals(oldColumn.getNullable());
                     if (newNullAble != oldNullAble) {
                         change = true;
-                        updateColumnSet.add(newColumn.getName());
+                        updateColumnSet.add(newColumn.getName().toLowerCase());
                         if (newNullAble) {
                             newColumnSql += " NULL";
                         } else {
