@@ -137,15 +137,15 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         // 首先声明两个变量，用于存储表和序列的数量
         return String.format("DECLARE " +
                         "    table_count INTEGER; " +
-                        "    seq_count   INTEGER; " +
+                        "    auto_seq_count   INTEGER; " +
                         "BEGIN " +
                         "    SELECT COUNT(*) INTO table_count FROM user_tables WHERE upper(table_name) = upper('%s'); " +
                         "    IF table_count > 0 THEN " +
                         "        EXECUTE IMMEDIATE 'DROP TABLE %s'; " +
                         "    END IF; " +
-                        "    SELECT COUNT(*) INTO seq_count FROM user_sequences WHERE upper(sequence_name) = upper('seq_%s'); " +
-                        "    IF seq_count > 0 THEN " +
-                        "        EXECUTE IMMEDIATE 'DROP SEQUENCE seq_%s'; " +
+                        "    SELECT COUNT(*) INTO auto_seq_count FROM user_sequences WHERE upper(sequence_name) = upper('auto_seq_%s'); " +
+                        "    IF auto_seq_count > 0 THEN " +
+                        "        EXECUTE IMMEDIATE 'DROP SEQUENCE auto_seq_%s'; " +
                         "    END IF;" +
                         "END;", tableName, tableName, tableName, tableName)
                 .replaceAll("\\s+", " ");
@@ -188,7 +188,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 构建主键自增序列
         if (primaryKey != null && primaryKey.isAutoIncrement()) {
-            result.add(String.format("CREATE SEQUENCE seq_%s", tableName));
+            result.add(String.format("CREATE SEQUENCE auto_seq_%s", tableName));
         }
         // 建表语句
         List<String> columnSqlList = columnMetadataList.stream()
@@ -248,10 +248,10 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                 .stream()
                 .peek(it -> {
                     String dataDefault = it.getData_default();
-                    String seqName = ".\"seq_" + tableName + "\".\"nextval\"";
+                    String seqName = ".\"auto_seq_" + tableName + "\".\"nextval\"";
                     if (StringUtils.hasText(dataDefault)
                             && dataDefault.toLowerCase().endsWith(seqName.toLowerCase())) {
-                        it.setData_default("seq_" + tableName + ".nextval".toLowerCase());
+                        it.setData_default("auto_seq_" + tableName + ".nextval".toLowerCase());
                     }
                 })
                 .collect(Collectors.toList());
@@ -459,7 +459,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         }
         // 先新增序列,方便后续修改主键默认值
         if (compareTableInfo.isNeedSequence() && !compareTableInfo.isHasSequence()) {
-            result.add(String.format("CREATE SEQUENCE seq_%s", tableName));
+            result.add(String.format("CREATE SEQUENCE auto_seq_%s", tableName));
         }
 
         // 删除字段
@@ -482,7 +482,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 删除序列
         if (!compareTableInfo.isNeedSequence() && compareTableInfo.isHasSequence()) {
-            result.add(String.format("DROP SEQUENCE seq_%s", tableName));
+            result.add(String.format("DROP SEQUENCE auto_seq_%s", tableName));
         }
 
 

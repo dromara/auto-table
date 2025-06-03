@@ -14,7 +14,7 @@ public class TabSequence {
 
     public static TabSequence search(String tableName) {
         Map<String, Object> params = Collections.singletonMap("tableName", tableName);
-        String sql = "SELECT * FROM user_sequences WHERE upper(sequence_name) = upper('seq_:tableName')";
+        String sql = "SELECT * FROM user_sequences WHERE upper(sequence_name) = upper('auto_seq_:tableName')";
         return OracleHelper.DB.queryOne(sql, params, TabSequence.class);
     }
 }

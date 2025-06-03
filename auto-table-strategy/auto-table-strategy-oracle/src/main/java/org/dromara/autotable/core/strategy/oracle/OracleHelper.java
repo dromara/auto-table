@@ -180,7 +180,7 @@ public static <T> List<T> queryList(String sql, Map<String, Object> params, Clas
         public static String formatDefaultValue(String tableName, ColumnMetadata columnMetadata) {
             // 主键自增情况
             if (columnMetadata.isPrimary() && columnMetadata.isAutoIncrement()) {
-                return "seq_" + tableName + ".nextval";
+                return "auto_seq_" + tableName + ".nextval";
             }
             // 获取列的默认值类型
             DefaultValueEnum type = columnMetadata.getDefaultValueType();
