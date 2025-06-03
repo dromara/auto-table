@@ -4,7 +4,7 @@ auto-table:
   auto-drop-column: true
   record-sql:
     # 开启SQL记录
-    enable: true
+    enable: false
     # 当前版本（此处可保持与计划上线的版本号一致，方便管理SQL文件）
     version: 1.0.0
     # 自定义记录方式
@@ -14,6 +14,8 @@ server:
 
 
 spring:
+  profiles:
+    active: oracle
   datasource:
     url: jdbc:mysql://localhost:3306/auto-table?useSSL=false&serverTimezone=UTC
     username: root
