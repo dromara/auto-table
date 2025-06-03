@@ -5,7 +5,6 @@ import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
 import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoColumns;
-import org.dromara.autotable.annotation.ColumnType;
 import org.dromara.autotable.annotation.Ignore;
 import org.dromara.autotable.annotation.doris.DorisTable;
 import org.dromara.autotable.annotation.doris.DorisTypeConstant;
@@ -33,9 +32,9 @@ public class AutoTableExecuteSqlLog {
 
     private String tableName;
 
-    @ColumnType(length = 5000)
     @AutoColumns({
-            @AutoColumn(dialect = DatabaseDialect.Doris, type = DorisTypeConstant.STRING, length = -1)
+            @AutoColumn(length = 5000)
+            , @AutoColumn(dialect = DatabaseDialect.Doris, type = DorisTypeConstant.STRING)
     })
     private String sqlStatement;
 
