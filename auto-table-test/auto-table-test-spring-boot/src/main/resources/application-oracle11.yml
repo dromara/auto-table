@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@//oracle11:1521/XE
+    username: tester
+    password: testpwd
+    driver-class-name: oracle.jdbc.OracleDriver
+logging:
+  level:
+    org.dromara: info
