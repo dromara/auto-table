@@ -1,7 +1,8 @@
 auto-table:
   enable: true
-  mode: update
+  mode: create
   auto-drop-column: true
+  auto-drop-index: true
   record-sql:
     # 开启SQL记录
     enable: true
@@ -9,14 +10,14 @@ auto-table:
     version: 1.0.0
     # 自定义记录方式
     record-type: db
-  auto-drop-index: true
+
 server:
   port: 9999
 
 
 spring:
   profiles:
-    active: oracle11
+    active: oracle23
   datasource:
     url: jdbc:mysql://localhost:3306/auto-table?useSSL=false&serverTimezone=UTC
     username: root
