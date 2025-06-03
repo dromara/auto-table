@@ -198,7 +198,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 构建主键约束
         if (primaryKey != null) {
-            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT pk_%s PRIMARY KEY(%s)", tableName, tableName, primaryKey.getName()));
+            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT auto_pk_%s PRIMARY KEY(%s)", tableName, tableName, primaryKey.getName()));
         }
 
         // 表和字段注释
@@ -495,7 +495,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         // 新增主键
         ColumnMetadata createPrimaryKey = compareTableInfo.getCreatePrimaryKey();
         if (createPrimaryKey != null) {
-            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT pk_%s PRIMARY KEY(%s)", tableName, tableName, createPrimaryKey.getName()));
+            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT auto_pk_%s PRIMARY KEY(%s)", tableName, tableName, createPrimaryKey.getName()));
         }
 
 
