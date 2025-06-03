@@ -2,14 +2,28 @@ package org.dromara.autotable.core.recordsql;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
+import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.AutoColumns;
 import org.dromara.autotable.annotation.ColumnType;
 import org.dromara.autotable.annotation.Ignore;
+import org.dromara.autotable.annotation.doris.DorisTable;
+import org.dromara.autotable.annotation.doris.DorisTypeConstant;
+import org.dromara.autotable.core.constants.DatabaseDialect;
 
 /**
  * 记录自动建表执行的SQL
+ *
  * @author don
  */
 @Getter
+@DorisTable(
+        duplicate_key = {AutoTableExecuteSqlLog.Fields.tableSchema, AutoTableExecuteSqlLog.Fields.tableName},
+        properties = {
+                "replication_num=1"
+        }
+)
+@FieldNameConstants
 public class AutoTableExecuteSqlLog {
 
     @Ignore
@@ -20,6 +34,9 @@ public class AutoTableExecuteSqlLog {
     private String tableName;
 
     @ColumnType(length = 5000)
+    @AutoColumns({
+            @AutoColumn(dialect = DatabaseDialect.Doris, type = DorisTypeConstant.STRING, length = -1)
+    })
     private String sqlStatement;
 
     @Setter
