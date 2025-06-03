@@ -20,6 +20,8 @@
         <module>auto-table-strategy-pgsql</module>
         <module>auto-table-strategy-sqlite</module>
         <module>auto-table-strategy-doris</module>
+        <module>auto-table-strategy-dm</module>
+        <module>auto-table-strategy-kingbase</module>
     </modules>
 
 </project>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.autotable</groupId>
+        <artifactId>auto-table-strategy</artifactId>
+        <version>2.4.6</version>
+    </parent>
+
+    <artifactId>auto-table-strategy-kingbase</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-strategy-pgsql</artifactId>
+            <optional>true</optional>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+</project>

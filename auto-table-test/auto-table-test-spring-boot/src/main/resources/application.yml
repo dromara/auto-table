@@ -19,6 +19,14 @@ spring:
     username: root
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:dm://localhost:5236?schema=test
+#    username: dm_user
+#    password: Dm888888
+#    driver-class-name: dm.jdbc.driver.DmDriver
+#    url: jdbc:kingbase8://localhost:54321/test?currentSchema=public&useSSL=false
+#    username: postgres
+#    password: postgres
+#    driver-class-name: com.kingbase8.Driver
 logging:
   level:
     org.dromara: info

@@ -1,17 +1,10 @@
 package org.dromara.autotable.test.core.dynamicdatasource;
 
-import org.dromara.autotable.annotation.AutoColumn;
-import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.ColumnComment;
-import org.dromara.autotable.annotation.ColumnDefault;
-import org.dromara.autotable.annotation.ColumnType;
-import org.dromara.autotable.annotation.Index;
-import org.dromara.autotable.annotation.PrimaryKey;
-import org.dromara.autotable.annotation.TableIndex;
-import org.dromara.autotable.annotation.enums.IndexTypeEnum;
-import org.dromara.autotable.annotation.h2.H2TypeConstant;
 import lombok.Data;
 import lombok.experimental.FieldNameConstants;
+import org.dromara.autotable.annotation.*;
+import org.dromara.autotable.annotation.enums.IndexTypeEnum;
+import org.dromara.autotable.annotation.h2.H2TypeConstant;
 
 import java.time.LocalDateTime;
 
