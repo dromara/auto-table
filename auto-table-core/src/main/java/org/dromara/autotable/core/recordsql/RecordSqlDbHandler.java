@@ -44,8 +44,8 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
                 for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
                     String schema = autoTableExecuteSqlLog.getTableSchema();
 
-                    String databaseDialect = AutoTableGlobalConfig.instance().getDatasourceHandler().getDatabaseDialect(DataSourceManager.getDatasourceName());
-                    IStrategy<?, ?> createTableStrategy = AutoTableGlobalConfig.instance().getStrategy(databaseDialect);
+                    // 从线程上下文获取数据库策略
+                    IStrategy<?, ?> createTableStrategy = IStrategy.getCurrentStrategy();
 
                     if (createTableStrategy.checkTableNotExist(schema, finalTableName)) {
                         // 初始化表
