@@ -31,7 +31,7 @@ public class TabColumn {
 
     private String data_default;
 
-    private String data_default_vc;
+    // private String data_default_vc;
 
     private String comments;
 
@@ -76,34 +76,34 @@ public class TabColumn {
 
         // SQL查询语句，用于从数据库中获取指定表的列信息
         // 包含了表名、列名、数据类型、长度、精度、小数位数、是否可为空、列ID、默认值、注释以及主键信息
-        String sql = "SELECT tc.table_name\n" +
-                "     , tc.column_name\n" +
-                "     , tc.data_type\n" +
-                "     , tc.data_length\n" +
-                "     , tc.data_precision\n" +
-                "     , tc.data_scale\n" +
-                "     , tc.nullable\n" +
-                "     , tc.column_id\n" +
-                "     , tc.data_default\n" +
-                "     , tc.data_default_vc\n" +
-                "     , cc.comments\n" +
-                "     , pk.constraint_name\n" +
-                "     , pk.constraint_type\n" +
-                "      FROM user_tab_columns tc\n" +
-                "               LEFT JOIN user_col_comments cc ON tc.table_name = cc.table_name AND tc.column_name = cc.column_name\n" +
-                "               LEFT JOIN (SELECT cons_col.table_name\n" +
-                "                               , cons_col.column_name\n" +
-                "                               , cons_col.constraint_name\n" +
-                "                               , cons.constraint_type\n" +
-                "                          FROM user_cons_columns cons_col\n" +
-                "                                   LEFT JOIN user_constraints cons ON cons_col.constraint_name = cons.constraint_name\n" +
-                "                          WHERE cons.constraint_type = 'P') pk\n" +
-                "                         ON tc.table_name = pk.table_name AND tc.column_name = pk.column_name\n" +
-                "      WHERE UPPER(tc.table_name) = UPPER(':tableName')\n" +
+        String sql = "SELECT tc.table_name " +
+                "     , tc.column_name " +
+                "     , tc.data_type " +
+                "     , tc.data_length " +
+                "     , tc.data_precision " +
+                "     , tc.data_scale " +
+                "     , tc.nullable " +
+                "     , tc.column_id " +
+                "     , tc.data_default " +
+                //"     , tc.data_default_vc " +
+                "     , cc.comments " +
+                "     , pk.constraint_name " +
+                "     , pk.constraint_type " +
+                "      FROM user_tab_columns tc " +
+                "               LEFT JOIN user_col_comments cc ON tc.table_name = cc.table_name AND tc.column_name = cc.column_name " +
+                "               LEFT JOIN (SELECT cons_col.table_name " +
+                "                               , cons_col.column_name " +
+                "                               , cons_col.constraint_name " +
+                "                               , cons.constraint_type " +
+                "                          FROM user_cons_columns cons_col " +
+                "                                   LEFT JOIN user_constraints cons ON cons_col.constraint_name = cons.constraint_name " +
+                "                          WHERE cons.constraint_type = 'P') pk " +
+                "                         ON tc.table_name = pk.table_name AND tc.column_name = pk.column_name " +
+                "      WHERE UPPER(tc.table_name) = UPPER(':tableName') " +
                 "      ORDER BY tc.column_id";
 
         // 执行SQL查询，并将结果映射到TabColumn对象列表中
-        return OracleHelper.DB.queryList(sql, params, TabColumn.class);
+        return OracleHelper.DB.queryList(sql.replaceAll("\\s+", " "), params, TabColumn.class);
     }
 
 
