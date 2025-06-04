@@ -7,6 +7,7 @@ import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
+import org.dromara.autotable.core.callback.CreateDatabaseFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
@@ -56,6 +57,7 @@ public class AutoTableAutoConfig {
             ObjectProvider<CreateTableInterceptor> createTableInterceptor,
             ObjectProvider<ModifyTableInterceptor> modifyTableInterceptor,
             /* 回调事件 */
+            ObjectProvider<CreateDatabaseFinishCallback> createDatabaseFinishCallbacks,
             ObjectProvider<CreateTableFinishCallback> createTableFinishCallback,
             ObjectProvider<ModifyTableFinishCallback> modifyTableFinishCallback,
             ObjectProvider<CompareTableFinishCallback> compareTableFinishCallbacks,
@@ -112,6 +114,8 @@ public class AutoTableAutoConfig {
         AutoTableGlobalConfig.instance().setModifyTableInterceptors(modifyTableInterceptor.orderedStream().collect(Collectors.toList()));
 
         /* 回调事件 */
+        // 配置自定义的创建库回调
+        AutoTableGlobalConfig.instance().setCreateDatabaseFinishCallbacks(createDatabaseFinishCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的创建表回调
         AutoTableGlobalConfig.instance().setCreateTableFinishCallbacks(createTableFinishCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的修改表回调

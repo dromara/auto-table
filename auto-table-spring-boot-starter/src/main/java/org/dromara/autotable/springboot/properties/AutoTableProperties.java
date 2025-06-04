@@ -46,6 +46,10 @@ public class AutoTableProperties {
      */
     private String indexPrefix = "auto_idx_";
     /**
+     * 自动创建数据库（用户）。
+     */
+    private Boolean autoBuildDatabase = true;
+    /**
      * 自动删除没有声明的表：强烈不建议开启，会发生丢失数据等不可逆的操作。
      */
     private Boolean autoDropTable = false;
@@ -78,12 +82,33 @@ public class AutoTableProperties {
     /**
      * mysql配置
      */
-    private Mysql mysql = new Mysql();
+    private MysqlConfig mysql = new MysqlConfig();
 
     /**
      * pgsql配置
      */
-    private Pgsql pgsql = new Pgsql();
+    private PgsqlConfig pgsql = new PgsqlConfig();
+
+    /**
+     * oracle配置
+     */
+    private OracleConfig oracle = new OracleConfig();
+
+    /**
+     * 达梦配置
+     */
+    private DMConfig dm = new DMConfig();
+
+    /**
+     * 人大金仓配置
+     */
+    private KingbaseConfig kingbase = new KingbaseConfig();
+
+    /**
+     * H2配置
+     */
+    private H2Config h2 = new H2Config();
+
     /**
      * doris配置
      */
@@ -102,6 +127,7 @@ public class AutoTableProperties {
         propertyConfig.setModelPackage(this.modelPackage);
         propertyConfig.setModelClass(this.modelClass);
         propertyConfig.setIndexPrefix(this.indexPrefix);
+        propertyConfig.setAutoBuildDatabase(this.autoBuildDatabase);
         propertyConfig.setAutoDropTable(this.autoDropTable);
         propertyConfig.setAutoDropTableIgnores(this.autoDropTableIgnores);
         propertyConfig.setAutoDropColumn(this.autoDropColumn);
@@ -118,17 +144,43 @@ public class AutoTableProperties {
         mysqlConfig.setTableDefaultCollation(this.mysql.getTableDefaultCollation());
         mysqlConfig.setColumnDefaultCharset(this.mysql.getColumnDefaultCharset());
         mysqlConfig.setColumnDefaultCollation(this.mysql.getColumnDefaultCollation());
+        mysqlConfig.setAdminUser(this.mysql.getAdminUser());
+        mysqlConfig.setAdminPassword(this.mysql.getAdminPassword());
         propertyConfig.setMysql(mysqlConfig);
 
         PropertyConfig.PgsqlConfig pgsqlConfig = new PropertyConfig.PgsqlConfig();
         pgsqlConfig.setPkAutoIncrementType(PropertyConfig.PgsqlConfig.PgsqlPkAutoIncrementType.valueOf(this.pgsql.getPkAutoIncrementType().name()));
+        pgsqlConfig.setAdminUser(this.pgsql.getAdminUser());
+        pgsqlConfig.setAdminPassword(this.pgsql.getAdminPassword());
         propertyConfig.setPgsql(pgsqlConfig);
+
+        PropertyConfig.OracleConfig oracleConfig = new PropertyConfig.OracleConfig();
+        oracleConfig.setAdminUser(this.oracle.getAdminUser());
+        oracleConfig.setAdminPassword(this.oracle.getAdminPassword());
+        propertyConfig.setOracle(oracleConfig);
+
+        PropertyConfig.DMConfig dmConfig = new PropertyConfig.DMConfig();
+        dmConfig.setAdminUser(this.dm.getAdminUser());
+        dmConfig.setAdminPassword(this.dm.getAdminPassword());
+        propertyConfig.setDm(dmConfig);
+
+        PropertyConfig.KingbaseConfig kingbaseConfig = new PropertyConfig.KingbaseConfig();
+        kingbaseConfig.setAdminUser(this.kingbase.getAdminUser());
+        kingbaseConfig.setAdminPassword(this.kingbase.getAdminPassword());
+        propertyConfig.setKingbase(kingbaseConfig);
+
+        PropertyConfig.H2Config h2Config = new PropertyConfig.H2Config();
+        h2Config.setAdminUser(this.h2.getAdminUser());
+        h2Config.setAdminPassword(this.h2.getAdminPassword());
+        propertyConfig.setH2(h2Config);
 
         PropertyConfig.DorisConfig dorisConfig = new PropertyConfig.DorisConfig();
         dorisConfig.setRollupPrefix(this.doris.getRollupPrefix());
         dorisConfig.setRollupAutoNameMaxLength(this.doris.getRollupAutoNameMaxLength());
         dorisConfig.setUpdateLimitTableDataLength(this.doris.getUpdateLimitTableDataLength());
         dorisConfig.setUpdateBackupOldTable(this.doris.isUpdateBackupOldTable());
+        dorisConfig.setAdminUser(this.doris.getAdminUser());
+        dorisConfig.setAdminPassword(this.doris.getAdminPassword());
         propertyConfig.setDoris(dorisConfig);
 
         PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
@@ -143,7 +195,7 @@ public class AutoTableProperties {
     }
 
     @Data
-    public static class Mysql {
+    public static class MysqlConfig {
         /**
          * 表默认字符集
          */
@@ -160,14 +212,30 @@ public class AutoTableProperties {
          * 列默认排序规则
          */
         private String columnDefaultCollation;
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
     }
 
     @Data
-    public static class Pgsql {
+    public static class PgsqlConfig {
         /**
          * 主键自增方式
          */
-        private PropertyConfig.PgsqlConfig.PgsqlPkAutoIncrementType pkAutoIncrementType = PropertyConfig.PgsqlConfig.PgsqlPkAutoIncrementType.byDefault;
+        private PgsqlPkAutoIncrementType pkAutoIncrementType = PgsqlPkAutoIncrementType.byDefault;
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
 
         public static enum PgsqlPkAutoIncrementType {
             /**
@@ -236,6 +304,54 @@ public class AutoTableProperties {
     }
 
     @Data
+    public static class OracleConfig {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
+    public static class DMConfig {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
+    public static class KingbaseConfig {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
+    public static class H2Config {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
     public static class DorisConfig {
         /**
          * 自己定义的物化视图前缀
@@ -255,6 +371,14 @@ public class AutoTableProperties {
          * 更新时,是否备份旧表
          */
         private boolean updateBackupOldTable = false;
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
 
     }
 }

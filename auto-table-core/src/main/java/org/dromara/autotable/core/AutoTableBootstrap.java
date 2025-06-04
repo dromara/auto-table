@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
+import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.core.utils.SpiLoader;
@@ -45,6 +46,9 @@ public class AutoTableBootstrap {
 
         // 注册不同数据源策略
         registerAllDbStrategy();
+
+        // 注册不同数据库的构建器
+        registerAllDatabaseBuilder();
 
         // 扫描所有的类，过滤出指定注解的实体
         Set<Class<?>> classes = findAllEntityClass(autoTableProperties);
@@ -147,6 +151,15 @@ public class AutoTableBootstrap {
             for (IStrategy provider : strategies) {
                 log.info("注册数据库策略：{}", provider.databaseDialect());
                 AutoTableGlobalConfig.instance().addStrategy(provider);
+            }
+        }
+    }
+
+    private static void registerAllDatabaseBuilder() {
+        List<DatabaseBuilder> databaseBuilders = SpiLoader.loadAll(DatabaseBuilder.class);
+        if (!databaseBuilders.isEmpty()) {
+            for (DatabaseBuilder databaseBuilder : databaseBuilders) {
+                AutoTableGlobalConfig.instance().addDatabaseBuilder(databaseBuilder);
             }
         }
     }

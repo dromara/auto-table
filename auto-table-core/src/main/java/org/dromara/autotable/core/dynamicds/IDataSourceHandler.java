@@ -1,6 +1,9 @@
 package org.dromara.autotable.core.dynamicds;
 
 import lombok.NonNull;
+import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.strategy.DatabaseBuilder;
+import org.dromara.autotable.core.utils.DataSourceInfoExtractor;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 import org.slf4j.Logger;
@@ -40,8 +43,24 @@ public interface IDataSourceHandler {
             }
             this.useDataSource(dataSource);
             DataSourceManager.setDatasourceName(dataSource);
+
+            // 确保数据库存在，不存在则构建数据库
+            Boolean autoBuildDatabase = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoBuildDatabase();
+            if (autoBuildDatabase) {
+                DataSourceInfoExtractor.DbInfo dbInfo = DataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
+                DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, entityClasses);
+                if (databaseBuilder != null) {
+                    boolean buildSuccess = databaseBuilder.buildIfAbsent(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password);
+                    if (buildSuccess) {
+                        // 触发回调
+                        AutoTableGlobalConfig.instance().getCreateDatabaseFinishCallbacks()
+                                .forEach(callback -> callback.afterCreateDatabase(dataSource, entityClasses, dbInfo));
+                    }
+                }
+            }
+
             // 常规情况下，同一个数据源下，也只会有一种数据库方言（Dialect），所以Map的大小应该只有一个
-            // 非常规情况，暂未遇到
+            // 【错误】非常规情况，同一个数据源下，@AutoTable指定了dialect属性
             Map<String, Set<Class<?>>> groupByDialect = entityClasses.stream().collect(
                     Collectors.groupingBy(
                             // 获取数据库方言，可能来自实体类注解，或者数据库连接
@@ -49,6 +68,9 @@ public interface IDataSourceHandler {
                             Collectors.toSet()
                     )
             );
+            if (groupByDialect.size() > 1) {
+                throw new RuntimeException("同一个数据源(" + dataSource + ")下，不能同时使用多个数据库方言[" + String.join(",", groupByDialect.keySet()) + "]");
+            }
 
             try {
                 groupByDialect.forEach(consumer);

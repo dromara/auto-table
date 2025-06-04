@@ -12,10 +12,22 @@
     <artifactId>auto-table-strategy-kingbase</artifactId>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>org.dromara.autotable</groupId>
             <artifactId>auto-table-strategy-pgsql</artifactId>
-            <optional>true</optional>
             <version>${project.version}</version>
         </dependency>
 

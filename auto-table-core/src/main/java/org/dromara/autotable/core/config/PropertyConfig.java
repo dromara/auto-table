@@ -1,7 +1,7 @@
 package org.dromara.autotable.core.config;
 
-import org.dromara.autotable.core.RunMode;
 import lombok.Data;
+import org.dromara.autotable.core.RunMode;
 
 @Data
 public class PropertyConfig {
@@ -34,6 +34,10 @@ public class PropertyConfig {
      * 自己定义的索引前缀
      */
     private String indexPrefix = "auto_idx_";
+    /**
+     * 自动创建数据库（用户）。
+     */
+    private Boolean autoBuildDatabase = true;
     /**
      * 自动删除没有声明的表：强烈不建议开启，会发生丢失数据等不可逆的操作。
      */
@@ -73,6 +77,26 @@ public class PropertyConfig {
      * pgsql配置
      */
     private PgsqlConfig pgsql = new PgsqlConfig();
+
+    /**
+     * oracle配置
+     */
+    private OracleConfig oracle = new OracleConfig();
+
+    /**
+     * 达梦配置
+     */
+    private DMConfig dm = new DMConfig();
+
+    /**
+     * 人大金仓配置
+     */
+    private KingbaseConfig kingbase = new KingbaseConfig();
+
+    /**
+     * H2配置
+     */
+    private H2Config h2 = new H2Config();
 
     /**
      * doris配置
@@ -156,6 +180,14 @@ public class PropertyConfig {
          * 列默认排序规则
          */
         private String columnDefaultCollation;
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
     }
 
     @Data
@@ -164,6 +196,14 @@ public class PropertyConfig {
          * 主键自增方式
          */
         private PgsqlPkAutoIncrementType pkAutoIncrementType = PgsqlPkAutoIncrementType.byDefault;
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
 
         public static enum PgsqlPkAutoIncrementType {
             /**
@@ -175,6 +215,54 @@ public class PropertyConfig {
              */
             byDefault,
         }
+    }
+
+    @Data
+    public static class OracleConfig {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
+    public static class DMConfig {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
+    public static class KingbaseConfig {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
+    }
+
+    @Data
+    public static class H2Config {
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
     }
 
     @Data
@@ -197,6 +285,14 @@ public class PropertyConfig {
          * 更新时,是否备份旧表
          */
         private boolean updateBackupOldTable = false;
+        /**
+         * 自动建库：数据库管理员用户名（默认使用数据库链接的username）
+         */
+        private String adminUser;
+        /**
+         * 自动建库：数据库管理员密码（默认使用数据库链接的password）
+         */
+        private String adminPassword;
 
     }
 }

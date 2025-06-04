@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
+import org.dromara.autotable.core.callback.CreateDatabaseFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
@@ -21,6 +22,7 @@ import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
 import org.dromara.autotable.core.interceptor.ModifyTableInterceptor;
 import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
+import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 
@@ -29,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 全局配置
@@ -155,6 +158,13 @@ public class AutoTableGlobalConfig {
     private List<ValidateFinishCallback> validateFinishCallbacks = new ArrayList<>();
 
     /**
+     * 创建库回调
+     */
+    @Setter
+    @Getter
+    private List<CreateDatabaseFinishCallback> createDatabaseFinishCallbacks = new ArrayList<>();
+
+    /**
      * 创建表回调
      */
     @Setter
@@ -205,6 +215,9 @@ public class AutoTableGlobalConfig {
 
     /* 拦截器与回调监听 ↑↑↑↑↑↑↑↑↑ */
 
+    /**
+     * 数据库策略
+     */
     private final Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> STRATEGY_MAP = new HashMap<>();
 
     public void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo> strategy) {
@@ -220,4 +233,25 @@ public class AutoTableGlobalConfig {
         return STRATEGY_MAP.values();
     }
 
+    /**
+     * 数据库构建器
+     */
+    private final List<DatabaseBuilder> DATABASE_BUILDER_LIST = new ArrayList<>();
+
+    public void addDatabaseBuilder(DatabaseBuilder databaseBuilder) {
+        DATABASE_BUILDER_LIST.add(databaseBuilder);
+    }
+
+    public DatabaseBuilder getDatabaseBuilder(String jdbcUrl, Set<Class<?>> classes) {
+        for (DatabaseBuilder databaseBuilder : DATABASE_BUILDER_LIST) {
+            if (databaseBuilder.support(jdbcUrl, classes)) {
+                return databaseBuilder;
+            }
+        }
+        return null;
+    }
+
+    public Collection<DatabaseBuilder> getAllDatabaseBuilder() {
+        return DATABASE_BUILDER_LIST;
+    }
 }
