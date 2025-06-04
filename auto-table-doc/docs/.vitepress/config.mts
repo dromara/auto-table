@@ -33,6 +33,7 @@ export default defineConfig({
             {
                 text: '数据库特性', items: [
                     {text: 'Doris', link: '/数据库特性/Doris/说明'},
+                    {text: 'Oracle', link: '/数据库特性/Oracle/说明'},
                 ]
             },
             {text: '变更日志', link: '/变更日志'},
@@ -120,6 +121,12 @@ export default defineConfig({
                         {text: '配置', link: '/数据库特性/Doris/配置'},
                     ]
                 },
+                {
+                    text: 'Oracle',
+                    items: [
+                        {text: '说明', link: '/数据库特性/Oracle/说明'},
+                    ]
+                }
             ],
             '/支持联系/': [
                 {
