@@ -44,6 +44,13 @@
             <version>${solon.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.noear</groupId>
+            <artifactId>solon-configuration-processor</artifactId>
+            <version>${solon.version}</version>
+            <scope>provided</scope> <!-- 这条一定要加 -->
+        </dependency>
+
         <!-- 替换test库 -->
         <dependency>
             <groupId>org.noear</groupId>

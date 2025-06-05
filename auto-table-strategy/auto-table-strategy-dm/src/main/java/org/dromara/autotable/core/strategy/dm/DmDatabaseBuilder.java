@@ -13,13 +13,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 
 @Slf4j
 public class DmDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:dm:") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.DM));
+        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:dm:") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.DM));
     }
 
     @Override

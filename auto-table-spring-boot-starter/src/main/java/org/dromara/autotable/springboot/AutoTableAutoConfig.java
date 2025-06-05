@@ -26,7 +26,6 @@ import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import org.dromara.autotable.springboot.properties.AutoTableProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
 public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(
-            AutoTableProperties autoTableProperties,
+            PropertyConfig propertiesConfig,
             ObjectProvider<DataSource> dataSource,
             ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> strategies,
             ObjectProvider<AutoTableClassScanner> autoTableClassScanner,
@@ -74,7 +73,7 @@ public class AutoTableAutoConfig {
         dataSource.ifUnique(DataSourceManager::setDataSource);
 
         // 设置全局的配置
-        PropertyConfig propertiesConfig = autoTableProperties.toConfig();
+        // PropertyConfig propertiesConfig = propertyConfig();
         // 假如有注解扫描的包，就覆盖设置
         if (AutoTableImportRegister.basePackagesFromAnno != null) {
             propertiesConfig.setModelPackage(AutoTableImportRegister.basePackagesFromAnno);

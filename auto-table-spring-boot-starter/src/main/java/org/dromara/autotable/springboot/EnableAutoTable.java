@@ -1,7 +1,5 @@
 package org.dromara.autotable.springboot;
 
-import org.dromara.autotable.springboot.properties.AutoTableProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -16,8 +14,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@EnableConfigurationProperties(AutoTableProperties.class)
-@Import({AutoTableAutoConfig.class, AutoTableImportRegister.class, AutoTableRunner.class})
+@Import({AutoTablePropertiesRegister.class, AutoTableAutoConfig.class, AutoTableImportRegister.class, AutoTableRunner.class})
 public @interface EnableAutoTable {
 
     /**

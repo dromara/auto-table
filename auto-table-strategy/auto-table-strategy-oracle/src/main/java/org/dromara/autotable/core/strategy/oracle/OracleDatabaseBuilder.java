@@ -13,13 +13,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 
 @Slf4j
 public class OracleDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:oracle:") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.Oracle));
+        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:oracle:") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.Oracle));
     }
 
     @Override

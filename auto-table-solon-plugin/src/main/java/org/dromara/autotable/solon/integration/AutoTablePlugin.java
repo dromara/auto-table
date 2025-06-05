@@ -32,6 +32,7 @@ import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
@@ -44,7 +45,7 @@ import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.solon.adapter.CustomAnnotationFinder;
 import org.dromara.autotable.solon.adapter.SolonDataSourceHandler;
 import org.dromara.autotable.solon.annotation.EnableAutoTable;
-import org.dromara.autotable.solon.properties.AutoTableProperties;
+import org.dromara.autotable.solon.properties.AutoTablePropertiesRegister;
 import org.noear.solon.core.AppContext;
 import org.noear.solon.core.Plugin;
 
@@ -69,10 +70,10 @@ public class AutoTablePlugin implements Plugin {
         }
 
         // 配置 自动装配属性
-        AutoTableProperties autoTableProperties = context.beanMake(AutoTableProperties.class).get();
-
+        context.beanMake(AutoTablePropertiesRegister.class);
+        PropertyConfig autoTableProperties = context.getBean(PropertyConfig.class);
         // 设置全局的配置
-        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties.toConfig());
+        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties);
 
         // 资源加载完成后启动AutoTable
         context.lifecycle(-100, () -> resourceLoadFinish(context));

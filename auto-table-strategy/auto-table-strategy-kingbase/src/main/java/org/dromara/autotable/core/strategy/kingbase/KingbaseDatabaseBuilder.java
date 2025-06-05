@@ -13,13 +13,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 
 @Slf4j
 public class KingbaseDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:kingbase8:") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.KingBase));
+        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:kingbase8:") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.KingBase));
     }
 
     @Override
