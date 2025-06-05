@@ -3,6 +3,7 @@ package org.dromara.autotable.core.strategy.mysql;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.utils.StringUtils;
 
@@ -12,7 +13,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
 public class MysqlDatabaseBuilder implements DatabaseBuilder {
 
     @Override
-    public boolean support(String jdbcUrl, Set<Class<?>> classes) {
-        return jdbcUrl.startsWith("jdbc:mysql");
+    public boolean support(String jdbcUrl, String dialectOnEntity) {
+        return jdbcUrl.startsWith("jdbc:mysql") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.MySQL));
     }
 
     @Override

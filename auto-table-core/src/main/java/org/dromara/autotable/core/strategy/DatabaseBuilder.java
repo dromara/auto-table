@@ -1,17 +1,15 @@
 package org.dromara.autotable.core.strategy;
 
-import java.util.Set;
-
 public interface DatabaseBuilder {
 
     /**
      * 是否支持
      *
-     * @param jdbcUrl jdbcUrl
-     * @param classes 所有涉及到的实体类
+     * @param jdbcUrl         jdbcUrl
+     * @param dialectOnEntity 实体上指定的数据库方言
      * @return true/false
      */
-    boolean support(String jdbcUrl, Set<Class<?>> classes);
+    boolean support(String jdbcUrl, String dialectOnEntity);
 
     /**
      * 构建数据库

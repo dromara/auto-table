@@ -6,15 +6,12 @@ import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,9 +19,8 @@ import java.util.regex.Pattern;
 public class DorisDatabaseBuilder implements DatabaseBuilder {
 
     @Override
-    public boolean support(String jdbcUrl, Set<Class<?>> classes) {
-        return jdbcUrl.startsWith("jdbc:mysql:") && classes.stream()
-                .allMatch(entityClass -> Objects.equals(DatabaseDialect.Doris, TableMetadataHandler.getTableDialect(entityClass)));
+    public boolean support(String jdbcUrl, String dialectOnEntity) {
+        return jdbcUrl.startsWith("jdbc:mysql:") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.Doris));
     }
 
     @Override

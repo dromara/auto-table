@@ -3,6 +3,7 @@ package org.dromara.autotable.core.strategy.dm;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.utils.StringUtils;
 
@@ -12,14 +13,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Set;
 
 @Slf4j
 public class DmDatabaseBuilder implements DatabaseBuilder {
 
     @Override
-    public boolean support(String jdbcUrl, Set<Class<?>> classes) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:dm:");
+    public boolean support(String jdbcUrl, String dialectOnEntity) {
+        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:dm:") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.DM));
     }
 
     @Override

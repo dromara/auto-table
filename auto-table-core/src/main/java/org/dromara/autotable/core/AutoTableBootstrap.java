@@ -7,10 +7,12 @@ import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
+import org.dromara.autotable.core.utils.DataSourceInfoExtractor;
 import org.dromara.autotable.core.utils.SpiLoader;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
@@ -56,21 +58,116 @@ public class AutoTableBootstrap {
         AutoTableGlobalConfig.instance().getAutoTableReadyCallbacks().forEach(fn -> fn.ready(classes));
 
         // 获取对应的数据源，根据不同数据库方言，执行不同的处理
-        IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.instance().getDatasourceHandler();
-        datasourceHandler.handleAnalysis(classes, (databaseDialect, entityClasses) -> {
+        handleAnalysis(classes);
 
-            // 同一个数据源下，检查重名的表
-            checkRepeatTableName(entityClasses);
-
-            // 查找对应的数据源策略并执行
-            start(databaseDialect, entityClasses);
-        });
         AutoTableGlobalConfig.instance().getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
         AutoTableGlobalConfig.instance().clear();
         log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
     }
 
-    private static void start(String databaseDialect, Set<Class<?>> entityClasses) {
+    /**
+     * 开始分析处理模型
+     * 处理ignore and repeat表
+     *
+     * @param classList 待处理的类
+     * @param consumer  实体消费回调
+     */
+    private static void handleAnalysis(Set<Class<?>> classList) {
+
+        IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.instance().getDatasourceHandler();
+        // <数据源，Set<表>>
+        Map<String, Set<Class<?>>> needHandleTableMap = classList.stream()
+                .collect(Collectors.groupingBy(datasourceHandler::getDataSourceName, Collectors.toSet()));
+
+        needHandleTableMap.forEach((dataSource, entityClasses) -> {
+            // 使用数据源
+            if (StringUtils.hasText(dataSource)) {
+                log.info("使用数据源：{}", dataSource);
+            }
+
+            // 同一个数据源下，检查重名的表
+            checkRepeatTableName(entityClasses);
+
+            datasourceHandler.useDataSource(dataSource);
+            DataSourceManager.setDatasourceName(dataSource);
+
+            // 查找实体上的数据库方言标注
+            String dialectOnEntity = findDialectOnEntity(dataSource, entityClasses);
+
+            // 确保数据库存在，不存在则构建数据库
+            buildDatabaseIfAbsent(dataSource, entityClasses, dialectOnEntity);
+
+            try {
+                // 如果实体上没有指定方言，则从链接中获取数据库方言
+                String dialect = StringUtils.hasText(dialectOnEntity) ? dialectOnEntity : getDatabaseDialectFromConnection(dataSource);
+
+                // 执行数据源策略
+                executeStrategy(dialect, entityClasses);
+
+            } finally {
+                if (StringUtils.hasText(dataSource)) {
+                    log.info("清理数据源：{}", dataSource);
+                }
+
+                datasourceHandler.clearDataSource(dataSource);
+                DataSourceManager.cleanDatasourceName();
+            }
+        });
+    }
+
+    private static String findDialectOnEntity(String dataSource, Set<Class<?>> entityClasses) {
+        // dialectInAnnotation可能是 只有一个空字符串的集合（未指定值），也有可能是指定的具体的方言值。但是不能是多种值
+        List<String> dialectInAnnotation = entityClasses.stream()
+                .map(TableMetadataHandler::getTableDialect)
+                .distinct()
+                .collect(Collectors.toList());
+        if (dialectInAnnotation.size() > 1) {
+            throw new RuntimeException("同一个数据源(" + dataSource + ")下，不能同时使用多个数据库方言[" + String.join(",", dialectInAnnotation) + "]");
+        }
+
+        String dialectOnEntity = dialectInAnnotation.get(0);
+        return dialectOnEntity;
+    }
+
+    private static void buildDatabaseIfAbsent(String dataSource, Set<Class<?>> entityClasses, String dialectOnEntity) {
+        Boolean autoBuildDatabase = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoBuildDatabase();
+        if (autoBuildDatabase) {
+            DataSourceInfoExtractor.DbInfo dbInfo = DataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
+            DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
+            if (databaseBuilder != null) {
+                boolean buildSuccess = databaseBuilder.buildIfAbsent(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password);
+                if (buildSuccess) {
+                    // 触发回调
+                    AutoTableGlobalConfig.instance().getCreateDatabaseFinishCallbacks()
+                            .forEach(callback -> callback.afterCreateDatabase(dataSource, entityClasses, dbInfo));
+                }
+            }
+        }
+    }
+
+    /**
+     * 自动获取当前数据源的方言
+     *
+     * @param dataSource 数据源名称
+     * @return 返回数据方言
+     */
+    private static String getDatabaseDialectFromConnection(String dataSource) {
+
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                // 通过连接获取DatabaseMetaData对象
+                DatabaseMetaData metaData = connection.getMetaData();
+                // 获取数据库方言
+                String databaseProductName = metaData.getDatabaseProductName();
+                log.debug("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
+                return databaseProductName;
+            } catch (SQLException e) {
+                throw new RuntimeException("获取数据方言失败", e);
+            }
+        });
+    }
+
+    private static void executeStrategy(String databaseDialect, Set<Class<?>> entityClasses) {
         IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.instance().getStrategy(databaseDialect);
         if (databaseStrategy != null) {
             Map<String, Set<String>> registerTableNameMap = new HashMap<>();

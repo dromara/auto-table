@@ -3,18 +3,23 @@ package org.dromara.autotable.core.strategy.oracle;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.utils.StringUtils;
 
-import java.sql.*;
-import java.util.Set;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 @Slf4j
 public class OracleDatabaseBuilder implements DatabaseBuilder {
 
     @Override
-    public boolean support(String jdbcUrl, Set<Class<?>> classes) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:oracle:");
+    public boolean support(String jdbcUrl, String dialectOnEntity) {
+        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:oracle:") && (dialectOnEntity.isEmpty() || dialectOnEntity.equals(DatabaseDialect.Oracle));
     }
 
     @Override

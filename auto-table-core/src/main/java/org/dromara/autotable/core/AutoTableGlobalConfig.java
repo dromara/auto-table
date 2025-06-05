@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 全局配置
@@ -242,9 +241,9 @@ public class AutoTableGlobalConfig {
         DATABASE_BUILDER_LIST.add(databaseBuilder);
     }
 
-    public DatabaseBuilder getDatabaseBuilder(String jdbcUrl, Set<Class<?>> classes) {
+    public DatabaseBuilder getDatabaseBuilder(String jdbcUrl, String dialectOnEntity) {
         for (DatabaseBuilder databaseBuilder : DATABASE_BUILDER_LIST) {
-            if (databaseBuilder.support(jdbcUrl, classes)) {
+            if (databaseBuilder.support(jdbcUrl, dialectOnEntity)) {
                 return databaseBuilder;
             }
         }
