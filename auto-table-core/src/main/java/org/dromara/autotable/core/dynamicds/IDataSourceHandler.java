@@ -1,16 +1,11 @@
 package org.dromara.autotable.core.dynamicds;
 
 import lombok.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author don
  */
 public interface IDataSourceHandler {
-
-    Logger log = LoggerFactory.getLogger(IDataSourceHandler.class);
-
     /**
      * 多数据源场景：切换指定的数据源
      *
