@@ -13,7 +13,7 @@
                 <!-- 注：-->
                 <!-- :resource: 指向项目的 resources 路径（resource前后两个 `:` 不能省略）-->
                 <!--          url: jdbc:h2::resource:h2.db-->
-                <property name="url" value="jdbc:h2:file:./src/main/resources/h2.db;IFEXISTS=TRUE"/>
+                <property name="url" value="jdbc:h2:file:./src/main/resources/h2.db"/>
             </dataSource>
         </environment>
     </environments>

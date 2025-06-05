@@ -16,6 +16,7 @@ import org.dromara.autotable.core.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
 import org.dromara.autotable.test.core.entity.mysql.custome_add_column.MyBuildTableMetadataInterceptor;
 import org.dromara.autotable.test.core.entity.pgsql.TestNoColumnComment;
+import org.dromara.autotable.test.core.entity.sqlite.TestSqlite;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +107,23 @@ public class ApplicationSingleTest {
         });
         // 自定义java类型与数据库类型映射关系
         JavaTypeToDatabaseTypeConverter.addTypeMapping(DatabaseDialect.H2, Date.class, H2DefaultTypeEnum.TIMESTAMP);
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
+    public void testSqliteCreate() {
+
+        initSqlSessionFactory("mybatis-config-sqlite.xml");
+
+        /* 修改表的逻辑 */
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+
+        autoTableProperties.setMode(RunMode.create);
+        // 测试所有的公共测试类
+        autoTableProperties.setModelClass(new Class[]{
+                TestSqlite.class
+        });
         // 开始
         AutoTableBootstrap.start();
     }
