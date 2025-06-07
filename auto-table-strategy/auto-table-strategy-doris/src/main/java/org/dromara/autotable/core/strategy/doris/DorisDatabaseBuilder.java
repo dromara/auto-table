@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +26,7 @@ public class DorisDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean buildIfAbsent(String jdbcUrl, String username, String password) {
+    public boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbName(jdbcUrl);
         String baseUrl = removeDbFromUrl(jdbcUrl);
 
@@ -49,7 +50,10 @@ public class DorisDatabaseBuilder implements DatabaseBuilder {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT SCHEMA_NAME FROM information_schema.schemata WHERE SCHEMA_NAME = '" + dbName + "'")) {
 
-            if (!rs.next()) {
+            boolean exists = rs.next();
+            // 数据库状态回调
+            dbStatusCallback.accept(exists);
+            if (!exists) {
                 String sql = "CREATE DATABASE `" + dbName + "`";
                 stmt.executeUpdate(sql);
                 log.info("成功创建 Doris 数据库：{}", dbName);

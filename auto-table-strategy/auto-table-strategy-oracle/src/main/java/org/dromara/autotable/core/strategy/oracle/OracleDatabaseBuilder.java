@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 @Slf4j
 public class OracleDatabaseBuilder implements DatabaseBuilder {
@@ -24,7 +25,7 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean buildIfAbsent(String jdbcUrl, String targetUsername, String targetPassword) {
+    public boolean build(String jdbcUrl, String targetUsername, String targetPassword, Consumer<Boolean> dbStatusCallback) {
         // 决定使用哪个账号连接
         PropertyConfig.OracleConfig oracleConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getOracle();
         String execUsername = StringUtils.hasText(oracleConfig.getAdminUser())
@@ -42,7 +43,10 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
                 return false;
             }
 
-            if (!userExists(conn, targetUsername)) {
+            boolean userExists = userExists(conn, targetUsername);
+            // 用户状态回调
+            dbStatusCallback.accept(userExists);
+            if (!userExists) {
                 return createUser(conn, targetUsername, targetPassword);
             }
 

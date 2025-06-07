@@ -130,12 +130,23 @@ public class AutoTableBootstrap {
     }
 
     private static void buildDatabaseIfAbsent(String dataSource, Set<Class<?>> entityClasses, String dialectOnEntity) {
-        Boolean autoBuildDatabase = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoBuildDatabase();
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+
+        boolean autoBuildDatabase = autoTableProperties.getAutoBuildDatabase();
         if (autoBuildDatabase) {
             DataSourceInfoExtractor.DbInfo dbInfo = DataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
             DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
             if (databaseBuilder != null) {
-                boolean buildSuccess = databaseBuilder.buildIfAbsent(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password);
+                // 构建数据库
+                boolean buildSuccess = databaseBuilder.build(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password, dbExists -> {
+                    // 如果数据库不存在，且当前是validate模式，则抛出异常
+                    if (!dbExists) {
+                        boolean isValidateMode = autoTableProperties.getMode() == RunMode.validate;
+                        if (isValidateMode) {
+                            throw new RuntimeException("【validate模式】。数据源：" + dataSource + "数据库链接" + dbInfo.jdbcUrl + "无效，请检查数据库连接信息！");
+                        }
+                    }
+                });
                 if (buildSuccess) {
                     // 触发回调
                     AutoTableGlobalConfig.instance().getCreateDatabaseFinishCallbacks()

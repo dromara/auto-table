@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 @Slf4j
 public class DmDatabaseBuilder implements DatabaseBuilder {
@@ -24,7 +25,7 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean buildIfAbsent(String jdbcUrl, String targetUser, String targetPwd) {
+    public boolean build(String jdbcUrl, String targetUser, String targetPwd, Consumer<Boolean> dbStatusCallback) {
         // 决定使用哪个账号连接
         PropertyConfig.DMConfig dmConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getDm();
         String execUser = StringUtils.hasText(dmConfig.getAdminUser())
@@ -43,7 +44,10 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
                 return false;
             }
 
-            if (!userExists(conn, targetUser)) {
+            boolean userExists = userExists(conn, targetUser);
+            // 回调数据库状态
+            dbStatusCallback.accept(userExists);
+            if (!userExists) {
                 return createUser(conn, targetUser, targetPwd);
             } else {
                 log.info("达梦用户已存在：{}", targetUser);

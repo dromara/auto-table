@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean buildIfAbsent(String jdbcUrl, String username, String password) {
+    public boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbNameFromUrl(jdbcUrl);
         if (dbName == null) {
             return false;
@@ -46,7 +47,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
         String adminUrl = jdbcUrl.replaceFirst("/" + dbName, "/postgres");
 
         try {
-            return createPgDatabaseIfAbsent(adminUrl, execUser, execPwd, dbName);
+            return createPgDatabaseIfAbsent(adminUrl, execUser, execPwd, dbName, dbStatusCallback);
         } catch (SQLException e) {
             log.error("创建PostgreSQL数据库失败", e);
         }
@@ -62,14 +63,17 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
         return null;
     }
 
-    private boolean createPgDatabaseIfAbsent(String adminUrl, String username, String password, String dbName) throws SQLException {
+    private boolean createPgDatabaseIfAbsent(String adminUrl, String username, String password, String dbName, Consumer<Boolean> dbStatusCallback) throws SQLException {
         try (
                 Connection conn = DriverManager.getConnection(adminUrl, username, password);
                 PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")
         ) {
             ps.setString(1, dbName);
             ResultSet rs = ps.executeQuery();
-            if (!rs.next()) {
+            boolean exists = rs.next();
+            // 回调数据库状态
+            dbStatusCallback.accept(exists);
+            if (!exists) {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.executeUpdate("CREATE DATABASE \"" + dbName + "\" WITH ENCODING='UTF8'");
                     log.info("创建 PostgreSQL 数据库：{}", dbName);

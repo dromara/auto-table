@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean buildIfAbsent(String jdbcUrl, String username, String password) {
+    public boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbNameFromUrl(jdbcUrl);
         if (dbName == null) {
             return false;
@@ -46,7 +47,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
         String adminUrl = jdbcUrl.replaceFirst("/" + dbName, "/information_schema");
 
         try {
-            return createMysqlDatabaseIfAbsent(adminUrl, execUser, execPwd, dbName);
+            return createMysqlDatabaseIfAbsent(adminUrl, execUser, execPwd, dbName, dbStatusCallback);
         } catch (SQLException e) {
             log.error("创建数据库失败", e);
         }
@@ -62,14 +63,17 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
         return null;
     }
 
-    private boolean createMysqlDatabaseIfAbsent(String adminUrl, String username, String password, String dbName) throws SQLException {
+    private boolean createMysqlDatabaseIfAbsent(String adminUrl, String username, String password, String dbName, Consumer<Boolean> dbStatusCallback) throws SQLException {
         try (
                 Connection conn = DriverManager.getConnection(adminUrl, username, password);
                 PreparedStatement ps = conn.prepareStatement("SELECT SCHEMA_NAME FROM SCHEMATA WHERE SCHEMA_NAME = ?")
         ) {
             ps.setString(1, dbName);
             ResultSet rs = ps.executeQuery();
-            if (!rs.next()) {
+            boolean exists = rs.next();
+            // 数据库状态回调
+            dbStatusCallback.accept(exists);
+            if (!exists) {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.executeUpdate("CREATE DATABASE `" + dbName + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
                     log.info("创建数据库成功：{}", dbName);

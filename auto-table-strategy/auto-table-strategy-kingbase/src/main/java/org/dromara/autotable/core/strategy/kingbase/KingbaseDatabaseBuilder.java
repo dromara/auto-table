@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 @Slf4j
 public class KingbaseDatabaseBuilder implements DatabaseBuilder {
@@ -24,7 +25,7 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean buildIfAbsent(String jdbcUrl, String targetUser, String targetPassword) {
+    public boolean build(String jdbcUrl, String targetUser, String targetPassword, Consumer<Boolean> dbStatusCallback) {
         // 决定使用哪个账号连接
         PropertyConfig.KingbaseConfig kingbaseConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getKingbase();
         String execUser = StringUtils.hasText(kingbaseConfig.getAdminUser())
@@ -42,7 +43,10 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
                 return false;
             }
 
-            if (!userExists(conn, targetUser)) {
+            boolean userExists = userExists(conn, targetUser);
+            // 用户状态回调
+            dbStatusCallback.accept(userExists);
+            if (!userExists) {
                 return createUser(conn, targetUser, targetPassword);
             } else {
                 log.info("Kingbase 用户已存在：{}", targetUser);

@@ -1,5 +1,7 @@
 package org.dromara.autotable.core.strategy;
 
+import java.util.function.Consumer;
+
 public interface DatabaseBuilder {
 
     /**
@@ -18,5 +20,5 @@ public interface DatabaseBuilder {
      * @param username 用户名
      * @param password 密码
      */
-    boolean buildIfAbsent(String jdbcUrl, String username, String password);
+    boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback);
 }
