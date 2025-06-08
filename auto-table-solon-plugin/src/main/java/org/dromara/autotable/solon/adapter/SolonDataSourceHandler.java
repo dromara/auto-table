@@ -37,9 +37,17 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
         Map<String, DataSource> dataSourceMap = Solon.context().getBeansMapOfType(DataSource.class);
 
         // 根据数据源名称获取数据源，如果存在的话，直接使用。
-        DataSource staticDataSource = dataSourceMap.get(dataSourceName);
-        if (staticDataSource != null) {
-            DataSourceManager.setDataSource(staticDataSource);
+        DataSource getDataSource = dataSourceMap.get(dataSourceName);
+        if (getDataSource != null) {
+            // 动态数据源对象
+            if (getDataSource instanceof DynamicDataSource) {
+                DataSource defaultTargetDataSource = ((DynamicDataSource) getDataSource).getDefaultTargetDataSource();
+                DataSourceManager.setDataSource(defaultTargetDataSource);
+            }
+            // 静态数据源
+            else {
+                DataSourceManager.setDataSource(getDataSource);
+            }
             return;
         }
 
@@ -47,9 +55,9 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
         List<DataSource> dynamicDataSourceList = dataSourceMap.values().stream()
                 .filter(ds -> ds instanceof DynamicDataSource).collect(Collectors.toList());
 
-        Assert.notEmpty(dynamicDataSourceList,() -> new DataSourceNotFoundException("未找到数据源"));
+        Assert.notEmpty(dynamicDataSourceList, () -> new DataSourceNotFoundException("未找到数据源"));
 
-        if (dynamicDataSourceList.size() != 1){
+        if (dynamicDataSourceList.size() != 1) {
             log.warn("项目中存在多个动态数据源，仅使用第一个动态数据源。");
         }
 
@@ -58,7 +66,7 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
 
         // 获取内部数据源
         DataSource dataSource = dynamicDataSource.getDefaultTargetDataSource();
-        if (StrUtil.isNotBlank(dataSourceName)){
+        if (StrUtil.isNotBlank(dataSourceName)) {
             dataSource = dynamicDataSource.getTargetDataSource(dataSourceName);
         }
 
@@ -79,7 +87,7 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
         }
         // 动态数据源优先
         String current = DynamicDsKey.current();
-        if (StrUtil.isNotBlank(current)){
+        if (StrUtil.isNotBlank(current)) {
             return current;
         }
         // 默认数据源
