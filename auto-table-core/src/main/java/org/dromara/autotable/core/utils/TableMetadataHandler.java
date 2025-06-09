@@ -137,6 +137,14 @@ public class TableMetadataHandler {
         return null;
     }
 
+    public static String getTableInitSql(Class<?> entityClass) {
+        AutoTable autoTable = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(entityClass, AutoTable.class);
+        if (autoTable != null && StringUtils.hasText(autoTable.initSql())) {
+            return autoTable.initSql();
+        }
+        return null;
+    }
+
 
     /* 字段相关 */
 

@@ -38,4 +38,9 @@ public @interface AutoTable {
      * 默认从数据源链接中获取
      */
     String dialect() default "";
+
+    /**
+     * @return 初始化sql
+     */
+    String initSql() default "";
 }

@@ -27,10 +27,10 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
+    public BuildResult build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbNameFromUrl(jdbcUrl);
         if (dbName == null) {
-            return false;
+            return BuildResult.of(false, dbName);
         }
 
         // 使用 admin 配置优先，否则 fallback 到 username/password
@@ -51,7 +51,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
         } catch (SQLException e) {
             log.error("创建PostgreSQL数据库失败", e);
         }
-        return false;
+        return BuildResult.of(false, dbName);
     }
 
     private String extractDbNameFromUrl(String jdbcUrl) {
@@ -63,7 +63,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
         return null;
     }
 
-    private boolean createPgDatabaseIfAbsent(String adminUrl, String username, String password, String dbName, Consumer<Boolean> dbStatusCallback) throws SQLException {
+    private BuildResult createPgDatabaseIfAbsent(String adminUrl, String username, String password, String dbName, Consumer<Boolean> dbStatusCallback) throws SQLException {
         try (
                 Connection conn = DriverManager.getConnection(adminUrl, username, password);
                 PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")
@@ -77,10 +77,10 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.executeUpdate("CREATE DATABASE \"" + dbName + "\" WITH ENCODING='UTF8'");
                     log.info("创建 PostgreSQL 数据库：{}", dbName);
-                    return true;
+                    return BuildResult.of(true, dbName);
                 }
             }
         }
-        return false;
+        return BuildResult.of(false, dbName);
     }
 }

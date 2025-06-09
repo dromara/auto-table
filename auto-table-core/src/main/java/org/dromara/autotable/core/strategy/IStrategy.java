@@ -2,6 +2,7 @@ package org.dromara.autotable.core.strategy;
 
 import lombok.NonNull;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.InitDataHandler;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
@@ -82,9 +83,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      */
     default TABLE_META start(Class<?> entityClass) {
 
-        // 设置当前策略
-        IStrategy.setCurrentStrategy(this);
-
         AutoTableGlobalConfig.instance().getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
         TABLE_META tableMetadata = this.analyseClass(entityClass);
@@ -93,8 +91,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
         AutoTableGlobalConfig.instance().getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
 
-        // 清理当前策略
-        IStrategy.clean();
         return tableMetadata;
     }
 
@@ -223,6 +219,9 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         AutoTableGlobalConfig.instance().getCreateTableInterceptors().forEach(fn -> fn.beforeCreateTable(this.databaseDialect(), tableMetadata));
         List<String> sqlList = this.createTable(tableMetadata);
         this.executeSql(tableMetadata, sqlList);
+        // 建表完成，执行表的sql初始化
+        InitDataHandler.initTableData(tableMetadata);
+
         AutoTableGlobalConfig.instance().getCreateTableFinishCallbacks().forEach(fn -> fn.afterCreateTable(this.databaseDialect(), tableMetadata));
     }
 

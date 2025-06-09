@@ -25,7 +25,7 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean build(String jdbcUrl, String targetUser, String targetPassword, Consumer<Boolean> dbStatusCallback) {
+    public BuildResult build(String jdbcUrl, String targetUser, String targetPassword, Consumer<Boolean> dbStatusCallback) {
         // 决定使用哪个账号连接
         PropertyConfig.KingbaseConfig kingbaseConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getKingbase();
         String execUser = StringUtils.hasText(kingbaseConfig.getAdminUser())
@@ -40,7 +40,7 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
 
             if (!hasCreateUserPrivilege(conn)) {
                 log.warn("用户 [{}] 无权限创建用户，跳过 Kingbase 建库", execUser);
-                return false;
+                return BuildResult.of(false, targetUser);
             }
 
             boolean userExists = userExists(conn, targetUser);
@@ -55,7 +55,7 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
         } catch (SQLException e) {
             log.error("Kingbase 建库失败", e);
         }
-        return false;
+        return BuildResult.of(false, targetUser);
     }
 
     private boolean hasCreateUserPrivilege(Connection conn) {
@@ -81,16 +81,16 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
         }
     }
 
-    private boolean createUser(Connection conn, String username, String password) {
+    private BuildResult createUser(Connection conn, String username, String password) {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE USER \"" + username + "\" WITH PASSWORD '" + password + "'");
             stmt.executeUpdate("GRANT CONNECT ON DATABASE CURRENT_DATABASE() TO \"" + username + "\"");
             stmt.executeUpdate("GRANT ALL PRIVILEGES ON SCHEMA public TO \"" + username + "\"");
             log.info("Kingbase 用户创建成功：{}", username);
-            return true;
+            return BuildResult.of(true, username);
         } catch (Exception e) {
             log.error("创建 Kingbase 用户失败", e);
         }
-        return false;
+        return BuildResult.of(false, username);
     }
 }

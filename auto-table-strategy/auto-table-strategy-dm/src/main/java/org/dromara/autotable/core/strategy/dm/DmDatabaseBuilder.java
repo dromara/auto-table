@@ -25,7 +25,7 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean build(String jdbcUrl, String targetUser, String targetPwd, Consumer<Boolean> dbStatusCallback) {
+    public BuildResult build(String jdbcUrl, String targetUser, String targetPwd, Consumer<Boolean> dbStatusCallback) {
         // 决定使用哪个账号连接
         PropertyConfig.DMConfig dmConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getDm();
         String execUser = StringUtils.hasText(dmConfig.getAdminUser())
@@ -41,7 +41,7 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
         try (Connection conn = DriverManager.getConnection(jdbcUrl, execUser, execPwd)) {
             if (!hasCreateUserPrivilege(conn)) {
                 log.warn("用户 [{}] 无权限创建用户，跳过达梦建库", execUser);
-                return false;
+                return BuildResult.of(false, targetUser);
             }
 
             boolean userExists = userExists(conn, targetUser);
@@ -56,7 +56,7 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
         } catch (SQLException e) {
             log.error("达梦建库失败", e);
         }
-        return false;
+        return BuildResult.of(false, targetUser);
     }
 
     private boolean hasCreateUserPrivilege(Connection conn) {
@@ -80,15 +80,15 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
         }
     }
 
-    private boolean createUser(Connection conn, String username, String password) {
+    private BuildResult createUser(Connection conn, String username, String password) {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE USER " + username + " IDENTIFIED BY \"" + password + "\"");
             stmt.executeUpdate("GRANT RESOURCE, PUBLIC TO " + username);
             log.info("达梦用户创建成功：{}", username);
-            return true;
+            return BuildResult.of(true, username);
         } catch (Exception e) {
             log.error("创建达梦用户失败", e);
         }
-        return false;
+        return BuildResult.of(false, username);
     }
 }

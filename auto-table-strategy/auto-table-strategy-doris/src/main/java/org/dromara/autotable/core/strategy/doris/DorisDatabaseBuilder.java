@@ -26,13 +26,13 @@ public class DorisDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
+    public BuildResult build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbName(jdbcUrl);
         String baseUrl = removeDbFromUrl(jdbcUrl);
 
         if (dbName == null || baseUrl == null) {
             log.warn("无法解析 Doris JDBC URL：{}", jdbcUrl);
-            return false;
+            return BuildResult.of(false, dbName);
         }
 
         // 使用 admin 配置优先，否则 fallback 到 username/password
@@ -57,13 +57,13 @@ public class DorisDatabaseBuilder implements DatabaseBuilder {
                 String sql = "CREATE DATABASE `" + dbName + "`";
                 stmt.executeUpdate(sql);
                 log.info("成功创建 Doris 数据库：{}", dbName);
-                return true;
+                return BuildResult.of(true, dbName);
             }
 
         } catch (SQLException e) {
             log.error("创建 Doris 数据库失败，连接或执行异常", e);
         }
-        return false;
+        return BuildResult.of(false, dbName);
     }
 
     /**

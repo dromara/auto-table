@@ -32,6 +32,13 @@
             <version>${commons-dbutils.version}</version>
         </dependency>
 
+        <!-- JSqlParser -->
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>${jsqlparser.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.dromara.autotable</groupId>
             <artifactId>auto-table-annotation</artifactId>

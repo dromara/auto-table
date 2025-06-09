@@ -95,15 +95,29 @@ public class AutoTableBootstrap {
             String dialectOnEntity = findDialectOnEntity(dataSource, entityClasses);
 
             // 确保数据库存在，不存在则构建数据库
-            buildDatabaseIfAbsent(dataSource, entityClasses, dialectOnEntity);
+            DatabaseBuilder.BuildResult buildResult = buildDatabaseIfAbsent(dataSource, entityClasses, dialectOnEntity);
+            boolean buildNewDb = buildResult != null && buildResult.isSuccess();
 
             try {
                 // 如果实体上没有指定方言，则从链接中获取数据库方言
                 String dialect = StringUtils.hasText(dialectOnEntity) ? dialectOnEntity : getDatabaseDialectFromConnection(dataSource);
+                IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.instance().getStrategy(dialect);
+                if (databaseStrategy == null) {
+                    log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", dialect);
+                    return;
+                }
 
-                // 执行数据源策略
-                executeStrategy(dialect, entityClasses);
+                // 设置当前策略
+                IStrategy.setCurrentStrategy(databaseStrategy);
 
+                // 执行数据源策略 建表
+                executeStrategy(databaseStrategy, entityClasses);
+
+                // 初始化库数据
+                if (buildNewDb) {
+                    // 创建的新的数据库，执行库级别的sql文件
+                    InitDataHandler.initDbData();
+                }
             } finally {
                 if (StringUtils.hasText(dataSource)) {
                     log.info("清理数据源：{}", dataSource);
@@ -111,6 +125,8 @@ public class AutoTableBootstrap {
 
                 datasourceHandler.clearDataSource(dataSource);
                 DataSourceManager.cleanDatasourceName();
+                // 清理当前策略
+                IStrategy.clean();
             }
         });
     }
@@ -129,7 +145,7 @@ public class AutoTableBootstrap {
         return dialectOnEntity;
     }
 
-    private static void buildDatabaseIfAbsent(String dataSource, Set<Class<?>> entityClasses, String dialectOnEntity) {
+    private static DatabaseBuilder.BuildResult buildDatabaseIfAbsent(String dataSource, Set<Class<?>> entityClasses, String dialectOnEntity) {
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
 
         boolean autoBuildDatabase = autoTableProperties.getAutoBuildDatabase();
@@ -138,7 +154,7 @@ public class AutoTableBootstrap {
             DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
             if (databaseBuilder != null) {
                 // 构建数据库
-                boolean buildSuccess = databaseBuilder.build(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password, dbExists -> {
+                DatabaseBuilder.BuildResult buildResult = databaseBuilder.build(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password, dbExists -> {
                     // 如果数据库不存在，且当前是validate模式，则抛出异常
                     if (!dbExists) {
                         boolean isValidateMode = autoTableProperties.getMode() == RunMode.validate;
@@ -147,13 +163,15 @@ public class AutoTableBootstrap {
                         }
                     }
                 });
-                if (buildSuccess) {
+                if (buildResult.isSuccess()) {
                     // 触发回调
                     AutoTableGlobalConfig.instance().getCreateDatabaseFinishCallbacks()
                             .forEach(callback -> callback.afterCreateDatabase(dataSource, entityClasses, dbInfo));
+                    return buildResult;
                 }
             }
         }
+        return null;
     }
 
     /**
@@ -178,24 +196,19 @@ public class AutoTableBootstrap {
         });
     }
 
-    private static void executeStrategy(String databaseDialect, Set<Class<?>> entityClasses) {
-        IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.instance().getStrategy(databaseDialect);
-        if (databaseStrategy != null) {
-            Map<String, Set<String>> registerTableNameMap = new HashMap<>();
-            for (Class<?> entityClass : entityClasses) {
-                log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);
-                TableMetadata tableMetadata = databaseStrategy.start(entityClass);
-                // 记录声明过的表
-                registerTableNameMap.computeIfAbsent(tableMetadata.getSchema(), k -> new HashSet<>()).add(tableMetadata.getTableName());
-            }
+    private static void executeStrategy(IStrategy<?, ?> databaseStrategy, Set<Class<?>> entityClasses) {
+        Map<String, Set<String>> registerTableNameMap = new HashMap<>();
+        for (Class<?> entityClass : entityClasses) {
+            log.info("{}执行{}方言策略", entityClass.getName(), databaseStrategy.databaseDialect());
+            TableMetadata tableMetadata = databaseStrategy.start(entityClass);
+            // 记录声明过的表
+            registerTableNameMap.computeIfAbsent(tableMetadata.getSchema(), k -> new HashSet<>()).add(tableMetadata.getTableName());
+        }
 
-            // 删除没有声明的表
-            Boolean autoDropTable = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable();
-            if (autoDropTable) {
-                deleteUnregisterTables(registerTableNameMap, databaseStrategy);
-            }
-        } else {
-            log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
+        // 删除没有声明的表
+        Boolean autoDropTable = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable();
+        if (autoDropTable) {
+            deleteUnregisterTables(registerTableNameMap, databaseStrategy);
         }
     }
 

@@ -27,10 +27,10 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public boolean build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
+    public BuildResult build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbNameFromUrl(jdbcUrl);
         if (dbName == null) {
-            return false;
+            return BuildResult.of(false, dbName);
         }
 
         // 使用 admin 配置优先，否则 fallback 到 username/password
@@ -51,7 +51,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
         } catch (SQLException e) {
             log.error("创建数据库失败", e);
         }
-        return false;
+        return BuildResult.of(false, dbName);
     }
 
     private String extractDbNameFromUrl(String jdbcUrl) {
@@ -63,7 +63,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
         return null;
     }
 
-    private boolean createMysqlDatabaseIfAbsent(String adminUrl, String username, String password, String dbName, Consumer<Boolean> dbStatusCallback) throws SQLException {
+    private BuildResult createMysqlDatabaseIfAbsent(String adminUrl, String username, String password, String dbName, Consumer<Boolean> dbStatusCallback) throws SQLException {
         try (
                 Connection conn = DriverManager.getConnection(adminUrl, username, password);
                 PreparedStatement ps = conn.prepareStatement("SELECT SCHEMA_NAME FROM SCHEMATA WHERE SCHEMA_NAME = ?")
@@ -77,12 +77,12 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.executeUpdate("CREATE DATABASE `" + dbName + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
                     log.info("创建数据库成功：{}", dbName);
-                    return true;
+                    return BuildResult.of(true, dbName);
                 }
             } else {
                 log.info("数据库已存在：{}", dbName);
             }
         }
-        return false;
+        return BuildResult.of(false, dbName);
     }
 }
