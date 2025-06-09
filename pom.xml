@@ -41,6 +41,7 @@
         <module>auto-table-solon-plugin</module>
         <module>auto-table-test</module>
         <module>auto-table-strategy</module>
+        <module>auto-table-support</module>
     </modules>
 
     <properties>
