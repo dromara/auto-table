@@ -2,7 +2,7 @@ package org.dromara.autotable.core.strategy;
 
 import lombok.NonNull;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
-import org.dromara.autotable.core.InitDataHandler;
+import org.dromara.autotable.core.initdata.InitDataHandler;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;

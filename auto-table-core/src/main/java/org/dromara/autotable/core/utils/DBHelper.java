@@ -142,5 +142,4 @@ public class DBHelper {
             return columnToProperty;
         }
     }
-
 }

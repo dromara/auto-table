@@ -85,6 +85,24 @@ public class ApplicationInitDataTest {
         AutoTableBootstrap.start();
     }
 
+    /**
+     * 本测试需要先删除数据库
+     */
+    @Test
+    public void testEntityJavaMethod() {
+
+        initSqlSessionFactory("mybatis-config-mysql-init-db.xml");
+
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
+        // 指定扫描包
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
+                org.dromara.autotable.test.core.initdata.InitDataJavaMethod.class
+        });
+
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
     private void initSqlSessionFactory(String resource) {
         try (InputStream inputStream = ApplicationInitDataTest.class.getClassLoader().getResourceAsStream(resource)) {
             // 使用SqlSessionFactoryBuilder加载配置文件
