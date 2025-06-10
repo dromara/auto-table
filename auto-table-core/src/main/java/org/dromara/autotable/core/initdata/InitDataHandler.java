@@ -9,6 +9,7 @@ import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.core.utils.BeanClassUtil;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -48,14 +49,16 @@ public class InitDataHandler {
             return;
         }
 
+        String basePath = getBasePath(initDataProperties);
+
         // 处理默认sql文件
-        String defaultInitSqlFile = initDataProperties.getBasePath() + "/" + initDataProperties.getDefaultInitFileName() + ".sql";
+        String defaultInitSqlFile = basePath + "/" + initDataProperties.getDefaultInitFileName() + ".sql";
         tryExecuteSqlFile(defaultInitSqlFile);
 
         // 处理特定数据源名称的sql文件
         String datasourceName = DataSourceManager.getDatasourceName();
         if (StringUtils.hasText(datasourceName)) {
-            String datasourceInitSqlFile = initDataProperties.getBasePath() + "/" + datasourceName + ".sql";
+            String datasourceInitSqlFile = basePath + "/" + datasourceName + ".sql";
             tryExecuteSqlFile(datasourceInitSqlFile);
         }
 
@@ -181,6 +184,8 @@ public class InitDataHandler {
     private static void initCustomizeTableSql(TableMetadata tableMetadata) {
         String initSqlFile = TableMetadataHandler.getTableInitSql(tableMetadata.getEntityClass());
         if (StringUtils.hasText(initSqlFile)) {
+            String dialect = IStrategy.getCurrentStrategy().databaseDialect();
+            initSqlFile = initSqlFile.replace("{dialect}", dialect);
             try {
                 String sqlContent = loadSqlContent(initSqlFile);
                 log.info(">>> 执行 SQL 文件：{}", initSqlFile);
@@ -195,7 +200,7 @@ public class InitDataHandler {
 
     private static void initDefaultTableSql(TableMetadata tableMetadata, PropertyConfig.InitDataProperties initDataProperties) {
         String tableNameSqlFile;
-        String basePath = initDataProperties.getBasePath();
+        String basePath = getBasePath(initDataProperties);
         String datasourceName = DataSourceManager.getDatasourceName();
         if (datasourceName == null) {
             tableNameSqlFile = basePath + "/" + tableMetadata.getTableName() + ".sql";
@@ -269,5 +274,18 @@ public class InitDataHandler {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String getBasePath(PropertyConfig.InitDataProperties initDataProperties) {
+        String basePath = initDataProperties.getBasePath();
+        if (StringUtils.noText(basePath)) {
+            throw new RuntimeException("auto-table.init-data.basePath 不能为空");
+        }
+        if (basePath.endsWith("/")) {
+            return basePath.substring(0, basePath.length() - 1);
+        }
+
+        String dialect = IStrategy.getCurrentStrategy().databaseDialect();
+        return basePath.replace("{dialect}", dialect);
     }
 }

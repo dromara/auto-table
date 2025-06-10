@@ -119,7 +119,7 @@ public class IndexMetadataBuilder {
     protected String getEncryptIndexName(String tableNamePart, String filedNamePart) {
         String prefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getIndexPrefix();
         String fullIndexName = prefix + tableNamePart + "_" + filedNamePart;
-        int maxLength = 63;
+        int maxLength = 30;
         if (fullIndexName.length() > maxLength) {
             String md5 = generateMD5(fullIndexName);
             if (prefix.length() + md5.length() > maxLength) {

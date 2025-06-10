@@ -1,1 +1,1 @@
-org.dromara.autotable.core.strategy.oracle.OracleDatabaseBuilder
+org.dromara.autotable.strategy.oracle.OracleDatabaseBuilder

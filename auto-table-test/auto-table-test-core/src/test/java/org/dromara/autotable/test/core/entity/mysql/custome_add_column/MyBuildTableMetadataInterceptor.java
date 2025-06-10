@@ -5,8 +5,8 @@ import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.interceptor.BuildTableMetadataInterceptor;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import org.dromara.autotable.core.strategy.mysql.data.MysqlColumnMetadata;
-import org.dromara.autotable.core.strategy.mysql.data.MysqlTableMetadata;
+import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
+import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
 
 import java.util.ArrayList;
 import java.util.List;

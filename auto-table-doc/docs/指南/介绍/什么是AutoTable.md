@@ -22,14 +22,15 @@ description: 根据 Java 实体，自动映射成数据库的表结构
 
 > 以下的测试版本是我本地的版本或者部分小伙伴测试过的版本，更低的版本未做详细测试，但不代表不能用，所以有测试过其他更低版本的小伙伴欢迎联系我修改相关版本号，感谢🫡
 
-| 数据库          | 测试版本       | 说明                                        |
-|--------------|------------|-------------------------------------------|
-| ✅ MySQL      | 5.7        |                                           |
-| ✅ MariaDB    | 对应MySQL的版本 | 协议使用MySQL，即`jdbc:mysql://`                |
-| ✅ PostgreSQL | 15.5       |                                           |
-| ✅ SQLite     | 3.35.5     |                                           |
-| ✅ H2         | 2.2.220    |                                           |
-| ✅ Doris      | 2.0        | 成员[@lizhian](https://gitee.com/lizhian)开发 |
-| ☑️ Oracle    | 未知         | 成员[@lizhian](https://gitee.com/lizhian)开发 |
-| ☑️ 达梦        | 未知         | 成员[@minfc](https://gitee.com/minfc)开发测试中  |
-| 其他数据库        | 暂未支持       | 期待你的PR😉                                  |
+| 数据库                                             | 测试版本                  | 说明                                        |
+|-------------------------------------------------|-----------------------|-------------------------------------------|
+| ✅ MySQL                                         | 5.7                   |                                           |
+| ✅ MariaDB                                       | 对应MySQL的版本            | 协议使用MySQL，即`jdbc:mysql://`                |
+| ✅ PostgreSQL                                    | 15.5                  |                                           |
+| ✅ SQLite                                        | 3.35.5                |                                           |
+| ✅ H2                                            | 2.2.220               |                                           |
+| ✅ Doris <Badge type="warning" text="^2.4.2" />  | 2.0                   | 成员[@lizhian](https://gitee.com/lizhian)开发 |
+| ✅ Oracle <Badge type="warning" text="^2.5.0" /> | 11g && 23ai           | 成员[@lizhian](https://gitee.com/lizhian)开发 |
+| ✅️ 达梦 <Badge type="warning" text="^2.5.0" />    | dm8(大小写不敏感,兼容mysql模式) | 成员[@minfc](https://gitee.com/minfc)开发     |
+| ✅ 人大金仓 <Badge type="warning" text="^2.5.0" />   | V009R001C002B0014     | 成员[@minfc](https://gitee.com/minfc)开发     |
+| 其他数据库                                           | 暂未支持                  | 期待你的PR😉                                  |

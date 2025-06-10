@@ -5,7 +5,6 @@ import org.dromara.autotable.annotation.*;
 import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;
 import org.dromara.autotable.annotation.oracle.OracleTypeConstant;
 import org.dromara.autotable.core.constants.DatabaseDialect;
-import org.dromara.autotable.core.strategy.oracle.OracleStrategy;
 
 @Data
 @AutoTable("sys_user")

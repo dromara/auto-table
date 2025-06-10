@@ -9,6 +9,11 @@ export default defineConfig({
         ['link', {rel: 'icon', href: '/logo.png'}]
     ],
     lastUpdated: true,
+    build: {
+        rollupOptions: {
+            external: ['/flow.png']
+        }
+    },
     // https://vitepress.dev/reference/default-theme-config
     themeConfig: {
         logo: '/logo.png',
@@ -111,6 +116,7 @@ export default defineConfig({
                         {text: '没有创建表', link: '/葵花宝典/没有创建表'},
                         {text: '一个实体适配多种数据库', link: '/葵花宝典/一个实体适配多种数据库.md'},
                         {text: '自动建库', link: '/葵花宝典/自动建库.md'},
+                        {text: '自动初始化数据', link: '/葵花宝典/自动初始化数据.md'},
                     ]
                 },
             ],

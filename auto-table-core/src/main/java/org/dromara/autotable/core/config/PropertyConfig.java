@@ -119,16 +119,6 @@ public class PropertyConfig {
         private boolean enable = true;
         private String basePath = "classpath:sql";
         private String defaultInitFileName = "_init_";
-
-        public String getBasePath() {
-            if (StringUtils.noText(basePath)) {
-                throw new RuntimeException("auto-table.init-data.basePath 不能为空");
-            }
-            if (basePath.endsWith("/")) {
-                return basePath.substring(0, basePath.length() - 1);
-            }
-            return basePath;
-        }
     }
 
     @Data

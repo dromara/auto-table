@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.dromara.autotable.core.support.springdoc.AutoTableSpringdocAutoConfiguration
+org.dromara.autotable.support.springdoc.AutoTableSpringdocAutoConfiguration
