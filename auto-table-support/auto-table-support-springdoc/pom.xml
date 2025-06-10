@@ -9,6 +9,7 @@
         <version>2.5.0</version>
     </parent>
 
+    <name>auto-table-support-springdoc</name>
     <artifactId>auto-table-support-springdoc</artifactId>
 
     <dependencies>
