@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>auto-table-strategy-dm</artifactId>
+    <name>auto-table-strategy-dm</name>
 
     <dependencies>
 

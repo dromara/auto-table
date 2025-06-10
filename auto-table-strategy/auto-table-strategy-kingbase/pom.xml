@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>auto-table-strategy-kingbase</artifactId>
+    <name>auto-table-strategy-kingbase</name>
 
     <dependencies>
 
