@@ -156,7 +156,7 @@ public class AutoTableBootstrap {
             DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
             if (databaseBuilder != null) {
                 // 构建数据库
-                DatabaseBuilder.BuildResult buildResult = databaseBuilder.build(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password, dbExists -> {
+                DatabaseBuilder.BuildResult buildResult = databaseBuilder.build(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password, entityClasses, dbExists -> {
                     // 如果数据库不存在，且当前是validate模式，则抛出异常
                     if (!dbExists) {
                         boolean isValidateMode = autoTableProperties.getMode() == RunMode.validate;

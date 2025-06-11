@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -25,7 +26,7 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
     }
 
     @Override
-    public BuildResult build(String jdbcUrl, String targetUser, String targetPwd, Consumer<Boolean> dbStatusCallback) {
+    public BuildResult build(String jdbcUrl, String targetUser, String targetPwd, Set<Class<?>> entityClasses, Consumer<Boolean> dbStatusCallback) {
         // 决定使用哪个账号连接
         PropertyConfig.DMConfig dmConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getDm();
         String execUser = StringUtils.hasText(dmConfig.getAdminUser())

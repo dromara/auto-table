@@ -3,6 +3,7 @@ package org.dromara.autotable.core.strategy;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.Set;
 import java.util.function.Consumer;
 
 public interface DatabaseBuilder {
@@ -23,7 +24,7 @@ public interface DatabaseBuilder {
      * @param username 用户名
      * @param password 密码
      */
-    BuildResult build(String jdbcUrl, String username, String password, Consumer<Boolean> dbStatusCallback);
+    BuildResult build(String jdbcUrl, String username, String password, Set<Class<?>> entityClasses, Consumer<Boolean> dbStatusCallback);
 
     @Data
     @AllArgsConstructor(staticName = "of")
