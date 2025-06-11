@@ -18,6 +18,7 @@ import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
@@ -95,6 +96,7 @@ public class AutoTablePlugin implements Plugin {
         this.getAndSetBean(context, RecordSqlHandler.class, AutoTableGlobalConfig.instance()::setCustomRecordSqlHandler);
         // IDataSourceHandler
         this.getAndSetBean(context, IDataSourceHandler.class, AutoTableGlobalConfig.instance()::setDatasourceHandler);
+        this.getAndSetBean(context, DataSourceInfoExtractor.class, AutoTableGlobalConfig.instance()::setDataSourceInfoExtractor);
 
         /* 拦截器 */
         // AutoTableAnnotationInterceptor

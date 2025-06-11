@@ -1,12 +1,14 @@
-package org.dromara.autotable.core.utils;
+package org.dromara.autotable.core.dynamicds;
+
+import org.dromara.autotable.core.utils.StringUtils;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class DataSourceInfoExtractor {
+public interface DataSourceInfoExtractor {
 
-    public static class DbInfo {
+    class DbInfo {
         public final String jdbcUrl;
         public final String username;
         public final String password;
@@ -23,7 +25,7 @@ public class DataSourceInfoExtractor {
         }
     }
 
-    public static DbInfo extract(DataSource dataSource) {
+    default DbInfo extract(DataSource dataSource) {
         if (dataSource == null) {
             throw new IllegalArgumentException("DataSource不能为null");
         }
@@ -39,7 +41,7 @@ public class DataSourceInfoExtractor {
         return new DbInfo(url, username, password);
     }
 
-    private static String tryGet(DataSource obj, String... methodNames) {
+    default String tryGet(DataSource obj, String... methodNames) {
         for (String name : methodNames) {
             try {
                 Method method = obj.getClass().getMethod(name);

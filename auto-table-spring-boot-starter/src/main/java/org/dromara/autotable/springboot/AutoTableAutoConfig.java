@@ -16,6 +16,7 @@ import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
@@ -49,6 +50,7 @@ public class AutoTableAutoConfig {
             ObjectProvider<AutoTableAnnotationFinder> autoTableAnnotationFinder,
             ObjectProvider<AutoTableMetadataAdapter> autoTableMetadataAdapter,
             ObjectProvider<IDataSourceHandler> dynamicDataSourceHandler,
+            ObjectProvider<DataSourceInfoExtractor> dataSourceInfoExtractor,
             ObjectProvider<RecordSqlHandler> recordSqlHandler,
             /* 拦截器 */
             ObjectProvider<AutoTableAnnotationInterceptor> autoTableAnnotationInterceptor,
@@ -98,6 +100,9 @@ public class AutoTableAutoConfig {
 
         // 配置自定义的动态数据源处理器
         dynamicDataSourceHandler.ifAvailable(AutoTableGlobalConfig.instance()::setDatasourceHandler);
+
+        // 配置自定义的数据源解析器
+        dataSourceInfoExtractor.ifAvailable(AutoTableGlobalConfig.instance()::setDataSourceInfoExtractor);
 
         // 配置自定义的SQL记录处理器
         recordSqlHandler.ifAvailable(AutoTableGlobalConfig.instance()::setCustomRecordSqlHandler);

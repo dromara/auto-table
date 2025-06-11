@@ -1,6 +1,6 @@
 package org.dromara.autotable.core.callback;
 
-import org.dromara.autotable.core.utils.DataSourceInfoExtractor;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 
 import java.util.Set;
 

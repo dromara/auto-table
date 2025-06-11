@@ -8,7 +8,7 @@ import org.dromara.autotable.core.initdata.InitDataHandler;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import org.dromara.autotable.core.utils.DataSourceInfoExtractor;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.utils.SpiLoader;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
@@ -151,7 +151,8 @@ public class AutoTableBootstrap {
 
         boolean autoBuildDatabase = autoTableProperties.getAutoBuildDatabase();
         if (autoBuildDatabase) {
-            DataSourceInfoExtractor.DbInfo dbInfo = DataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
+            DataSourceInfoExtractor dataSourceInfoExtractor = AutoTableGlobalConfig.instance().getDataSourceInfoExtractor();
+            DataSourceInfoExtractor.DbInfo dbInfo = dataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
             DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
             if (databaseBuilder != null) {
                 // 构建数据库

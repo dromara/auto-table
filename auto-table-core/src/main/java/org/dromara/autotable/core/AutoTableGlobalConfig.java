@@ -14,6 +14,7 @@ import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.dynamicds.impl.DefaultDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
@@ -79,6 +80,13 @@ public class AutoTableGlobalConfig {
     @Setter
     @Getter
     private IDataSourceHandler datasourceHandler = new DefaultDataSourceHandler();
+
+    /**
+     * 数据源解析器
+     */
+    @Setter
+    @Getter
+    private DataSourceInfoExtractor dataSourceInfoExtractor = new DataSourceInfoExtractor(){};
 
     /**
      * 自定义注解查找器
