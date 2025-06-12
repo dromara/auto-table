@@ -82,6 +82,9 @@ export default defineConfig({
                         {text: '多数据源', link: '/指南/高级/多数据源'},
                         {text: '拦截器', link: '/指南/高级/拦截器'},
                         {text: '事件回调', link: '/指南/高级/事件回调'},
+                        {text: '多库适配', link: '/指南/高级/多库适配.md'},
+                        {text: '自动建库', link: '/指南/高级/自动建库.md'},
+                        {text: '自动初始化数据', link: '/指南/高级/自动初始化数据.md'},
                     ]
                 },
                 {
@@ -114,9 +117,6 @@ export default defineConfig({
                         {text: '字段删除', link: '/葵花宝典/字段删除'},
                         {text: '自定义类型映射', link: '/葵花宝典/自定义类型映射'},
                         {text: '没有创建表', link: '/葵花宝典/没有创建表'},
-                        {text: '一个实体适配多种数据库', link: '/葵花宝典/一个实体适配多种数据库.md'},
-                        {text: '自动建库', link: '/葵花宝典/自动建库.md'},
-                        {text: '自动初始化数据', link: '/葵花宝典/自动初始化数据.md'},
                         {text: '集成springdoc', link: '/葵花宝典/集成springdoc.md'},
                     ]
                 },
