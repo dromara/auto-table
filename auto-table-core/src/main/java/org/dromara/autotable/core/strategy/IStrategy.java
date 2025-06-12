@@ -2,11 +2,11 @@ package org.dromara.autotable.core.strategy;
 
 import lombok.NonNull;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
-import org.dromara.autotable.core.initdata.InitDataHandler;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.initdata.InitDataHandler;
 import org.dromara.autotable.core.recordsql.AutoTableExecuteSqlLog;
 import org.dromara.autotable.core.recordsql.RecordSqlService;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -74,6 +74,14 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
             return trimmed + ";";
         }
         return trimmed;
+    }
+
+    /**
+     * 索引名称最大长度: 考虑到大多数数据库，其中oracle的30最小，再就是pg的63了，所以这里取63，oracle自行处理
+     * @return 索引名称最大长度
+     */
+    default int indexNameMaxLength() {
+        return 63;
     }
 
     /**

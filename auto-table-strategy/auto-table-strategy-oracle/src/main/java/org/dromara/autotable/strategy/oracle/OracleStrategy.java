@@ -48,6 +48,15 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     }
 
     /**
+     * 索引名称最大长度: 考虑到大多数数据库，其中oracle的30最小，再就是pg的63了，所以这里取63，oracle自行处理
+     * @return 索引名称最大长度
+     */
+    @Override
+    public int indexNameMaxLength() {
+        return 30;
+    }
+
+    /**
      * 重写typeMapping方法以提供自定义的数据库类型映射
      * 此方法定义了Java类型到数据库类型的映射规则，用于指导ORM框架如何处理不同类型的字段
      *
