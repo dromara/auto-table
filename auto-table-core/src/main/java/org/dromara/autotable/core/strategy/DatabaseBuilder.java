@@ -29,7 +29,7 @@ public interface DatabaseBuilder {
     @Data
     @AllArgsConstructor(staticName = "of")
     class BuildResult {
-        private final boolean success;
-        private final String dbName;
+        private boolean success;
+        private String dbName;
     }
 }
