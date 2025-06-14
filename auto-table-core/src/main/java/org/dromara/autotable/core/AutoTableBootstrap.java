@@ -2,13 +2,13 @@ package org.dromara.autotable.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.initdata.InitDataHandler;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.utils.SpiLoader;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
@@ -71,7 +71,6 @@ public class AutoTableBootstrap {
      * 处理ignore and repeat表
      *
      * @param classList 待处理的类
-     * @param consumer  实体消费回调
      */
     private static void handleAnalysis(Set<Class<?>> classList) {
 
@@ -246,13 +245,20 @@ public class AutoTableBootstrap {
 
     private static void checkRepeatTableName(Set<Class<?>> entityClasses) {
         Map<String, List<Class<?>>> repeatCheckMap = entityClasses.stream()
-                .collect(Collectors.groupingBy(entity -> TableMetadataHandler.getTableSchema(entity) + "." + TableMetadataHandler.getTableName(entity)));
+                .collect(Collectors.groupingBy(entity -> {
+                    String tableSchema = TableMetadataHandler.getTableSchema(entity);
+                    String tableName = TableMetadataHandler.getTableName(entity);
+                    if (StringUtils.hasText(tableSchema)) {
+                        return tableSchema + "." + tableName;
+                    }
+                    return tableName;
+                }));
         for (Map.Entry<String, List<Class<?>>> repeatCheckItem : repeatCheckMap.entrySet()) {
             int sameTableNameCount = repeatCheckItem.getValue().size();
             if (sameTableNameCount > 1) {
                 String tableName = repeatCheckItem.getKey();
-                throw new RuntimeException(String.format("存在重名的表：%s(%s)，请检查！", tableName,
-                        String.join(",", repeatCheckItem.getValue().stream().map(Class::getName).collect(Collectors.toSet()))));
+                String repeatTableNames = repeatCheckItem.getValue().stream().map(Class::getName).collect(Collectors.joining(", "));
+                throw new RuntimeException(String.format("存在重名的表：%s(%s)，请检查！", tableName, repeatTableNames));
             }
         }
     }

@@ -14,7 +14,7 @@ public class DynamicDataSourceHandler implements IDataSourceHandler {
 
     @Override
     public void useDataSource(String dataSourceName) {
-        // 切换数据源
+        // 切换数据源，因为spring的数据源是动态的，所以直接调用spring的内部切换逻辑即可
         DynamicDataSourceContextHolder.setContextKey(dataSourceName);
     }
 

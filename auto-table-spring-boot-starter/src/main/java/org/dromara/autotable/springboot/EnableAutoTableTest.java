@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
         listeners = {AutoTableTestExecutionListener.class},
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
 )
-@Import({AutoTablePropertiesRegister.class, AutoTableAutoConfig.class, AutoTableImportRegister.class, AutoTableTest.class})
+@Import({AutoTableTest.class, AutoTablePropertiesRegister.class, AutoTableAutoConfig.class, AutoTableImportRegister.class})
 public @interface EnableAutoTableTest {
 
     /**

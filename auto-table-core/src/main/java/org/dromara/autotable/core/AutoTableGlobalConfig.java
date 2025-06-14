@@ -60,6 +60,13 @@ public class AutoTableGlobalConfig {
     }
 
     /**
+     * 单元测试模式，配置加载完不执行AutoTable逻辑，等带测试逻辑执行
+     */
+    @Getter
+    @Setter
+    private boolean unitTestMode = false;
+
+    /**
      * 全局配置
      */
     @Setter

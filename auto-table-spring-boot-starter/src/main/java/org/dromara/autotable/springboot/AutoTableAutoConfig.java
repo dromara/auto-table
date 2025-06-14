@@ -1,6 +1,8 @@
 package org.dromara.autotable.springboot;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
+import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableClassScanner;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
@@ -38,12 +40,14 @@ import java.util.stream.Collectors;
 /**
  * @author don
  */
+@Slf4j
 @AutoConfigureAfter({DataSourceAutoConfiguration.class})
 @ConditionalOnMissingBean(AutoTableAutoConfig.class)
 public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(
             PropertyConfig propertiesConfig,
+            ObjectProvider<InitializeBeans> initializeBeans,
             ObjectProvider<DataSource> dataSource,
             ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> strategies,
             ObjectProvider<AutoTableClassScanner> autoTableClassScanner,
@@ -71,11 +75,13 @@ public class AutoTableAutoConfig {
 
             ObjectProvider<JavaTypeToDatabaseTypeConverter> javaTypeToDatabaseTypeConverter) {
 
+        initializeBeans.orderedStream().forEachOrdered(initializeBean -> {
+            log.info("初始化{}", initializeBean.getClass().getName());
+        });
+
         // 默认设置全局的dataSource
         dataSource.ifUnique(DataSourceManager::setDataSource);
 
-        // 设置全局的配置
-        // PropertyConfig propertiesConfig = propertyConfig();
         // 假如有注解扫描的包，就覆盖设置
         if (AutoTableImportRegister.basePackagesFromAnno != null) {
             propertiesConfig.setModelPackage(AutoTableImportRegister.basePackagesFromAnno);
@@ -141,5 +147,15 @@ public class AutoTableAutoConfig {
 
         // 配置自定义的java到数据库的转换器
         javaTypeToDatabaseTypeConverter.ifAvailable(AutoTableGlobalConfig.instance()::setJavaTypeToDatabaseTypeConverter);
+
+        this.start();
+    }
+
+    protected void start() {
+        // 单元测试模式下，不主动启动
+        if (!AutoTableGlobalConfig.instance().isUnitTestMode()) {
+            // 启动AutoTable
+            AutoTableBootstrap.start();
+        }
     }
 }

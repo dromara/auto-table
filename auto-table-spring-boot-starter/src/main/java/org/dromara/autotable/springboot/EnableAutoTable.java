@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({AutoTablePropertiesRegister.class, AutoTableAutoConfig.class, AutoTableImportRegister.class, AutoTableRunner.class})
+@Import({AutoTablePropertiesRegister.class, AutoTableImportRegister.class, AutoTableAutoConfig.class})
 public @interface EnableAutoTable {
 
     /**
