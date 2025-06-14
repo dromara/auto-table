@@ -152,6 +152,10 @@ public class AutoTableBootstrap {
         if (autoBuildDatabase) {
             DataSourceInfoExtractor dataSourceInfoExtractor = AutoTableGlobalConfig.instance().getDataSourceInfoExtractor();
             DataSourceInfoExtractor.DbInfo dbInfo = dataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
+            if (dbInfo == null) {
+                log.warn("数据库信息提取失败，跳过自动建库");
+                return null;
+            }
             DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
             if (databaseBuilder != null) {
                 // 构建数据库
@@ -264,12 +268,32 @@ public class AutoTableBootstrap {
     }
 
     private static Set<Class<?>> findAllEntityClass(PropertyConfig autoTableProperties) {
+        Set<Class<?>> classes = new HashSet<>();
+
         Class<?>[] modelClass = autoTableProperties.getModelClass();
-        Set<Class<?>> classes = new HashSet<>(Arrays.asList(modelClass));
-        String[] packs = getModelPackage(autoTableProperties);
-        Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(packs);
-        classes.addAll(packClasses);
+        // 优先添加指定的类
+        boolean customModelClass = modelClass != null && modelClass.length > 0;
+        if (customModelClass) {
+            modelClass.forEach(classes::add);
+        }
+        // 添加指定的包下的类
+        String[] packs = autoTableProperties.getModelPackage();
+        boolean customModelPackage = packs != null && packs.length > 0;
+        if (customModelPackage) {
+            Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(packs);
+            classes.addAll(packClasses);
+        }
+
+        // 扫描类和包都没有指定的情况下，扫描启动类根目录
+        if (!customModelClass && !customModelPackage) {
+            // 扫描根目录实体并返回
+            String[] basePackages = {getBootPackage()};
+            Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(basePackages);
+            classes.addAll(packClasses);
+        }
+
         return classes;
+
     }
 
     private static void registerAllDbStrategy() {

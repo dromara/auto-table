@@ -1,19 +1,23 @@
 package org.dromara.autotable.test.springboot;
 
 import lombok.Data;
-import org.dromara.autotable.annotation.*;
-import org.dromara.autotable.annotation.enums.IndexSortTypeEnum;
+import org.dromara.autotable.annotation.AutoColumn;
+import org.dromara.autotable.annotation.ColumnComment;
+import org.dromara.autotable.annotation.ColumnDefault;
+import org.dromara.autotable.annotation.ColumnType;
+import org.dromara.autotable.annotation.Index;
+import org.dromara.autotable.annotation.PrimaryKey;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 
 import java.util.Date;
 
 @Data
-@AutoTable(value = "oracle_user", comment = "修改注释")
-@TableIndex(type = IndexTypeEnum.UNIQUE, indexFields = {
-        @IndexField(field = "phone", sort = IndexSortTypeEnum.DESC)
-        , @IndexField(field = "age", sort = IndexSortTypeEnum.DESC)
-
-})
+// @AutoTable(value = "oracle_user", comment = "修改注释")
+// @TableIndex(type = IndexTypeEnum.UNIQUE, indexFields = {
+//         @IndexField(field = "phone", sort = IndexSortTypeEnum.DESC)
+//         , @IndexField(field = "age", sort = IndexSortTypeEnum.DESC)
+//
+// })
 public class OracleUser {
 
     @PrimaryKey(autoIncrement = true)

@@ -4,6 +4,12 @@ spring:
     username: test
     password: 123456
     driver-class-name: oracle.jdbc.OracleDriver
+
+auto-table:
+  oracle:
+    admin-user: sys as sysdba
+    admin-password: 79a4b357932077a9
+
 logging:
   level:
     org.dromara: info

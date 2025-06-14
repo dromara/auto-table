@@ -1,12 +1,16 @@
 package org.dromara.autotable.core.dynamicds;
 
 import org.dromara.autotable.core.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public interface DataSourceInfoExtractor {
+
+    Logger log = LoggerFactory.getLogger(DataSourceInfoExtractor.class);
 
     class DbInfo {
         public final String jdbcUrl;
@@ -27,7 +31,8 @@ public interface DataSourceInfoExtractor {
 
     default DbInfo extract(DataSource dataSource) {
         if (dataSource == null) {
-            throw new IllegalArgumentException("DataSource不能为null");
+            log.warn("当前数据源为空，无法提取数据链接信息");
+            return null;
         }
 
         String url = tryGet(dataSource, "getJdbcUrl", "getUrl");
@@ -35,7 +40,8 @@ public interface DataSourceInfoExtractor {
         String password = tryGet(dataSource, "getPassword");
 
         if (url == null) {
-            throw new RuntimeException("未能通过反射从 DataSource 获取到 JDBC URL");
+            log.warn("未能通过反射从 {} 获取到 JDBC URL, 若有建库需要可自行实现提取逻辑", dataSource.getClass().getName());
+            return null;
         }
 
         return new DbInfo(url, username, password);
@@ -47,7 +53,7 @@ public interface DataSourceInfoExtractor {
                 Method method = obj.getClass().getMethod(name);
                 method.setAccessible(true);
                 Object value = method.invoke(obj);
-                if (value instanceof String && StringUtils.hasText((String)value)) {
+                if (value instanceof String && StringUtils.hasText((String) value)) {
                     return (String) value;
                 }
             } catch (NoSuchMethodException ignored) {
@@ -65,7 +71,7 @@ public interface DataSourceInfoExtractor {
                     Field field = obj.getClass().getDeclaredField(fieldName);
                     field.setAccessible(true);
                     Object value = field.get(obj);
-                    if (value instanceof String && StringUtils.hasText((String)value)) {
+                    if (value instanceof String && StringUtils.hasText((String) value)) {
                         return (String) value;
                     }
                 } catch (NoSuchFieldException ignored) {

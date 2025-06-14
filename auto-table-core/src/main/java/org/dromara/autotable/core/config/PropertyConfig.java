@@ -2,7 +2,6 @@ package org.dromara.autotable.core.config;
 
 import lombok.Data;
 import org.dromara.autotable.core.RunMode;
-import org.dromara.autotable.core.utils.StringUtils;
 
 @Data
 public class PropertyConfig {

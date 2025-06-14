@@ -77,7 +77,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
             if (!exists) {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.executeUpdate("CREATE DATABASE `" + dbName + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                    log.info("创建数据库成功：{}", dbName);
+                    log.info("成功创建 Mysql 数据库：{}", dbName);
                     return BuildResult.of(true, dbName);
                 }
             } else {
