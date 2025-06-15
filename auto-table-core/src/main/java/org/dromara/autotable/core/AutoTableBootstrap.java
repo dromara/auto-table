@@ -274,7 +274,9 @@ public class AutoTableBootstrap {
         // 优先添加指定的类
         boolean customModelClass = modelClass != null && modelClass.length > 0;
         if (customModelClass) {
-            modelClass.forEach(classes::add);
+            for (Class<?> aClass : modelClass) {
+                classes.add(aClass);
+            }
         }
         // 添加指定的包下的类
         String[] packs = autoTableProperties.getModelPackage();
