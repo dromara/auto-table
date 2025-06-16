@@ -303,9 +303,9 @@ public class AutoTableBootstrap {
         if (strategies.isEmpty()) {
             log.warn("没有发现任何数据库策略！");
         } else {
+            strategies.forEach(AutoTableGlobalConfig.instance()::addStrategy);
             List<String> dialects = strategies.stream()
-                    .peek(AutoTableGlobalConfig.instance()::addStrategy)
-                    .map(IStrategy::databaseDialect)
+                    .map(provider -> provider.databaseDialect())
                     .collect(Collectors.toList());
             log.info("注册数据库表策略：{}", String.join(", ", dialects));
         }
@@ -314,9 +314,7 @@ public class AutoTableBootstrap {
     private static void registerAllDatabaseBuilder() {
         List<DatabaseBuilder> databaseBuilders = SpiLoader.loadAll(DatabaseBuilder.class);
         if (!databaseBuilders.isEmpty()) {
-            for (DatabaseBuilder databaseBuilder : databaseBuilders) {
-                AutoTableGlobalConfig.instance().addDatabaseBuilder(databaseBuilder);
-            }
+            databaseBuilders.forEach(AutoTableGlobalConfig.instance()::addDatabaseBuilder);
         }
     }
 
