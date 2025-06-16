@@ -303,10 +303,11 @@ public class AutoTableBootstrap {
         if (strategies.isEmpty()) {
             log.warn("没有发现任何数据库策略！");
         } else {
-            for (IStrategy provider : strategies) {
-                log.info("注册数据库策略：{}", provider.databaseDialect());
-                AutoTableGlobalConfig.instance().addStrategy(provider);
-            }
+            List<String> dialects = strategies.stream()
+                    .peek(AutoTableGlobalConfig.instance()::addStrategy)
+                    .map(IStrategy::databaseDialect)
+                    .collect(Collectors.toList());
+            log.info("注册数据库表策略：{}", String.join(", ", dialects));
         }
     }
 
