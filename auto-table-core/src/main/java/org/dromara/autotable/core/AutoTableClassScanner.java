@@ -3,6 +3,7 @@ package org.dromara.autotable.core;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.Ignore;
+import org.dromara.autotable.core.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.JarEntry;
@@ -50,6 +52,8 @@ public abstract class AutoTableClassScanner {
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
 
         return Arrays.stream(basePackages)
+                .filter(Objects::nonNull)
+                .filter(StringUtils::hasText)
                 .map(basePackage -> {
                     try {
                         return getClasses(basePackage,

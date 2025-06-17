@@ -17,6 +17,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +63,7 @@ public class AutoTableBootstrap {
         handleAnalysis(classes);
 
         AutoTableGlobalConfig.instance().getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
-        AutoTableGlobalConfig.instance().clear();
+        AutoTableGlobalConfig.clear();
         log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
     }
 
@@ -141,8 +142,7 @@ public class AutoTableBootstrap {
             throw new RuntimeException("同一个数据源(" + dataSource + ")下，不能同时使用多个数据库方言[" + String.join(",", dialectInAnnotation) + "]");
         }
 
-        String dialectOnEntity = dialectInAnnotation.get(0);
-        return dialectOnEntity;
+        return dialectInAnnotation.get(0);
     }
 
     private static DatabaseBuilder.BuildResult buildDatabaseIfAbsent(String dataSource, Set<Class<?>> entityClasses, String dialectOnEntity) {
@@ -268,34 +268,41 @@ public class AutoTableBootstrap {
     }
 
     private static Set<Class<?>> findAllEntityClass(PropertyConfig autoTableProperties) {
+
         Set<Class<?>> classes = new HashSet<>();
 
+        boolean noConfig = findFromProperties(autoTableProperties, classes);
+        // 扫描类和包都没有指定的情况下，扫描启动类根目录
+        if (noConfig) {
+            // 扫描根目录实体并返回
+            findFromRootPackage(classes);
+        }
+
+        return classes;
+
+    }
+
+    private static void findFromRootPackage(Set<Class<?>> classes) {
+        String[] basePackages = {getBootPackage()};
+        Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(basePackages);
+        classes.addAll(packClasses);
+    }
+
+    private static boolean findFromProperties(PropertyConfig autoTableProperties, Set<Class<?>> classes) {
         Class<?>[] modelClass = autoTableProperties.getModelClass();
+        String[] packs = autoTableProperties.getModelPackage();
         // 优先添加指定的类
         boolean customModelClass = modelClass != null && modelClass.length > 0;
         if (customModelClass) {
-            for (Class<?> aClass : modelClass) {
-                classes.add(aClass);
-            }
+            Collections.addAll(classes, modelClass);
         }
         // 添加指定的包下的类
-        String[] packs = autoTableProperties.getModelPackage();
         boolean customModelPackage = packs != null && packs.length > 0;
         if (customModelPackage) {
             Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(packs);
             classes.addAll(packClasses);
         }
-
-        // 扫描类和包都没有指定的情况下，扫描启动类根目录
-        if (!customModelClass && !customModelPackage) {
-            // 扫描根目录实体并返回
-            String[] basePackages = {getBootPackage()};
-            Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(basePackages);
-            classes.addAll(packClasses);
-        }
-
-        return classes;
-
+        return !customModelClass && !customModelPackage;
     }
 
     private static void registerAllDbStrategy() {
@@ -305,7 +312,7 @@ public class AutoTableBootstrap {
         } else {
             strategies.forEach(AutoTableGlobalConfig.instance()::addStrategy);
             List<String> dialects = strategies.stream()
-                    .map(provider -> provider.databaseDialect())
+                    .map(IStrategy::databaseDialect)
                     .collect(Collectors.toList());
             log.info("注册数据库表策略：{}", String.join(", ", dialects));
         }
@@ -316,16 +323,6 @@ public class AutoTableBootstrap {
         if (!databaseBuilders.isEmpty()) {
             databaseBuilders.forEach(AutoTableGlobalConfig.instance()::addDatabaseBuilder);
         }
-    }
-
-    private static String[] getModelPackage(PropertyConfig autoTableProperties) {
-        String[] packs = autoTableProperties.getModelPackage();
-        Class<?>[] modelClass = autoTableProperties.getModelClass();
-        // 没有指定实体的class，则使用根包扫描
-        if (packs.length == 0 && modelClass.length == 0) {
-            packs = new String[]{getBootPackage()};
-        }
-        return packs;
     }
 
     private static String getBootPackage() {
