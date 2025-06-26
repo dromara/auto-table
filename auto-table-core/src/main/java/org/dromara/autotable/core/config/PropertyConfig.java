@@ -37,7 +37,7 @@ public class PropertyConfig {
     /**
      * 自动创建数据库（用户）。
      */
-    private Boolean autoBuildDatabase = true;
+    private Boolean autoBuildDatabase = false;
     /**
      * 自动删除没有声明的表：强烈不建议开启，会发生丢失数据等不可逆的操作。
      */
