@@ -1,6 +1,6 @@
 <p align="center"><img src="https://autotable.tangzc.com/logo.png" alt="logo" width="150px" /></p>
 
-<p align="center">你只负责维护实体，数据表的事情交给我</p>
+<p align="center">你只负责维护实体，数据库的事交给我</p>
 
 <p align="center">
 <img src="https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg?style=for-the-badge" alt="img" /> 

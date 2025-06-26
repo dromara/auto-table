@@ -9,5 +9,5 @@ rsync -avz --progress \
   --exclude='.DS_Store' \
   --exclude='.git' \
   --exclude='.svn' \
-  docs/.vitepress/dist/ \
+  docs/.vitepress/dist \
   root@tangzc.com:/website/autotable/

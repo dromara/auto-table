@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "AutoTable"
   #  text: "--自动维护表结构"
-  tagline: --你只负责维护实体，表结构的事交给我
+  tagline: --你只负责维护实体，数据库的事交给我
   image:
     src: /home-bg.png
     alt: AutoTable
@@ -29,7 +29,7 @@ features:
     details: 抽象了能力接口，可以对接多种ORM框架，例如MybatisPlus、MybatisFlex等
   - icon: { src: '/智能.png', width: '100px', height: '100px' }
     title: 表结构智能同步
-    details: 根据不同数据源，自动维护表结构（mysql可保持字段顺序与列顺序一致）、索引等信息
+    details: 根据不同数据源，自动维护数据库（mysql可保持字段顺序与列顺序一致）、索引等信息
 ---
 
 <style>

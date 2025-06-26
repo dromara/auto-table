@@ -4,7 +4,7 @@ import {defineConfig} from 'vitepress'
 export default defineConfig({
     title: "Dromara AutoTable",
     titleTemplate: "Auto Table",
-    description: "自动维护表结构",
+    description: "自动维护数据库",
     head: [
         ['link', {rel: 'icon', href: '/logo.png'}]
     ],
