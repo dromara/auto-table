@@ -55,13 +55,6 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
 
             // 创建数据库
             createDatabase = createDatabase(dbStatusCallback, conn, dbName);
-
-            // 创建schema
-            // 获取数据库所有schema
-            Set<String> schemas = findAllSchemas(entityClasses);
-            if (!schemas.isEmpty()) {
-                createSchemas(conn, schemas);
-            }
         } catch (SQLException e) {
             log.error("创建PostgreSQL数据库失败", e);
         }
@@ -89,47 +82,6 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
             }
         }
         return false;
-    }
-
-    private static void createSchemas(Connection conn, Set<String> schemas) {
-        for (String schemaName : schemas) {
-            try (
-                    PreparedStatement ps = conn.prepareStatement(
-                            "SELECT schema_name FROM information_schema.schemata WHERE schema_name = ?")
-            ) {
-                ps.setString(1, schemaName);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    log.info("PostgreSQL schema [{}] 已存在，无需创建。", schemaName);
-                } else {
-                    try (Statement stmt = conn.createStatement()) {
-                        stmt.executeUpdate("CREATE SCHEMA \"" + schemaName + "\"");
-                        log.info("已成功创建 PostgreSQL schema [{}]", schemaName);
-                    }
-                }
-            } catch (SQLException e) {
-                log.error("检查或创建 schema [{}] 时出错", schemaName, e);
-            }
-        }
-    }
-
-    private static Set<String> findAllSchemas(Set<Class<?>> entityClasses) {
-        Set<String> schemas = entityClasses.stream()
-                .map(TableMetadataHandler::getTableName)
-                .filter(StringUtils::hasText)
-                .collect(Collectors.toSet());
-        DataSourceManager.useConnection(connection -> {
-            try {
-                // 通过连接获取DatabaseMetaData对象
-                String schema = connection.getSchema();
-                if (StringUtils.hasText(schema)) {
-                    schemas.add(schema);
-                }
-            } catch (Exception e) {
-                log.error("获取数据库信息失败", e);
-            }
-        });
-        return schemas;
     }
 
     private String extractDbNameFromUrl(String jdbcUrl) {

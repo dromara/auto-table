@@ -13,12 +13,16 @@ import org.dromara.autotable.core.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -78,6 +82,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
     /**
      * 索引名称最大长度: 考虑到大多数数据库，其中oracle的30最小，再就是pg的63了，所以这里取63，oracle自行处理
+     *
      * @return 索引名称最大长度
      */
     default int indexNameMaxLength() {
@@ -167,8 +172,9 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void createMode(TABLE_META tableMetadata) {
 
         String schema = tableMetadata.getSchema();
-        String tableName = tableMetadata.getTableName();
+        this.createSchema(schema);
 
+        String tableName = tableMetadata.getTableName();
         // 表是否存在的标记
         log.info("create模式，删除表：{}", tableName);
         // 直接尝试删除表
@@ -191,6 +197,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void updateMode(TABLE_META tableMetadata) {
 
         String schema = tableMetadata.getSchema();
+        this.createSchema(schema);
+
         String tableName = tableMetadata.getTableName();
 
         boolean tableNotExist = this.checkTableNotExist(schema, tableName);
@@ -354,6 +362,14 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @return SQL
      */
     String dropTable(String schema, String tableName);
+
+    /**
+     * 创建schema
+     *
+     * @param schema schema名字
+     */
+    default void createSchema(String schema) {
+    }
 
     /**
      * 生成创建表SQL

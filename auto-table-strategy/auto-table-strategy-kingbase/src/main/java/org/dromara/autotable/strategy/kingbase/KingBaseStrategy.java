@@ -15,5 +15,4 @@ public class KingBaseStrategy extends PgsqlStrategy implements IStrategy<Default
     public String databaseDialect() {
         return DatabaseDialect.KingBase;
     }
-
 }

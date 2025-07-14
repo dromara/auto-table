@@ -25,7 +25,10 @@ import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -98,6 +101,24 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
     public @NonNull DefaultTableMetadata analyseClass(Class<?> beanClass) {
 
         return new PgsqlTableMetadataBuilder().build(beanClass);
+    }
+
+    @Override
+    public void createSchema(String schema) {
+        DataSourceManager.useConnection(connection -> {
+            try (PreparedStatement ps = connection.prepareStatement("SELECT schema_name FROM information_schema.schemata WHERE schema_name = ?")) {
+                ps.setString(1, schema);
+                ResultSet rs = ps.executeQuery();
+                if (!rs.next()) {
+                    try (Statement stmt = connection.createStatement()) {
+                        stmt.executeUpdate(String.format("CREATE SCHEMA \"%s\"", schema));
+                        log.info("成功创建 PostgreSQL schema [{}]", schema);
+                    }
+                }
+            } catch (SQLException e) {
+                log.error("检查或创建 schema [{}] 时出错", schema, e);
+            }
+        });
     }
 
     @Override

@@ -57,35 +57,11 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
             } else {
                 log.info("Kingbase 用户已存在：{}", targetUser);
             }
-
-            // 自动创建schema
-            Set<String> allSchemaNames = findAllSchemaNames(entityClasses, conn);
-            if (!allSchemaNames.isEmpty()) {
-                createSchemasIfAbsent(conn, allSchemaNames);
-            }
         } catch (SQLException e) {
             log.error("Kingbase 建库失败", e);
         }
 
         return BuildResult.of(createUser, targetUser);
-    }
-
-    private static Set<String> findAllSchemaNames(Set<Class<?>> entityClasses, Connection conn) {
-        // 获取数据库所有schema
-        Set<String> schemas = entityClasses.stream()
-                .map(TableMetadataHandler::getTableName)
-                .filter(StringUtils::hasText)
-                .collect(Collectors.toSet());
-        try {
-            // 通过连接获取DatabaseMetaData对象
-            String schema = conn.getSchema();
-            if (StringUtils.hasText(schema)) {
-                schemas.add(schema);
-            }
-        } catch (Exception e) {
-            log.error("获取数据库信息失败", e);
-        }
-        return schemas;
     }
 
     private boolean hasCreateUserPrivilege(Connection conn) {
@@ -124,28 +100,5 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
         }
 
         return true;
-    }
-
-    private void createSchemasIfAbsent(Connection conn, Set<String> schemas) {
-
-        for (String schemaName : schemas) {
-            try (
-                    PreparedStatement ps = conn.prepareStatement(
-                            "SELECT schema_name FROM information_schema.schemata WHERE schema_name = ?")
-            ) {
-                ps.setString(1, schemaName);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    log.info("PostgreSQL schema [{}] 已存在，无需创建。", schemaName);
-                } else {
-                    try (Statement stmt = conn.createStatement()) {
-                        stmt.executeUpdate("CREATE SCHEMA \"" + schemaName + "\"");
-                        log.info("已成功创建 PostgreSQL schema [{}]", schemaName);
-                    }
-                }
-            } catch (SQLException e) {
-                log.error("检查或创建 schema [{}] 时出错", schemaName, e);
-            }
-        }
     }
 }
