@@ -219,20 +219,30 @@ public class AutoTableBootstrap {
 
     private static void deleteUnregisterTables(Map<String, Set<String>> registerTableNameMap, IStrategy<?, ?> databaseStrategy) {
 
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+
         registerTableNameMap.forEach((schema, tableNames) -> {
-            List<String> allTableNames = databaseStrategy.listAllTables(schema);
+            List<String> allMatchTableNames = databaseStrategy.listAllTables(schema).stream()
+                    .filter(tableName -> {
+                        String[] autoDropTablePrefix = autoTableProperties.getAutoDropTablePrefix();
+                        if (autoDropTablePrefix.length > 0) {
+                            return Arrays.stream(autoDropTablePrefix).anyMatch(tableName::startsWith);
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
 
             // 剔除掉指定不删除的表
-            String[] autoDropTableIgnores = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTableIgnores();
+            String[] autoDropTableIgnores = autoTableProperties.getAutoDropTableIgnores();
             if (autoDropTableIgnores != null) {
-                allTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
+                allMatchTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
             }
 
             // 剔除掉声明过的表
-            allTableNames.removeAll(tableNames);
+            allMatchTableNames.removeAll(tableNames);
 
             // 删除剩余的表
-            allTableNames.forEach(tableName -> {
+            allMatchTableNames.forEach(tableName -> {
                 log.info("表{}{}没有声明，执行删除！", StringUtils.hasText(schema) ? schema + "." : "", tableName);
                 DataSourceManager.useConnection(connection -> {
                     String sql = databaseStrategy.dropTable(schema, tableName);

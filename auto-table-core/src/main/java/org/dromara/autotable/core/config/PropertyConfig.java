@@ -43,6 +43,10 @@ public class PropertyConfig {
      */
     private Boolean autoDropTable = false;
     /**
+     * 自动删除没有声明的表的过程中，指定匹配的表前缀。
+     */
+    private String[] autoDropTablePrefix = new String[]{};
+    /**
      * 自动删除没有声明的表的过程中，跳过指定的表，不做删除。
      */
     private String[] autoDropTableIgnores = new String[]{};
