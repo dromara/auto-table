@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.dromara.autotable</groupId>
         <artifactId>auto-table-test</artifactId>
-        <version>2.5.3</version>
+        <version>2.5.4</version>
     </parent>
 
     <name>auto-table-test-spring-boot-dynamicdatasource</name>
