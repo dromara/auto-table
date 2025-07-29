@@ -10,6 +10,7 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.dm.builder.DmCreateTableSqlBuilder;
 import org.dromara.autotable.strategy.dm.builder.DmModifyTableSqlBuilder;
 import org.dromara.autotable.strategy.dm.builder.DmTableMetadataBuilder;
@@ -19,7 +20,6 @@ import org.dromara.autotable.strategy.dm.data.dbdata.DmDbColumn;
 import org.dromara.autotable.strategy.dm.data.dbdata.DmDbIndex;
 import org.dromara.autotable.strategy.dm.data.dbdata.DmDbPrimary;
 import org.dromara.autotable.strategy.dm.mapper.DmTablesMapper;
-import org.dromara.autotable.core.utils.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -84,7 +84,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     @Override
     public String dropTable(String schema, String tableName) {
-        return String.format("DROP TABLE IF EXISTS \"%s\"", withSchemaName(schema, tableName));
+        return String.format("DROP TABLE IF EXISTS %s", withSchemaName(schema, tableName));
     }
 
     @Override
