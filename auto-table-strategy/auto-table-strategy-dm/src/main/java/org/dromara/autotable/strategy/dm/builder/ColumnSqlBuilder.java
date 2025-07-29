@@ -50,18 +50,6 @@ public class ColumnSqlBuilder {
         } else if ("CHAR".equals(typeName)) {
             return (length != null && length > 1) ? "CHAR(" + length + ")" : "CHAR";
         } else if ("INTEGER".equals(typeName)) {
-            // 根据指定长度选择合适的整数类型
-            if (length != null) {
-                if (length <= 2) {
-                    return "TINYINT";
-                } else if (length <= 4) {
-                    return "SMALLINT";
-                } else if (length <= 9) {
-                    return "INTEGER";
-                } else {
-                    return "BIGINT";
-                }
-            }
             return "INTEGER";
         } else {
             return buildDefaultType(type, typeEnum, length, decimal);
