@@ -1,6 +1,7 @@
 auto-table:
   enable: true
   auto-drop-column: true
+  auto-build-database: true
 
 spring:
   datasource:

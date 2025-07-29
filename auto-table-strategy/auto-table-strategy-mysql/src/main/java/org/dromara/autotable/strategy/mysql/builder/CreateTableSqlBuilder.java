@@ -2,6 +2,7 @@ package org.dromara.autotable.strategy.mysql.builder;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
@@ -84,8 +85,8 @@ public class CreateTableSqlBuilder {
                 .filter(StringUtils::hasText)
                 .collect(Collectors.joining(","));
 
-        return "CREATE TABLE `{tableName}` ({addItems}) {tableProperties};"
-                .replace("{tableName}", name)
+        return "CREATE TABLE {tableName} ({addItems}) {tableProperties};"
+                .replace("{tableName}", IStrategy.wrapIdentifiers(name))
                 .replace("{addItems}", addSql)
                 .replace("{tableProperties}", propertiesSql);
     }
@@ -117,15 +118,15 @@ public class CreateTableSqlBuilder {
 
     public static String getIndexSql(IndexMetadata indexMetadata) {
         // 例子： UNIQUE INDEX `unique_name_age`(`name` ASC, `age` DESC) COMMENT '姓名、年龄索引',
-        return StringConnectHelper.newInstance("{indexType} INDEX `{indexName}`({columns}) {method} {indexComment}")
+        return StringConnectHelper.newInstance("{indexType} INDEX {indexName}({columns}) {method} {indexComment}")
                 .replace("{indexType}", indexMetadata.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE" : "")
-                .replace("{indexName}", indexMetadata.getName())
+                .replace("{indexName}", IStrategy.wrapIdentifiers(indexMetadata.getName()))
                 .replace("{columns}", () -> {
                     List<IndexMetadata.IndexColumnParam> columnParams = indexMetadata.getColumns();
                     return columnParams.stream().map(column ->
                             // 例：`name` ASC
-                            "`{column}`{sortMode}"
-                                    .replace("{column}", column.getColumn())
+                            "{column}{sortMode}"
+                                    .replace("{column}", IStrategy.wrapIdentifiers(column.getColumn()))
                                     .replace("{sortMode}", column.getSort() != null ? (" " + column.getSort().name()) : "")
                     ).collect(Collectors.joining(","));
                 })
@@ -135,10 +136,7 @@ public class CreateTableSqlBuilder {
     }
 
     public static String getPrimaryKeySql(List<String> primaries) {
-        return "PRIMARY KEY (`{primaries}`)"
-                .replace(
-                        "{primaries}",
-                        String.join("`,`", primaries)
-                );
+        return "PRIMARY KEY ({primaries})"
+                .replace("{primaries}", IStrategy.customConcatWrapIdentifiers(",", primaries));
     }
 }

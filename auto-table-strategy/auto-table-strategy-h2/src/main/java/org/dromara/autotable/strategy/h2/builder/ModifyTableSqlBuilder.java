@@ -1,7 +1,7 @@
 package org.dromara.autotable.strategy.h2.builder;
 
 import org.dromara.autotable.core.strategy.ColumnMetadata;
-import org.dromara.autotable.strategy.h2.H2Strategy;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.strategy.h2.data.H2CompareTableInfo;
 import org.dromara.autotable.core.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class ModifyTableSqlBuilder {
         // 删除列
         List<String> dropColumnList = compareTableInfo.getDropColumnList();
         dropColumnList.stream()
-                .map(columnName -> "ALTER TABLE {tableName} DROP COLUMN " + columnName)
+                .map(columnName -> "ALTER TABLE {tableName} DROP COLUMN " + IStrategy.wrapIdentifiers(columnName))
                 .forEach(alterTableSqlList::add);
         // 新增列
         List<ColumnMetadata> newColumnList = compareTableInfo.getNewColumnMetadataList();
@@ -54,7 +54,10 @@ public class ModifyTableSqlBuilder {
         if (!newPrimaries.isEmpty()) {
             // 删除主键
             alterTableSqlList.add("ALTER TABLE {tableName} DROP PRIMARY KEY");
-            String primaryColumns = newPrimaries.stream().map(ColumnMetadata::getName).collect(Collectors.joining(", "));
+            String primaryColumns = newPrimaries.stream()
+                    .map(ColumnMetadata::getName)
+                    .map(IStrategy::wrapIdentifiers)
+                    .collect(Collectors.joining(", "));
             // 新增主键
             alterTableSqlList.add("ALTER TABLE {tableName} ADD PRIMARY KEY (" + primaryColumns + ")");
         }
@@ -65,7 +68,7 @@ public class ModifyTableSqlBuilder {
         /* 修改 索引 */
         // 删除索引
         List<String> dropIndexList = compareTableInfo.getDropIndexList();
-        List<String> dropIndexSql = dropIndexList.stream().map(indexName -> "DROP INDEX " + H2Strategy.withSchemaName(schema, indexName.toUpperCase()) + ";").collect(Collectors.toList());
+        List<String> dropIndexSql = dropIndexList.stream().map(indexName -> "DROP INDEX " + IStrategy.concatWrapIdentifiers(schema, indexName) + ";").collect(Collectors.toList());
         // 添加索引
         List<String> createIndexSql = CreateTableSqlBuilder.getCreateIndexSql(schema, tableName, compareTableInfo.getIndexMetadataList());
 
@@ -78,7 +81,7 @@ public class ModifyTableSqlBuilder {
         return sqlList.stream()
                 .filter(StringUtils::hasText)
                 .map(sql -> {
-                    sql = sql.replace("{tableName}", H2Strategy.withSchemaName(schema, tableName));
+                    sql = sql.replace("{tableName}", IStrategy.concatWrapIdentifiers(schema, tableName));
                     if (!sql.endsWith(";")) {
                         sql += ";";
                     }

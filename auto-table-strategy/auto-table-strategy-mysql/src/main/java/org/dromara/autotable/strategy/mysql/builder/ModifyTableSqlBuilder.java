@@ -1,6 +1,7 @@
 package org.dromara.autotable.strategy.mysql.builder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlCompareTableInfo;
@@ -81,8 +82,8 @@ public class ModifyTableSqlBuilder {
                 .filter(StringUtils::hasText)
                 .collect(Collectors.joining(","));
 
-        return "ALTER TABLE `{tableName}` {modifyItems};"
-                .replace("{tableName}", name)
+        return "ALTER TABLE {tableName} {modifyItems};"
+                .replace("{tableName}", IStrategy.wrapIdentifiers(name))
                 .replace("{modifyItems}", modifySql);
     }
 
@@ -95,15 +96,15 @@ public class ModifyTableSqlBuilder {
 
     private static String getDropIndexSql(List<String> dropIndexList) {
         return dropIndexList.stream()
-                .map(dropIndex -> "DROP INDEX `{indexName}`"
-                        .replace("{indexName}", dropIndex))
+                .map(dropIndex -> "DROP INDEX {indexName}"
+                        .replace("{indexName}", IStrategy.wrapIdentifiers(dropIndex)))
                 .collect(Collectors.joining(","));
     }
 
     private static String getDropColumnSql(List<String> dropColumnList) {
         return dropColumnList.stream()
-                .map(dropColumn -> "DROP COLUMN `{columnName}`"
-                        .replace("{columnName}", dropColumn)
+                .map(dropColumn -> "DROP COLUMN {columnName}"
+                        .replace("{columnName}", IStrategy.wrapIdentifiers(dropColumn))
                 ).collect(Collectors.joining(","));
     }
 

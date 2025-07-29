@@ -84,7 +84,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
     @Override
     public String dropTable(String schema, String tableName) {
         // 删除表，并同时删除外键
-        return String.format("DROP TABLE IF EXISTS %s CASCADE", withSchemaName(schema, tableName));
+        return String.format("DROP TABLE IF EXISTS %s CASCADE", concatWrapName(schema, tableName));
     }
 
     @Override
@@ -127,7 +127,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
         List<IndexMetadata> indexMetadataList = tableMetadata.getIndexMetadataList();
         for (IndexMetadata indexMetadata : indexMetadataList) {
             // 转大写，因为H2的索引元数据用的都是大写
-            String indexName = indexMetadata.getName().toUpperCase();
+            String indexName = indexMetadata.getName();
             String indexComment = indexMetadata.getComment();
             // 尝试从索引标记集合中删除索引
             List<InformationSchemaIndexes> dbIndex = dbIndexMap.remove(indexName);
@@ -171,7 +171,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
                 } else {
                     column += " ASC";
                 }
-                return column.toUpperCase();
+                return column;
             }).collect(Collectors.joining(","));
             String dbIndexColumnStr = dbIndex.stream().map(index -> index.getColumnName() + " " + index.getOrderingSpecification()).collect(Collectors.joining(","));
             // 索引字段或者顺序改变了
@@ -215,7 +215,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
 
         for (ColumnMetadata columnMetadata : columnMetadataList) {
-            String columnName = columnMetadata.getName().toUpperCase();
+            String columnName = columnMetadata.getName();
             InformationSchemaColumns schemaColumns = pgsqlFieldDetailMap.remove(columnName);
             // 新增字段
             String columnComment = columnMetadata.getComment();
@@ -385,16 +385,5 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
     @Override
     public List<String> modifyTable(H2CompareTableInfo compareTableInfo) {
         return ModifyTableSqlBuilder.buildSql(compareTableInfo);
-    }
-
-    public static String withSchemaName(String schema, String... names) {
-
-        String name = String.join(".", names);
-
-        if (StringUtils.hasText(schema)) {
-            return schema + "." + name;
-        }
-
-        return name;
     }
 }

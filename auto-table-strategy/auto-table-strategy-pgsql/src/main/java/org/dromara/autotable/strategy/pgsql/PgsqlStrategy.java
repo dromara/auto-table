@@ -94,7 +94,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
 
     @Override
     public String dropTable(String schema, String tableName) {
-        return String.format("DROP TABLE IF EXISTS %s", withSchemaName(schema, tableName));
+        return String.format("DROP TABLE IF EXISTS %s", concatWrapName(schema, tableName));
     }
 
     @Override
@@ -339,14 +339,5 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
     public List<String> modifyTable(PgsqlCompareTableInfo pgsqlCompareTableInfo) {
         String sql = ModifyTableSqlBuilder.buildSql(pgsqlCompareTableInfo);
         return Collections.singletonList(sql);
-    }
-
-    public static String withSchemaName(String schema, String name) {
-
-        if (StringUtils.hasText(schema)) {
-            return "\"" + schema + "\".\"" + name + "\"";
-        }
-
-        return "\"" + name + "\"";
     }
 }

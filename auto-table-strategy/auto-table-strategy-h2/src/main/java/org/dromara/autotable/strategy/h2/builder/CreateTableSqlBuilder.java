@@ -5,6 +5,7 @@ import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.strategy.h2.H2Strategy;
 import org.dromara.autotable.strategy.h2.data.H2TypeHelper;
@@ -67,15 +68,15 @@ public class CreateTableSqlBuilder {
         return indexMetadataList.stream()
                 .map(indexMetadata -> StringConnectHelper.newInstance("CREATE {indexType} INDEX {indexName} ON {tableName} {method} ({columns});")
                         .replace("{indexType}", indexMetadata.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE" : "")
-                        .replace("{indexName}", indexMetadata.getName())
-                        .replace("{tableName}", H2Strategy.withSchemaName(schema, tableName))
+                        .replace("{indexName}", IStrategy.wrapIdentifiers(indexMetadata.getName()))
+                        .replace("{tableName}", IStrategy.concatWrapIdentifiers(schema, tableName))
                         .replace("{method}", StringUtils.hasText(indexMetadata.getMethod()) ? "USING " + indexMetadata.getMethod() : "")
                         .replace("{columns}", () -> {
                             List<IndexMetadata.IndexColumnParam> columnParams = indexMetadata.getColumns();
                             return columnParams.stream().map(column ->
                                     // 例："name" ASC
                                     "{column} {sortMode}"
-                                            .replace("{column}", column.getColumn())
+                                            .replace("{column}", IStrategy.wrapIdentifiers(column.getColumn()))
                                             .replace("{sortMode}", column.getSort() != null ? column.getSort().name() : "")
                             ).collect(Collectors.joining(","));
                         })
@@ -103,7 +104,7 @@ public class CreateTableSqlBuilder {
         // 表备注
         if (tableComment != null) {
             String addTableComment = StringConnectHelper.newInstance("COMMENT ON TABLE {tableName} IS {comment};")
-                    .replace("{tableName}", H2Strategy.withSchemaName(schema, tableName))
+                    .replace("{tableName}", IStrategy.concatWrapIdentifiers(schema, tableName))
                     .replace("{comment}", tableComment.isEmpty() ? "null" : "'" + tableComment + "'")
                     .toString();
             commentSqlList.add(addTableComment);
@@ -113,7 +114,7 @@ public class CreateTableSqlBuilder {
         columnCommentMap.entrySet().stream()
                 .map(columnComment -> StringConnectHelper.newInstance("COMMENT ON COLUMN {name} IS {comment};")
                         // ⚠️列名称转大写，不然找不到
-                        .replace("{name}", H2Strategy.withSchemaName(schema, tableName, columnComment.getKey()))
+                        .replace("{name}", IStrategy.concatWrapIdentifiers(schema, tableName, columnComment.getKey()))
                         .replace("{comment}", () -> {
                             String value = columnComment.getValue();
                             return value == null || value.isEmpty() ? "null" : "'" + value + "'";
@@ -124,7 +125,7 @@ public class CreateTableSqlBuilder {
         // 索引备注
         indexCommentMap.entrySet().stream()
                 .map(indexComment -> StringConnectHelper.newInstance("COMMENT ON INDEX {name} IS {comment};")
-                        .replace("{name}", H2Strategy.withSchemaName(schema, indexComment.getKey()))
+                        .replace("{name}", IStrategy.concatWrapIdentifiers(schema, indexComment.getKey()))
                         .replace("{comment}", () -> {
                             String value = indexComment.getValue();
                             return value == null || value.isEmpty() ? "null" : "'" + value + "'";
@@ -173,7 +174,7 @@ public class CreateTableSqlBuilder {
                 .collect(Collectors.joining(","));
 
         return "CREATE TABLE {tableName} ({columnList});"
-                .replace("{tableName}", H2Strategy.withSchemaName(schema, name))
+                .replace("{tableName}", IStrategy.concatWrapIdentifiers(schema, name))
                 .replace("{columnList}", columnSql);
     }
 
@@ -188,7 +189,7 @@ public class CreateTableSqlBuilder {
         // 例子："name" varchar(100) NULL DEFAULT '张三' COMMENT '名称'
         // 例子："id" int4(32) NOT NULL AUTO_INCREMENT COMMENT '主键'
         return StringConnectHelper.newInstance("{columnName} {typeAndLength} {null} {default} {autoIncrement}")
-                .replace("{columnName}", columnMetadata.getName())
+                .replace("{columnName}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                 .replace("{typeAndLength}", columnMetadata.getType().getDefaultFullType())
                 .replace("{autoIncrement}", columnMetadata.isAutoIncrement() ? "auto_increment" : "")
                 .replace("{null}", columnMetadata.isNotNull() ? "NOT NULL" : "")
@@ -221,7 +222,7 @@ public class CreateTableSqlBuilder {
         return "PRIMARY KEY ({primaries})"
                 .replace(
                         "{primaries}",
-                        String.join(",", primaries)
+                        IStrategy.customConcatWrapIdentifiers(",", primaries)
                 );
     }
 }

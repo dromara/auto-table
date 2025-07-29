@@ -10,6 +10,7 @@ auto-table:
     version: 1.0.0
     # 自定义记录方式
     record-type: db
+  auto-build-database: true
 
 server:
   port: 9999

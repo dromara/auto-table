@@ -3,6 +3,7 @@ package org.dromara.autotable.strategy.dm.builder;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.dm.data.DmDefaultTypeEnum;
@@ -20,7 +21,7 @@ public class ColumnSqlBuilder {
     public static String buildSql(ColumnMetadata columnMetadata) {
         StringConnectHelper sql = StringConnectHelper.newInstance("{columnName} {type} {null} {default} " +
                         "{autoIncrement}")
-                .replace("{columnName}", wrapColumnName(columnMetadata.getName()))
+                .replace("{columnName}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                 .replace("{type}", buildTypeDefinition(columnMetadata.getType()))
                 .replace("{null}", columnMetadata.isNotNull() ? "NOT NULL" : "")
                 .replace("{default}", buildDefaultValue(columnMetadata))
@@ -160,7 +161,7 @@ public class ColumnSqlBuilder {
      * 处理保留字列名
      */
     public static String wrapColumnName(String columnName) {
-        return "\"" + columnName + "\"";
+        return IStrategy.wrapIdentifiers(columnName);
     }
 
     /**

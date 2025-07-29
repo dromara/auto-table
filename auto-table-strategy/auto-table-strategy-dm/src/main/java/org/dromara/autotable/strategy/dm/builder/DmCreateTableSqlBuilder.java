@@ -3,10 +3,10 @@ package org.dromara.autotable.strategy.dm.builder;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.strategy.dm.DmStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 /**
  * 达梦建表SQL生成器
+ *
  * @author freddy
  */
 public class DmCreateTableSqlBuilder {
@@ -52,11 +53,11 @@ public class DmCreateTableSqlBuilder {
 
         // 添加主键约束
         if (!primaries.isEmpty()) {
-            columns.add("PRIMARY KEY (\"" + String.join(", ", primaries) + "\")");
+            columns.add("PRIMARY KEY (" + IStrategy.customConcatWrapIdentifiers(", ", primaries) + ")");
         }
 
         return String.format("CREATE TABLE %s (\n  %s\n)",
-                DmStrategy.withSchemaName(metadata.getSchema(), metadata.getTableName()),
+                IStrategy.concatWrapIdentifiers(metadata.getSchema(), metadata.getTableName()),
                 String.join(",\n  ", columns));
     }
 
@@ -71,19 +72,12 @@ public class DmCreateTableSqlBuilder {
                 .replace("{unique}", index.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE " : "")
                 .replace("{indexName}", index.getName())
                 // 关键修改点：统一处理模式名和表名
-                .replace("{schemaTable}", buildSchemaTableName(schema, tableName))
+                .replace("{schemaTable}", IStrategy.concatWrapIdentifiers(schema, tableName))
                 .replace("{columns}", index.getColumns().stream()
-                        .map(col -> ColumnSqlBuilder.wrapColumnName(col.getColumn())
+                        .map(col -> IStrategy.wrapIdentifiers(col.getColumn())
                                 + (col.getSort() != null ? " " + col.getSort() : ""))
                         .collect(Collectors.joining(", ")))
                 .toString() + ";";
-    }
-
-    private static String buildSchemaTableName(String schema, String tableName) {
-        String wrappedTable = ColumnSqlBuilder.wrapColumnName(tableName);
-        return StringUtils.hasText(schema)
-                ? schema + "." + wrappedTable
-                : wrappedTable;
     }
 
     /**
@@ -94,7 +88,7 @@ public class DmCreateTableSqlBuilder {
      */
     private static List<String> buildCommentStatements(DefaultTableMetadata metadata) {
         List<String> comments = new ArrayList<>();
-        String qualifiedTableName = DmStrategy.withSchemaName(metadata.getSchema(), metadata.getTableName());
+        String qualifiedTableName = IStrategy.concatWrapIdentifiers(metadata.getSchema(), metadata.getTableName());
 
         // 表注释
         if (StringUtils.hasText(metadata.getComment())) {
@@ -105,8 +99,9 @@ public class DmCreateTableSqlBuilder {
         // 列注释
         for (ColumnMetadata column : metadata.getColumnMetadataList()) {
             if (StringUtils.hasText(column.getComment())) {
-                comments.add("COMMENT ON COLUMN " + qualifiedTableName + ".\"" + column.getName()
-                        + "\" IS '" + column.getComment().replace("'", "''") + "';");
+                comments.add("COMMENT ON COLUMN " + qualifiedTableName +
+                        "." + IStrategy.wrapIdentifiers(column.getName()) + " IS '"
+                        + column.getComment().replace("'", "''") + "';");
             }
         }
 

@@ -4,6 +4,7 @@ import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
 
@@ -23,8 +24,8 @@ public class ColumnSqlBuilder {
     public static String buildSql(ColumnMetadata columnMetadata) {
         // 例子："name" varchar(100) NULL DEFAULT '张三' COMMENT '名称'
         // 例子："id" int4(32) NOT NULL AUTO_INCREMENT COMMENT '主键'
-        StringConnectHelper sql = StringConnectHelper.newInstance("\"{columnName}\" {typeAndLength} {null} {default}")
-                .replace("{columnName}", columnMetadata.getName())
+        StringConnectHelper sql = StringConnectHelper.newInstance("{columnName} {typeAndLength} {null} {default}")
+                .replace("{columnName}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                 .replace("{typeAndLength}", () -> columnMetadata.getType().getDefaultFullType());
 
         // 如果是自增列，则使用GENERATED ALWAYS AS IDENTITY, 忽略not null和默认值的配置

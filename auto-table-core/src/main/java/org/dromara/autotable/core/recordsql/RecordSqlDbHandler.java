@@ -46,14 +46,14 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
 
                     // 从线程上下文获取数据库策略
                     IStrategy<?, ?> createTableStrategy = IStrategy.getCurrentStrategy();
-
+                    String schemaTableName = createTableStrategy.concatWrapName(schema, finalTableName);
                     if (createTableStrategy.checkTableNotExist(schema, finalTableName)) {
                         // 初始化表
-                        initTable(createTableStrategy, connection, finalTableName);
-                        log.info("初始化sql记录表：{}", finalTableName);
+                        initTable(createTableStrategy, connection, schema, finalTableName);
+                        log.info("初始化sql记录表：{}", schemaTableName);
                     }
                     // 插入数据
-                    insertLog(finalTableName, autoTableExecuteSqlLog, connection);
+                    insertLog(schemaTableName, autoTableExecuteSqlLog, connection);
                 }
                 log.debug("提交sql记录事务");
                 connection.commit();
@@ -61,36 +61,6 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
                 throw new RuntimeException("记录sql到数据库出错", e);
             }
         });
-        // try (SqlSession sqlSession = sqlSessionFactory.openSession();
-        //      Connection connection = sqlSession.getConnection()) {
-        //     log.debug("开启sql记录事务");
-        //     connection.setAutoCommit(false);
-        //
-        //     try {
-        //         for (AutoTableExecuteSqlLog autoTableExecuteSqlLog : autoTableExecuteSqlLogs) {
-        //             String schema = connection.getSchema();
-        //             if (StringUtils.hasText(autoTableExecuteSqlLog.getTableSchema())) {
-        //                 schema = autoTableExecuteSqlLog.getTableSchema();
-        //             }
-        //             boolean exists = Utils.tableIsExists(connection, schema, tableName, new String[]{"TABLE"}, true);
-        //             if (!exists) {
-        //                 // 初始化表
-        //                 initTable(connection, tableName);
-        //                 log.info("初始化sql记录表：{}", tableName);
-        //             }
-        //             // 插入数据
-        //             insertLog(tableName, autoTableExecuteSqlLog, connection);
-        //         }
-        //     } catch (Exception e) {
-        //         throw new RuntimeException("记录sql到数据库出错", e);
-        //     }
-        //     log.debug("提交sql记录事务");
-        //     connection.commit();
-        // } catch (SQLException e) {
-        //     throw new RuntimeException(e);
-        // } finally {
-        //     log.debug("关闭sql记录事务");
-        // }
     }
 
     private static void insertLog(String tableName, AutoTableExecuteSqlLog autoTableExecuteSqlLog, Connection connection) throws SQLException {
@@ -103,6 +73,7 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         // 根据统一的风格定义列名
         List<String> columns = columnFields.stream()
                 .map(field -> TableMetadataHandler.getColumnName(sqlLogClass, field))
+                .map(IStrategy::wrapIdentifiers)
                 .collect(Collectors.toList());
         // 获取每一列的值
         List<Object> values = columnFields.stream().map(field -> {
@@ -127,16 +98,21 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
         preparedStatement.executeUpdate();
     }
 
-    private static void initTable(IStrategy<?, ?> createTableStrategy, Connection connection, String customTableName) throws SQLException {
+    private static void initTable(IStrategy<?, ?> createTableStrategy, Connection connection, String schema, String customTableName) throws SQLException {
 
         // 使用相应的策略创建数据库表
         List<String> initTableSql = createTableStrategy.createTable(AutoTableExecuteSqlLog.class, tableMetadata -> {
             if (!Objects.equals(customTableName, tableMetadata.getTableName())) {
-                // 自定义SQL记录表的名称
+
                 try {
+                    // 自定义SQL记录表的名称
                     Field tableNameField = BeanClassUtil.getField(tableMetadata.getClass(), TableMetadata.tableNameFieldName);
                     tableNameField.setAccessible(true);
                     tableNameField.set(tableMetadata, customTableName);
+                    // 自定义schema
+                    Field schemaField = BeanClassUtil.getField(tableMetadata.getClass(), TableMetadata.schemaFieldName);
+                    schemaField.setAccessible(true);
+                    schemaField.set(tableMetadata, schema);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
@@ -144,12 +120,15 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
             return tableMetadata;
         });
 
+
         try (Statement statement = connection.createStatement()) {
             for (String sql : initTableSql) {
+                log.debug("执行sql：{}", sql);
                 statement.execute(sql);
             }
         } catch (SQLException e) {
             throw new RuntimeException("初始化sql记录表失败", e);
         }
+
     }
 }

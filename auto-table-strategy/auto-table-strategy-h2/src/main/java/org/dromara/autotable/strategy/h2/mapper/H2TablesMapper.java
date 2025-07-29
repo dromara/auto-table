@@ -24,10 +24,10 @@ public class H2TablesMapper {
      * @param tableName   表名
      * @return InformationSchemaTables
      */
-    // @Select("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = UPPER(#{tableSchema}) and TABLE_NAME = UPPER(#{tableName});")
+    // @Select("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = (#{tableSchema}) and TABLE_NAME = (#{tableName});")
     public InformationSchemaTables findTableInformation(String tableSchema, String tableName) {
 
-        String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = UPPER(':tableSchema') and TABLE_NAME = UPPER(':tableName');";
+        String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = (':tableSchema') and TABLE_NAME = (':tableName');";
 
         return DataSourceManager.useConnection(connection -> {
             return DBHelper.queryObject(connection, sql, new HashMap<String, Object>() {{
@@ -44,10 +44,10 @@ public class H2TablesMapper {
      * @param tableName   表名
      * @return 表的字段结构等信息
      */
-    // @Select("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = UPPER(#{tableSchema}) and TABLE_NAME = UPPER(#{tableName});")
+    // @Select("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = (#{tableSchema}) and TABLE_NAME = (#{tableName});")
     public List<InformationSchemaColumns> findColumnInformation(String tableSchema, String tableName) {
 
-        String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = UPPER(':tableSchema') and TABLE_NAME = UPPER(':tableName');";
+        String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = (':tableSchema') and TABLE_NAME = (':tableName');";
 
         return DataSourceManager.useConnection(connection -> {
             return DBHelper.queryObjectList(connection, sql, new HashMap<String, Object>() {{
@@ -66,12 +66,12 @@ public class H2TablesMapper {
      */
     // @Select("SELECT IC.*, I.REMARKS FROM INFORMATION_SCHEMA.INDEX_COLUMNS IC " +
     //         "LEFT JOIN INFORMATION_SCHEMA.INDEXES I ON I.INDEX_NAME = IC.INDEX_NAME AND IC.TABLE_SCHEMA = I.TABLE_SCHEMA AND IC.TABLE_NAME = I.TABLE_NAME " +
-    //         "WHERE IC.TABLE_SCHEMA = UPPER(#{tableSchema}) AND IC.TABLE_NAME = UPPER(#{tableName}) AND I.INDEX_TYPE_NAME != 'PRIMARY KEY';")
+    //         "WHERE IC.TABLE_SCHEMA = (#{tableSchema}) AND IC.TABLE_NAME = (#{tableName}) AND I.INDEX_TYPE_NAME != 'PRIMARY KEY';")
     public List<InformationSchemaIndexes> findIndexInformation(String tableSchema, String tableName) {
 
         String sql = "SELECT IC.*, I.REMARKS FROM INFORMATION_SCHEMA.INDEX_COLUMNS IC " +
                 "LEFT JOIN INFORMATION_SCHEMA.INDEXES I ON I.INDEX_NAME = IC.INDEX_NAME AND IC.TABLE_SCHEMA = I.TABLE_SCHEMA AND IC.TABLE_NAME = I.TABLE_NAME " +
-                "WHERE IC.TABLE_SCHEMA = UPPER(':tableSchema') AND IC.TABLE_NAME = UPPER(':tableName') AND I.INDEX_TYPE_NAME != 'PRIMARY KEY';";
+                "WHERE IC.TABLE_SCHEMA = (':tableSchema') AND IC.TABLE_NAME = (':tableName') AND I.INDEX_TYPE_NAME != 'PRIMARY KEY';";
 
         return DataSourceManager.useConnection(connection -> {
             return DBHelper.queryObjectList(connection, sql, new HashMap<String, Object>() {{

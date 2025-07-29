@@ -5,7 +5,8 @@ package org.dromara.autotable.strategy.dm.builder;
  * @date: 2025/2/25 23:06
  */
 
-import org.dromara.autotable.strategy.dm.DmStrategy;
+import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.strategy.dm.data.DmCompareTableInfo;
 import org.dromara.autotable.core.utils.StringUtils;
 
@@ -20,16 +21,16 @@ public class DmModifyTableSqlBuilder {
 
     public static List<String> buildSql(DmCompareTableInfo compareInfo) {
         List<String> sqlList = new ArrayList<>();
-        String qualifiedTableName = DmStrategy.withSchemaName(compareInfo.getSchema(), compareInfo.getName());
+        String qualifiedTableName = IStrategy.concatWrapIdentifiers(compareInfo.getSchema(), compareInfo.getName());
 
         // 1. 删除旧索引（独立语句）
         compareInfo.getDropIndexList().forEach(index ->
-                sqlList.add("DROP INDEX " + DmStrategy.withSchemaName(compareInfo.getSchema(), index) + ";")
+                sqlList.add("DROP INDEX " + IStrategy.concatWrapIdentifiers(compareInfo.getSchema(), index) + ";")
         );
         // 2. 字段修改
         compareInfo.getModifyColumnMetadataList().forEach(column -> {
             String columnDef = ColumnSqlBuilder.buildSql(column)
-                    .replaceFirst("\"\\w+\"", "\"" + column.getName() + "\"");
+                    .replaceFirst("\"\\w+\"", IStrategy.wrapIdentifiers(column.getName()));
             if (StringUtils.hasText(columnDef)) { // 增加有效性校验
                 sqlList.add("ALTER TABLE " + qualifiedTableName + " MODIFY " + columnDef + ";");
             }
@@ -39,13 +40,13 @@ public class DmModifyTableSqlBuilder {
         // 删除主键
         if (StringUtils.hasText(compareInfo.getDropPrimaryKeyName())) {
             sqlList.add("ALTER TABLE " + qualifiedTableName
-                    + " DROP CONSTRAINT \"" + compareInfo.getDropPrimaryKeyName() + "\";");
+                    + " DROP CONSTRAINT " + IStrategy.wrapIdentifiers(compareInfo.getDropPrimaryKeyName()) + ";");
         }
 
         // 删除列（每个列独立）
         compareInfo.getDropColumnList().forEach(column ->
                 sqlList.add("ALTER TABLE " + qualifiedTableName
-                        + " DROP COLUMN \"" + column + "\";")
+                        + " DROP COLUMN " + IStrategy.wrapIdentifiers(column) + ";")
         );
 
         // 新增列（每个列独立）
@@ -57,7 +58,8 @@ public class DmModifyTableSqlBuilder {
         // 添加主键（独立语句）
         if (!compareInfo.getNewPrimaries().isEmpty()) {
             String pkColumns = compareInfo.getNewPrimaries().stream()
-                    .map(col -> "\"" + col.getName() + "\"")
+                    .map(ColumnMetadata::getName)
+                    .map(IStrategy::wrapIdentifiers)
                     .collect(Collectors.joining(", "));
             String pkStatement = "ADD PRIMARY KEY (" + pkColumns + ")";
             sqlList.add("ALTER TABLE " + qualifiedTableName + " " + pkStatement + ";");
@@ -86,7 +88,7 @@ public class DmModifyTableSqlBuilder {
 
     private static List<String> buildCommentStatements(DmCompareTableInfo compareInfo) {
         List<String> comments = new ArrayList<>();
-        String qualifiedTableName = DmStrategy.withSchemaName(compareInfo.getSchema(), compareInfo.getName());
+        String qualifiedTableName = IStrategy.concatWrapIdentifiers(compareInfo.getSchema(), compareInfo.getName());
 
         // 表注释
         if (StringUtils.hasText(compareInfo.getComment())) {
@@ -96,8 +98,8 @@ public class DmModifyTableSqlBuilder {
 
         // 列注释（每个列独立）
         compareInfo.getColumnComment().forEach((col, comment) -> {
-            comments.add("COMMENT ON COLUMN " + qualifiedTableName + ".\"" + col
-                    + "\" IS '" + comment.replace("'", "''") + "';");
+            comments.add("COMMENT ON COLUMN " + qualifiedTableName + "." + IStrategy.wrapIdentifiers(col)
+                    + " IS '" + comment.replace("'", "''") + "';");
         });
 
         return comments;

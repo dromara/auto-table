@@ -23,6 +23,8 @@ public class ApplicationAllTest {
 
         // 配置信息
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        // 开启自动创建数据库
+        autoTableProperties.setAutoBuildDatabase(true);
         // create模式
         autoTableProperties.setMode(RunMode.create);
         // 开启 删除不存在的列
@@ -91,10 +93,24 @@ public class ApplicationAllTest {
         AutoTableBootstrap.start();
     }
 
+    private void testRecordSqlByDB() {
+
+        // 记录sql
+        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
+        recordSqlProperties.setEnable(true);
+        recordSqlProperties.setVersion(Version.VALUE);
+        // 以数据库的方式记录sql
+        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
+        recordSqlProperties.setTableName("my_record_sql");
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
+    }
+
     @Test
     public void testMysqlCreateAndUpdate() {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        testRecordSqlByDB();
 
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
@@ -215,18 +231,6 @@ public class ApplicationAllTest {
         });
         // 开始
         AutoTableBootstrap.start();
-    }
-
-    private void testRecordSqlByDB() {
-
-        // 记录sql
-        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
-        recordSqlProperties.setEnable(true);
-        recordSqlProperties.setVersion(Version.VALUE);
-        // 以数据库的方式记录sql
-        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
-        recordSqlProperties.setTableName("my_record_sql");
-        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
     }
 
     private void initSqlSessionFactory(String resource) {

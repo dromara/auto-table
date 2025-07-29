@@ -60,6 +60,11 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
     }
 
     @Override
+    public String identifier() {
+        return "`";
+    }
+
+    @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
             put(String.class, MySqlDefaultTypeEnum.VARCHAR);

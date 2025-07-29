@@ -140,7 +140,7 @@ public class H2CompareTableInfo extends CompareTableInfo {
     public void addModifyIndex(IndexMetadata indexMetadata) {
         this.dropIndexList.add(indexMetadata.getName());
         this.indexMetadataList.add(indexMetadata);
-        this.addIndexComment(indexMetadata.getName().toUpperCase(), indexMetadata.getComment());
+        this.addIndexComment(indexMetadata.getName(), indexMetadata.getComment());
     }
 
     public void addIndexComment(@NonNull String indexName, @NonNull String newComment) {

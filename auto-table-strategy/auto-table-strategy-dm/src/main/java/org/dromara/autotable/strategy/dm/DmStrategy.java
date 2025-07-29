@@ -10,7 +10,6 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
-import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.dm.builder.DmCreateTableSqlBuilder;
 import org.dromara.autotable.strategy.dm.builder.DmModifyTableSqlBuilder;
 import org.dromara.autotable.strategy.dm.builder.DmTableMetadataBuilder;
@@ -37,11 +36,6 @@ import java.util.stream.Collectors;
 public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTableInfo> {
 
     private final DmTablesMapper mapper = new DmTablesMapper();
-
-    public static String withSchemaName(String schema, String... names) {
-        String name = String.join(".", names);
-        return StringUtils.hasText(schema) ? "\"" + schema + "\"" + "." + "\"" + name + "\"" : "\"" + name + "\"";
-    }
 
     @Override
     public String databaseDialect() {
@@ -84,7 +78,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     @Override
     public String dropTable(String schema, String tableName) {
-        return String.format("DROP TABLE IF EXISTS %s", withSchemaName(schema, tableName));
+        return String.format("DROP TABLE IF EXISTS %s", concatWrapName(schema, tableName));
     }
 
     @Override

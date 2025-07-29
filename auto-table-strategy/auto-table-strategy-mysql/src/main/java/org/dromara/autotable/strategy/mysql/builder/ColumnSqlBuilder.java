@@ -2,6 +2,7 @@ package org.dromara.autotable.strategy.mysql.builder;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTypeHelper;
 import org.dromara.autotable.core.utils.StringConnectHelper;
@@ -22,8 +23,8 @@ public class ColumnSqlBuilder {
     public static String buildSql(MysqlColumnMetadata columnMetadata) {
         // 例子：`name` varchar(100) NULL DEFAULT '张三' COMMENT '名称'
         // 例子：`id` int(32) NOT NULL AUTO_INCREMENT COMMENT '主键'
-        return StringConnectHelper.newInstance("`{columnName}` {typeAndLength} {qualifier} {character} {collate} {null} {default} {autoIncrement} {columnComment} {position}")
-                .replace("{columnName}", columnMetadata.getName())
+        return StringConnectHelper.newInstance("{columnName} {typeAndLength} {qualifier} {character} {collate} {null} {default} {autoIncrement} {columnComment} {position}")
+                .replace("{columnName}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                 .replace("{typeAndLength}", MysqlTypeHelper.getFullType(columnMetadata.getType()))
                 // 添加二进制、无符号、补零 等修饰符
                 .replace("{qualifier}", () -> {
@@ -73,7 +74,7 @@ public class ColumnSqlBuilder {
                 .replace("{columnComment}", StringUtils.hasText(columnMetadata.getComment()) ? "COMMENT '" + columnMetadata.getComment() + "'" : "")
                 .replace("{position}", () -> {
                     if (StringUtils.hasText(columnMetadata.getNewPreColumn())) {
-                        return "AFTER `" + columnMetadata.getNewPreColumn() + "`";
+                        return "AFTER " + IStrategy.wrapIdentifiers(columnMetadata.getNewPreColumn());
                     }
                     if ("".equals(columnMetadata.getNewPreColumn())) {
                         return "FIRST";

@@ -13,17 +13,16 @@ import org.dromara.autotable.core.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author don
@@ -67,6 +66,39 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     }
 
     /**
+     * 使用数据库标识符包裹名称并根据指定连字符链接
+     *
+     * @param hyphen 连字符
+     * @param names  名称
+     */
+    static String customConcatWrapIdentifiers(String hyphen, Collection<String> names) {
+        return names.stream()
+                .filter(StringUtils::hasText)
+                .map(IStrategy::wrapIdentifiers)
+                .collect(Collectors.joining(hyphen));
+    }
+
+    /**
+     * 使用数据库标识符包裹名称
+     *
+     * @param name 名称
+     * @return 带有标识符的名称
+     */
+    static String wrapIdentifiers(String name) {
+        return IStrategy.getCurrentStrategy().wrapIdentifier(name);
+    }
+
+    /**
+     * 获取数据库标识符包裹后的名称
+     *
+     * @param names 名称
+     * @return 带有schema前缀后的名称
+     */
+    static String concatWrapIdentifiers(String... names) {
+        return IStrategy.getCurrentStrategy().concatWrapName(names);
+    }
+
+    /**
      * sql包装，如果sql以分号结尾，则不添加分号，否则添加分号
      *
      * @param rawSql 原始sql
@@ -78,6 +110,45 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
             return trimmed + ";";
         }
         return trimmed;
+    }
+
+    /**
+     * 数据库标识符引号
+     * <p>MySQL 反引号 `
+     * <p>PostgreSQL 双引号 "
+     * <p>SQL Server 方括号 [ 和 ]
+     * <p>Oracle 双引号 "
+     * <p>SQLite 支持 "、\``、[]`
+     */
+    default String identifier() {
+        return "\"";
+    }
+
+    /**
+     * 使用数据库标识符包裹名称
+     *
+     * @param name 名称
+     * @return 带有标识符的名称
+     */
+    default String wrapIdentifier(String name) {
+        String identifier = identifier();
+        if (!name.startsWith(identifier) || !name.endsWith(identifier)) {
+            return identifier + name + identifier;
+        }
+        return name;
+    }
+
+    /**
+     * 链接schema、表、索引 等名称，并使用数据库标识符包裹
+     *
+     * @param names 名称（表名或者索引名）
+     */
+    default String concatWrapName(String... names) {
+
+        return Arrays.stream(names)
+                .filter(StringUtils::hasText)
+                .map(this::wrapIdentifier)
+                .collect(Collectors.joining("."));
     }
 
     /**
@@ -274,7 +345,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                         log.info("执行sql({}ms)：{}", executionEndTime - executionTime, sql);
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(String.format("执行SQL期间出错: \n%s\n", String.join("\n", sqlList)), e);
+                    throw new RuntimeException(String.format("执行SQL期间出错: \n%s\n", java.lang.String.join("\n", sqlList)), e);
                 }
                 // 提交
                 connection.commit();

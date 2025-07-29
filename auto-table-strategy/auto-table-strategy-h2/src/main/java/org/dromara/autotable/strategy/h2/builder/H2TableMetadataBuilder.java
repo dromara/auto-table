@@ -20,13 +20,6 @@ public class H2TableMetadataBuilder extends DefaultTableMetadataBuilder {
         super(new ColumnMetadataBuilder(DatabaseDialect.H2), new IndexMetadataBuilder());
     }
 
-    // @Override
-    // protected String getTableName(Class<?> clazz) {
-    //     String tableName = super.getTableName(clazz);
-    //     // 强调：必须大写
-    //     return tableName.toUpperCase();
-    // }
-
     @Override
     protected String getTableSchema(Class<?> clazz) {
         String tableSchema = super.getTableSchema(clazz);
