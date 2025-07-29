@@ -3,9 +3,9 @@ package org.dromara.autotable.strategy.dm.builder;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
-import org.dromara.autotable.strategy.dm.data.DmDefaultTypeEnum;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
+import org.dromara.autotable.strategy.dm.data.DmDefaultTypeEnum;
 
 import java.util.Arrays;
 
@@ -36,7 +36,6 @@ public class ColumnSqlBuilder {
         String typeName = type.getType().toUpperCase();
         Integer length = type.getLength();
         Integer decimal = type.getDecimalLength();
-
         // 优先使用枚举中定义的默认值
         DmDefaultTypeEnum typeEnum = Arrays.stream(DmDefaultTypeEnum.values())
                 .filter(e -> e.getTypeName().equalsIgnoreCase(typeName))
@@ -50,8 +49,22 @@ public class ColumnSqlBuilder {
             return String.format("VARCHAR2(%d)", actualLength);
         } else if ("CHAR".equals(typeName)) {
             return (length != null && length > 1) ? "CHAR(" + length + ")" : "CHAR";
+        } else if ("INTEGER".equals(typeName)) {
+            // 根据指定长度选择合适的整数类型
+            if (length != null) {
+                if (length <= 2) {
+                    return "TINYINT";
+                } else if (length <= 4) {
+                    return "SMALLINT";
+                } else if (length <= 9) {
+                    return "INTEGER";
+                } else {
+                    return "BIGINT";
+                }
+            }
+            return "INTEGER";
         } else {
-            return buildDefaultType(typeEnum, length, decimal);
+            return buildDefaultType(type, typeEnum, length, decimal);
         }
     }
 
@@ -62,7 +75,7 @@ public class ColumnSqlBuilder {
         return DmDefaultTypeEnum.convertNumberType(precision, scale);
     }
 
-    private static String buildDefaultType(DmDefaultTypeEnum typeEnum,
+    private static String buildDefaultType(DatabaseTypeAndLength type, DmDefaultTypeEnum typeEnum,
                                            Integer length, Integer decimal) {
         if (typeEnum == DmDefaultTypeEnum.FLOAT || typeEnum == DmDefaultTypeEnum.DOUBLE) {
             int actualLength = (length != null) ? length : typeEnum.getDefaultLength();
@@ -72,7 +85,7 @@ public class ColumnSqlBuilder {
             int actualDecimal = (decimal != null) ? decimal : typeEnum.getDefaultDecimalLength();
             return String.format("%s(%d,%d)", typeEnum.getTypeName(), actualLength, actualDecimal);
         } else {
-            return typeEnum.getTypeName();
+            return type.getDefaultFullType();
         }
     }
 

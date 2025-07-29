@@ -4,9 +4,9 @@ import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IndexMetadata;
-import org.dromara.autotable.strategy.dm.DmStrategy;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
+import org.dromara.autotable.strategy.dm.DmStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,11 @@ public class DmCreateTableSqlBuilder {
         // 构建索引语句
         List<String> indexSql = buildIndexStatements(schema, tableName, tableMetadata.getIndexMetadataList());
         indexSql.add(0, createTableSql);
+
+        // 构建注释语句
+        List<String> commentSql = buildCommentStatements(tableMetadata);
+        indexSql.addAll(commentSql);
+
         return indexSql;
     }
 
@@ -81,5 +86,30 @@ public class DmCreateTableSqlBuilder {
                 : wrappedTable;
     }
 
+    /**
+     * 构建注释语句
+     *
+     * @param metadata 表元数据
+     * @return 注释语句列表
+     */
+    private static List<String> buildCommentStatements(DefaultTableMetadata metadata) {
+        List<String> comments = new ArrayList<>();
+        String qualifiedTableName = DmStrategy.withSchemaName(metadata.getSchema(), metadata.getTableName());
 
+        // 表注释
+        if (StringUtils.hasText(metadata.getComment())) {
+            comments.add("COMMENT ON TABLE " + qualifiedTableName
+                    + " IS '" + metadata.getComment().replace("'", "''") + "';");
+        }
+
+        // 列注释
+        for (ColumnMetadata column : metadata.getColumnMetadataList()) {
+            if (StringUtils.hasText(column.getComment())) {
+                comments.add("COMMENT ON COLUMN " + qualifiedTableName + ".\"" + column.getName()
+                        + "\" IS '" + column.getComment().replace("'", "''") + "';");
+            }
+        }
+
+        return comments;
+    }
 }
