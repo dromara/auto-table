@@ -1,0 +1,1 @@
+INSERT INTO `auto_table`.`sys_user` (`id`, `phone`, `age`) VALUES (1, '13111864111', 18)

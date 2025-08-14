@@ -1,7 +1,14 @@
+server:
+  port: 9999
+
 auto-table:
   enable: true
-  auto-drop-column: true
   mode: create
+  auto-drop-column: true
+  auto-build-database: true
+  init-data:
+    enable: true
+    base-path: classpath:sql
   record-sql:
     # 开启SQL记录
     enable: true
@@ -9,8 +16,6 @@ auto-table:
     version: 1.0.0
     # 记录到文件
     record-type: custom
-server:
-  port: 9999
 
 solon.dataSources:
   "db_order!": #数据源（!结尾表示 typed=true）
