@@ -118,6 +118,7 @@ export default defineConfig({
                         {text: '自定义类型映射', link: '/葵花宝典/自定义类型映射'},
                         {text: '没有创建表', link: '/葵花宝典/没有创建表'},
                         {text: '集成springdoc', link: '/葵花宝典/集成springdoc.md'},
+                        {text: '自定义sql记录数据源', link: '/葵花宝典/自定义sql记录数据源.md'},
                     ]
                 },
             ],
