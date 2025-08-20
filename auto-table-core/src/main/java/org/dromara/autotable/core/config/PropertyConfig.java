@@ -151,6 +151,11 @@ public class PropertyConfig {
          */
         private String folderPath;
 
+        /**
+         * 默认记录方式，默认为db
+         */
+        private Datasource datasource;
+
         public static enum TypeEnum {
             /**
              * 记录到数据库
@@ -165,6 +170,14 @@ public class PropertyConfig {
              */
             custom
         }
+    }
+
+    @Data
+    public static class Datasource {
+        private String url;
+        private String username;
+        private String password;
+        private String driverClassName;
     }
 
     public enum SuperInsertPosition {

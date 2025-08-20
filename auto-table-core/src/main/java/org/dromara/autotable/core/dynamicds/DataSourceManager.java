@@ -6,6 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -22,7 +26,7 @@ public class DataSourceManager {
     /**
      * 当前数据源
      */
-    private static final ThreadLocal<DataSource> DATA_SOURCE_THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<Deque<DataSource>> DATA_SOURCE_THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
 
     public static <R> R useConnection(Function<Connection, R> function) {
         DataSource dataSource = getDataSource();
@@ -43,11 +47,12 @@ public class DataSourceManager {
     }
 
     public static void setDataSource(@NonNull DataSource dataSource) {
-        DataSourceManager.DATA_SOURCE_THREAD_LOCAL.set(dataSource);
+        log.debug("DSM添加数据源");
+        DataSourceManager.DATA_SOURCE_THREAD_LOCAL.get().push(dataSource);
     }
 
     public static DataSource getDataSource() {
-        DataSource dataSource = DATA_SOURCE_THREAD_LOCAL.get();
+        DataSource dataSource = DATA_SOURCE_THREAD_LOCAL.get().peek();
         if (dataSource == null) {
             throw new RuntimeException("当前数据源下，未找到对应的SqlSessionFactory");
         }
@@ -55,7 +60,8 @@ public class DataSourceManager {
     }
 
     public static void cleanDataSource() {
-        DATA_SOURCE_THREAD_LOCAL.remove();
+        log.debug("DSM清除数据源");
+        DATA_SOURCE_THREAD_LOCAL.get().pop();
     }
 
     public static void setDatasourceName(@NonNull String datasourceName) {
