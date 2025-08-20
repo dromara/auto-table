@@ -2,6 +2,7 @@ package org.dromara.autotable.core.dynamicds;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.autotable.core.utils.StringUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -65,7 +66,9 @@ public class DataSourceManager {
     }
 
     public static void setDatasourceName(@NonNull String datasourceName) {
-        DATASOURCE_NAME_THREAD_LOCAL.set(datasourceName);
+        if(StringUtils.hasText(datasourceName)) {
+            DATASOURCE_NAME_THREAD_LOCAL.set(datasourceName);
+        }
     }
 
     public static String getDatasourceName() {
