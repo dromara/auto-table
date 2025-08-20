@@ -34,16 +34,10 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
     @Override
     public void record(List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs) {
 
-        PropertyConfig.RecordSqlProperties recordSqlConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql();
-
         // 优先使用自定义的表名，没有则根据统一的风格定义表名
-        String tableName;
-        if (StringUtils.hasText(recordSqlConfig.getTableName())) {
-            tableName = recordSqlConfig.getTableName();
-        } else {
-            tableName = TableMetadataHandler.getTableName(AutoTableExecuteSqlLog.class);
-        }
+        String tableName = getRecordSqlTableName();
 
+        PropertyConfig.RecordSqlProperties recordSqlConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql();
         // 从线程上下文获取数据库策略
         PropertyConfig.Datasource datasource = recordSqlConfig.getDatasource();
         // 指定了数据源的情况下
@@ -71,6 +65,17 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
                 executeInsertSql(createTableStrategy, autoTableExecuteSqlLogs, connection, tableName);
             });
         }
+    }
+
+    public static String getRecordSqlTableName() {
+        PropertyConfig.RecordSqlProperties recordSqlConfig = AutoTableGlobalConfig.instance().getAutoTableProperties().getRecordSql();
+        String tableName;
+        if (StringUtils.hasText(recordSqlConfig.getTableName())) {
+            tableName = recordSqlConfig.getTableName();
+        } else {
+            tableName = TableMetadataHandler.getTableName(AutoTableExecuteSqlLog.class);
+        }
+        return tableName;
     }
 
     private static void executeInsertSql(IStrategy<?, ?> createTableStrategy, List<AutoTableExecuteSqlLog> autoTableExecuteSqlLogs, Connection connection, String finalTableName) {

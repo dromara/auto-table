@@ -6,6 +6,7 @@ import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.initdata.InitDataHandler;
+import org.dromara.autotable.core.recordsql.RecordSqlDbHandler;
 import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
@@ -237,6 +238,10 @@ public class AutoTableBootstrap {
             if (autoDropTableIgnores != null) {
                 allMatchTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
             }
+
+            // 剔除掉sql记录表
+            String recordSqlTableName = RecordSqlDbHandler.getRecordSqlTableName();
+            allMatchTableNames.remove(recordSqlTableName);
 
             // 剔除掉声明过的表
             allMatchTableNames.removeAll(tableNames);
