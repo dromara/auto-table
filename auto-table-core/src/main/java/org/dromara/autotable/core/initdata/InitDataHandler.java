@@ -202,7 +202,7 @@ public class InitDataHandler {
         String tableNameSqlFile;
         String basePath = getBasePath(initDataProperties);
         String datasourceName = DataSourceManager.getDatasourceName();
-        if (datasourceName == null) {
+        if (StringUtils.noText(datasourceName)) {
             tableNameSqlFile = basePath + "/" + tableMetadata.getTableName() + ".sql";
         } else {
             tableNameSqlFile = basePath + "/" + datasourceName + "/" + tableMetadata.getTableName() + ".sql";
@@ -279,7 +279,7 @@ public class InitDataHandler {
     private static String getBasePath(PropertyConfig.InitDataProperties initDataProperties) {
         String basePath = initDataProperties.getBasePath();
         if (StringUtils.noText(basePath)) {
-            throw new RuntimeException("auto-table.init-data.basePath 不能为空");
+            throw new RuntimeException("auto-table.init-data.base-path 不能为空");
         }
         if (basePath.endsWith("/")) {
             return basePath.substring(0, basePath.length() - 1);

@@ -69,11 +69,7 @@ public class DataSourceManager {
     }
 
     public static String getDatasourceName() {
-        String datasourceName = DATASOURCE_NAME_THREAD_LOCAL.get();
-        if (datasourceName == null) {
-            log.error("当前数据源下，未找到对应的DatasourceName");
-        }
-        return datasourceName;
+        return DATASOURCE_NAME_THREAD_LOCAL.get();
     }
 
     public static void cleanDatasourceName() {
