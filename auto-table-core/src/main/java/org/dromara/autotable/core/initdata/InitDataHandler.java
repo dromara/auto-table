@@ -60,6 +60,8 @@ public class InitDataHandler {
         if (StringUtils.hasText(datasourceName)) {
             String datasourceInitSqlFile = basePath + "/" + datasourceName + ".sql";
             tryExecuteSqlFile(datasourceInitSqlFile);
+            String defaultDatasourceInitSqlFile = basePath + "/" + datasourceName + "/" + initDataProperties.getDefaultInitFileName() + ".sql";
+            tryExecuteSqlFile(defaultDatasourceInitSqlFile);
         }
 
     }
