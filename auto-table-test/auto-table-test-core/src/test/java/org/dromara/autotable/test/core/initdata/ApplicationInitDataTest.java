@@ -30,13 +30,14 @@ public class ApplicationInitDataTest {
         initSqlSessionFactory("mybatis-config-mysql-init-db.xml");
 
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setAutoBuildDatabase(true);
         // 指定扫描包
         AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
                 org.dromara.autotable.test.core.initdata.InitData.class
         });
         PropertyConfig.InitDataProperties initData = new PropertyConfig.InitDataProperties();
-        initData.setBasePath("classpath:sql");
-        initData.setDefaultInitFileName("_init_");
+        // initData.setBasePath("classpath:sql"); // 默认的
+        // initData.setDefaultInitFileName("_init_"); // 默认的
         AutoTableGlobalConfig.instance().getAutoTableProperties().setInitData(initData);
 
         // 开始

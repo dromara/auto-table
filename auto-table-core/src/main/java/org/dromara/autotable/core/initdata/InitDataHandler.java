@@ -115,9 +115,7 @@ public class InitDataHandler {
                     try {
                         method.setAccessible(true); // 关键步骤，绕过private限制
                         return (List<?>) method.invoke(null);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
+                    } catch (IllegalAccessException | InvocationTargetException e) {
                         throw new RuntimeException(e);
                     }
                 })
@@ -130,14 +128,22 @@ public class InitDataHandler {
             List<Map<String, Object>> rows = insertDataList.stream().map(data -> {
                 Map<String, Object> map = new HashMap<>();
                 fields.stream()
+                        // 只保留数据库字段
                         .filter(field -> TableMetadataHandler.isIncludeField(field, entityClass))
+                        // 剔除自增的
+                        .filter(field -> !TableMetadataHandler.isAutoIncrement(field, entityClass))
                         .forEach(field -> {
                             field.setAccessible(true);
                             String columnName = TableMetadataHandler.getColumnName(entityClass, field);
                             try {
                                 Object value = field.get(data);
+                                // 如果字段上存在InitDataValue注解，则调用转换器
+                                InitDataValue initDataValue = autoTableAnnotationFinder.find(field, InitDataValue.class);
+                                if(initDataValue != null) {
+                                    value = initDataValue.value().newInstance().convert(entityClass, field, value);
+                                }
                                 map.put(columnName, value);
-                            } catch (IllegalAccessException e) {
+                            } catch (IllegalAccessException | InstantiationException e) {
                                 throw new RuntimeException(e);
                             }
                         });
