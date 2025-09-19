@@ -52,7 +52,17 @@ public class InitDataHandler {
         String basePath = getBasePath(initDataProperties);
 
         // 处理默认sql文件
-        String defaultInitSqlFile = basePath + "/" + initDataProperties.getDefaultInitFileName() + ".sql";
+        String defaultInitFileName = initDataProperties.getDefaultInitFileName();
+        if (StringUtils.noText(defaultInitFileName)) {
+            log.warn("未配置默认初始化数据文件名，请检查配置项：autoTable.initData.defaultInitFileName");
+            return;
+        }
+        // 如果用户手滑配置了文件后缀，则去掉
+        if (defaultInitFileName.endsWith(".sql")) {
+            defaultInitFileName = defaultInitFileName.substring(0, defaultInitFileName.length() - 4);
+        }
+
+        String defaultInitSqlFile = basePath + "/" + defaultInitFileName + ".sql";
         tryExecuteSqlFile(defaultInitSqlFile);
 
         // 处理特定数据源名称的sql文件
@@ -60,7 +70,7 @@ public class InitDataHandler {
         if (StringUtils.hasText(datasourceName)) {
             String datasourceInitSqlFile = basePath + "/" + datasourceName + ".sql";
             tryExecuteSqlFile(datasourceInitSqlFile);
-            String defaultDatasourceInitSqlFile = basePath + "/" + datasourceName + "/" + initDataProperties.getDefaultInitFileName() + ".sql";
+            String defaultDatasourceInitSqlFile = basePath + "/" + datasourceName + "/" + defaultInitFileName + ".sql";
             tryExecuteSqlFile(defaultDatasourceInitSqlFile);
         }
 
@@ -139,7 +149,7 @@ public class InitDataHandler {
                                 Object value = field.get(data);
                                 // 如果字段上存在InitDataValue注解，则调用转换器
                                 InitDataValue initDataValue = autoTableAnnotationFinder.find(field, InitDataValue.class);
-                                if(initDataValue != null) {
+                                if (initDataValue != null) {
                                     value = initDataValue.value().newInstance().convert(entityClass, field, value);
                                 }
                                 map.put(columnName, value);
@@ -290,7 +300,7 @@ public class InitDataHandler {
             throw new RuntimeException("auto-table.init-data.base-path 不能为空");
         }
         if (basePath.endsWith("/")) {
-            return basePath.substring(0, basePath.length() - 1);
+            basePath = basePath.substring(0, basePath.length() - 1);
         }
 
         String dialect = IStrategy.getCurrentStrategy().databaseDialect();
