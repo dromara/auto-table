@@ -1,6 +1,6 @@
 package org.dromara.autotable.solon.integration;
 
-import cn.hutool.core.util.ObjUtil;
+import org.dromara.autotable.solon.util.AutoTableUtils;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableClassScanner;
@@ -73,7 +73,7 @@ public class AutoTablePlugin implements Plugin {
 
         // 注入自定义的注解扫描器
         AutoTableAnnotationFinder annotationFinder = context.getBean(AutoTableAnnotationFinder.class);
-        AutoTableGlobalConfig.instance().setAutoTableAnnotationFinder(ObjUtil.defaultIfNull(annotationFinder, new CustomAnnotationFinder()));
+        AutoTableGlobalConfig.instance().setAutoTableAnnotationFinder(AutoTableUtils.defaultIfNull(annotationFinder, new CustomAnnotationFinder()));
 
         // 资源全部加载完成后
         DataSource dataSource = context.getWrap(DataSource.class).get();

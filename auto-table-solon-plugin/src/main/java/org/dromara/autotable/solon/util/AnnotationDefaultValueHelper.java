@@ -13,11 +13,6 @@ import java.util.Map;
  */
 public class AnnotationDefaultValueHelper {
 
-    public static <A extends Annotation> A getAnnotationWithDefaultValues(Class<A> annotationType) {
-        Map<String, Object> defaultValues = getDefaultValues(annotationType);
-        return createAnnotationInstance(annotationType, defaultValues);
-    }
-
     public static <A extends Annotation> Map<String, Object> getDefaultValues(Class<A> annotationType) {
         Map<String, Object> defaultValues = new HashMap<>();
         Method[] declaredMethods = annotationType.getDeclaredMethods();

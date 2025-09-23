@@ -1,10 +1,9 @@
 package org.dromara.autotable.solon.util;
 
-import cn.hutool.core.annotation.AnnotationUtil;
-import cn.hutool.core.collection.ListUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.util.*;
 
@@ -17,12 +16,7 @@ import java.util.*;
 public class AnnotatedElementUtilsPlus {
 
     public static <ANNO extends Annotation> ANNO getDeepMergedAnnotation(AnnotatedElement element, Class<ANNO> annoClass) {
-        final List<ANNO> allMergedAnnotations = AnnotationUtil.getAllSynthesizedAnnotations(element, annoClass);
-        return merge(annoClass, new HashSet<>(allMergedAnnotations));
-    }
-
-    public static <ANNO extends Annotation> ANNO findDeepMergedAnnotation(AnnotatedElement element, Class<ANNO> annoClass) {
-        final List<ANNO> allMergedAnnotations = AnnotationUtil.getAllSynthesizedAnnotations(element, annoClass);
+        final List<ANNO> allMergedAnnotations = getAllSynthesizedAnnotations(element, annoClass);
         return merge(annoClass, new HashSet<>(allMergedAnnotations));
     }
 
@@ -79,8 +73,8 @@ public class AnnotatedElementUtilsPlus {
 
         if (defVal.getClass().isArray()) {
             // 长度相等的情况下，在比对内容
-            List<Object> list = ListUtil.toList(val);
-            List<Object> defList = ListUtil.toList(defVal);
+            List<Object> list = AutoTableUtils.arrayToList(val);
+            List<Object> defList = AutoTableUtils.arrayToList(defVal);
             if (list.size() == defList.size()) {
                 // 考虑到数组中，可能值的顺序不同，所以使用containsAll方法。
                 // 因为大小相同，如果是一个集合全包含另一个集合，则说明两个集合内容完全一致
@@ -90,4 +84,46 @@ public class AnnotatedElementUtilsPlus {
         }
         return !Objects.equals(val, defVal);
     }
+
+    /**
+     * 获取元素上指定类型的所有注解，包括重复注解
+     * 替换 hutool AnnotationUtil.getAllSynthesizedAnnotations
+     */
+    private static <ANNO extends Annotation> List<ANNO> getAllSynthesizedAnnotations(AnnotatedElement element, Class<ANNO> annotationClass) {
+        if (element == null || annotationClass == null) {
+            return Collections.emptyList();
+        }
+
+        List<ANNO> annotations = new ArrayList<>();
+
+        // 获取直接注解
+        ANNO directAnnotation = element.getAnnotation(annotationClass);
+        if (directAnnotation != null) {
+            annotations.add(directAnnotation);
+        }
+
+        // 处理重复注解
+        Repeatable repeatable = annotationClass.getAnnotation(Repeatable.class);
+        if (repeatable != null) {
+            Class<? extends Annotation> containerClass = repeatable.value();
+            Annotation containerAnnotation = element.getAnnotation(containerClass);
+            if (containerAnnotation != null) {
+                try {
+                    Object value = containerClass.getMethod("value").invoke(containerAnnotation);
+                    if (value instanceof Annotation[]) {
+                        for (Annotation anno : (Annotation[]) value) {
+                            if (annotationClass.isInstance(anno)) {
+                                annotations.add(annotationClass.cast(anno));
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("处理重复注解时出错", e);
+                }
+            }
+        }
+
+        return annotations;
+    }
+
 }

@@ -25,14 +25,6 @@
         </dependency>
 
         <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-core</artifactId>
-            <version>${hutool.version}</version>
-            <!-- TODO 注解工具必须传递，不然无法使用 -->
-            <!-- <optional>true</optional>-->
-        </dependency>
-
-        <dependency>
             <groupId>org.noear</groupId>
             <artifactId>solon-data</artifactId>
             <version>${solon.version}</version>
