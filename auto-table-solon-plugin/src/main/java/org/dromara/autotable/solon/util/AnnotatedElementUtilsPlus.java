@@ -20,6 +20,11 @@ public class AnnotatedElementUtilsPlus {
         return merge(annoClass, new HashSet<>(allMergedAnnotations));
     }
 
+    public static <ANNO extends Annotation> ANNO findDeepMergedAnnotation(AnnotatedElement element, Class<ANNO> annoClass) {
+        final List<ANNO> allMergedAnnotations = getAllSynthesizedAnnotations(element, annoClass);
+        return merge(annoClass, new HashSet<>(allMergedAnnotations));
+    }
+
     public static <ANNO extends Annotation> ANNO merge(Class<ANNO> annoClass, Set<ANNO> allAnnotations) {
 
         if (allAnnotations == null || allAnnotations.isEmpty()) {
