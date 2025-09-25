@@ -9,7 +9,6 @@ public interface PgsqlTypeConstant {
     String FLOAT4 = "float4";       // 单精度浮点数
     String FLOAT8 = "float8";       // 双精度浮点数
     String MONEY = "money";         // 货币类型
-    String DECIMAL = "decimal";     // 精确小数类型 (等同于 numeric)
     String NUMERIC = "numeric";     // 精确小数类型
     String BYTEA = "bytea";         // 二进制数据类型
     String CHAR = "char";           // 定长字符类型

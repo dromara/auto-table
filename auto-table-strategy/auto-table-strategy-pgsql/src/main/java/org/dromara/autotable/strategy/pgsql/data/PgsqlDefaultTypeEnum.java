@@ -32,8 +32,6 @@ public enum PgsqlDefaultTypeEnum implements DefaultTypeEnumInterface {
 
     MONEY(PgsqlTypeConstant.MONEY, null, null), //
 
-    DECIMAL(PgsqlTypeConstant.DECIMAL, 10, 6), //
-
     NUMERIC(PgsqlTypeConstant.NUMERIC, 10, 6), // BigDecimal
 
     /**
