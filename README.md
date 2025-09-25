@@ -1,6 +1,6 @@
 <p align="center"><img src="https://autotable.tangzc.com/logo.png" alt="logo" width="150px" /></p>
 
-<p align="center">你只负责维护实体，数据表的事情交给我</p>
+<p align="center">你只负责维护实体，数据库的事交给我</p>
 
 <p align="center">
 <img src="https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg?style=for-the-badge" alt="img" /> 
@@ -33,17 +33,18 @@ AutoTable分别在表名、字段名、主键、主键策略、枚举处理、�
 
 > 以下的测试版本是我本地的版本或者部分小伙伴测试过的版本，更低的版本未做详细测试，但不代表不能用，所以有测试过其他更低版本的小伙伴欢迎联系我修改相关版本号，感谢🫡
 
-| 数据库          | 测试版本       | 说明                                  |
-|--------------|------------|-------------------------------------|
-| ✅ MySQL      | 5.7        |                                     |
-| ✅ MariaDB    | 对应MySQL的版本 | 协议使用MySQL，即`jdbc:mysql://`          |
-| ✅ PostgreSQL | 15.5       |                                     |
-| ✅ SQLite     | 3.35.5     |                                     |
-| ✅ H2         | 2.2.220    |                                     |
-| ✅ Doris      | 2.0        | 成员[@lizhian](../../../../lizhian)开发 |
-| ☑️ 达梦        | dm8(大小写不敏感,兼容mysql模式) | 成员[@minfc](https://gitee.com/minfc)开发测试中     |
-| ✅ 人大金仓      | V009R001C002B0014     | 成员[@minfc](https://gitee.com/minfc)开发     |
-| 其他数据库        | 暂未支持       | 期待你的PR😉                            |
+| 数据库          | 测试版本                  | 说明                                  |
+|--------------|-----------------------|-------------------------------------|
+| ✅ MySQL      | 5.7                   |                                     |
+| ✅ MariaDB    | 对应MySQL的版本            | 协议使用MySQL，即`jdbc:mysql://`          |
+| ✅ PostgreSQL | 15.5                  |                                     |
+| ✅ SQLite     | 3.35.5                |                                     |
+| ✅ H2         | 2.2.220               |                                     |
+| ✅ Doris      | 2.0                   | 成员[@lizhian](../../../../lizhian)开发 |
+| ✅ Oracle     | 11g && 23ai           | 成员[@lizhian](../../../../lizhian)开发 |
+| ✅️ 达梦        | dm8(大小写不敏感,兼容mysql模式) | 成员[@minfc](../../../../minfc)开发     |
+| ✅ 人大金仓       | V009R001C002B0014     | 成员[@minfc](../../../../minfc)开发     |
+| 其他数据库        | 暂未支持                  | 期待你的PR😉                            |
 
 ## 流程图
 

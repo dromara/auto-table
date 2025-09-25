@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
+import org.dromara.autotable.core.callback.CreateDatabaseFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
@@ -13,6 +14,7 @@ import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.dynamicds.impl.DefaultDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
@@ -21,6 +23,7 @@ import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
 import org.dromara.autotable.core.interceptor.ModifyTableInterceptor;
 import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
+import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 
@@ -57,6 +60,13 @@ public class AutoTableGlobalConfig {
     }
 
     /**
+     * 单元测试模式，配置加载完不执行AutoTable逻辑，等带测试逻辑执行
+     */
+    @Getter
+    @Setter
+    private boolean unitTestMode = false;
+
+    /**
      * 全局配置
      */
     @Setter
@@ -77,6 +87,13 @@ public class AutoTableGlobalConfig {
     @Setter
     @Getter
     private IDataSourceHandler datasourceHandler = new DefaultDataSourceHandler();
+
+    /**
+     * 数据源解析器
+     */
+    @Setter
+    @Getter
+    private DataSourceInfoExtractor dataSourceInfoExtractor = new DataSourceInfoExtractor(){};
 
     /**
      * 自定义注解查找器
@@ -155,6 +172,13 @@ public class AutoTableGlobalConfig {
     private List<ValidateFinishCallback> validateFinishCallbacks = new ArrayList<>();
 
     /**
+     * 创建库回调
+     */
+    @Setter
+    @Getter
+    private List<CreateDatabaseFinishCallback> createDatabaseFinishCallbacks = new ArrayList<>();
+
+    /**
      * 创建表回调
      */
     @Setter
@@ -205,6 +229,9 @@ public class AutoTableGlobalConfig {
 
     /* 拦截器与回调监听 ↑↑↑↑↑↑↑↑↑ */
 
+    /**
+     * 数据库策略
+     */
     private final Map<String, IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> STRATEGY_MAP = new HashMap<>();
 
     public void addStrategy(IStrategy<? extends TableMetadata, ? extends CompareTableInfo> strategy) {
@@ -220,4 +247,25 @@ public class AutoTableGlobalConfig {
         return STRATEGY_MAP.values();
     }
 
+    /**
+     * 数据库构建器
+     */
+    private final List<DatabaseBuilder> DATABASE_BUILDER_LIST = new ArrayList<>();
+
+    public void addDatabaseBuilder(DatabaseBuilder databaseBuilder) {
+        DATABASE_BUILDER_LIST.add(databaseBuilder);
+    }
+
+    public DatabaseBuilder getDatabaseBuilder(String jdbcUrl, String dialectOnEntity) {
+        for (DatabaseBuilder databaseBuilder : DATABASE_BUILDER_LIST) {
+            if (databaseBuilder.support(jdbcUrl, dialectOnEntity)) {
+                return databaseBuilder;
+            }
+        }
+        return null;
+    }
+
+    public Collection<DatabaseBuilder> getAllDatabaseBuilder() {
+        return DATABASE_BUILDER_LIST;
+    }
 }

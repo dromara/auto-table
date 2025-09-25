@@ -4,11 +4,16 @@ import {defineConfig} from 'vitepress'
 export default defineConfig({
     title: "Dromara AutoTable",
     titleTemplate: "Auto Table",
-    description: "自动维护表结构",
+    description: "自动维护数据库",
     head: [
         ['link', {rel: 'icon', href: '/logo.png'}]
     ],
     lastUpdated: true,
+    build: {
+        rollupOptions: {
+            external: ['/flow.png']
+        }
+    },
     // https://vitepress.dev/reference/default-theme-config
     themeConfig: {
         logo: '/logo.png',
@@ -33,6 +38,7 @@ export default defineConfig({
             {
                 text: '数据库特性', items: [
                     {text: 'Doris', link: '/数据库特性/Doris/说明'},
+                    {text: 'Oracle', link: '/数据库特性/Oracle/说明'},
                 ]
             },
             {text: '变更日志', link: '/变更日志'},
@@ -76,6 +82,9 @@ export default defineConfig({
                         {text: '多数据源', link: '/指南/高级/多数据源'},
                         {text: '拦截器', link: '/指南/高级/拦截器'},
                         {text: '事件回调', link: '/指南/高级/事件回调'},
+                        {text: '多库适配', link: '/指南/高级/多库适配.md'},
+                        {text: '自动建库', link: '/指南/高级/自动建库.md'},
+                        {text: '自动初始化数据', link: '/指南/高级/自动初始化数据.md'},
                     ]
                 },
                 {
@@ -108,7 +117,8 @@ export default defineConfig({
                         {text: '字段删除', link: '/葵花宝典/字段删除'},
                         {text: '自定义类型映射', link: '/葵花宝典/自定义类型映射'},
                         {text: '没有创建表', link: '/葵花宝典/没有创建表'},
-                        {text: '一个实体适配多种数据库', link: '/葵花宝典/一个实体适配多种数据库.md'},
+                        {text: '集成springdoc', link: '/葵花宝典/集成springdoc.md'},
+                        {text: '自定义sql记录数据源', link: '/葵花宝典/自定义sql记录数据源.md'},
                     ]
                 },
             ],
@@ -120,6 +130,12 @@ export default defineConfig({
                         {text: '配置', link: '/数据库特性/Doris/配置'},
                     ]
                 },
+                {
+                    text: 'Oracle',
+                    items: [
+                        {text: '说明', link: '/数据库特性/Oracle/说明'},
+                    ]
+                }
             ],
             '/支持联系/': [
                 {

@@ -85,7 +85,7 @@ public class DBHelper {
      * @param params 参数映射
      * @throws SQLException
      */
-    private static String setParameters(String sql, Map<String, Object> params) {
+    public static String setParameters(String sql, Map<String, Object> params) {
         for (Entry<String, Object> param : params.entrySet()) {
             sql = sql.replaceAll(":" + param.getKey(), param.getValue().toString());
         }
@@ -142,5 +142,4 @@ public class DBHelper {
             return columnToProperty;
         }
     }
-
 }

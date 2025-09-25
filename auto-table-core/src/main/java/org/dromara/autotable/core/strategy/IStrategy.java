@@ -6,6 +6,7 @@ import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.initdata.InitDataHandler;
 import org.dromara.autotable.core.recordsql.AutoTableExecuteSqlLog;
 import org.dromara.autotable.core.recordsql.RecordSqlService;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -15,10 +16,13 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author don
@@ -62,6 +66,39 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     }
 
     /**
+     * 使用数据库标识符包裹名称并根据指定连字符链接
+     *
+     * @param hyphen 连字符
+     * @param names  名称
+     */
+    static String customConcatWrapIdentifiers(String hyphen, Collection<String> names) {
+        return names.stream()
+                .filter(StringUtils::hasText)
+                .map(IStrategy::wrapIdentifiers)
+                .collect(Collectors.joining(hyphen));
+    }
+
+    /**
+     * 使用数据库标识符包裹名称
+     *
+     * @param name 名称
+     * @return 带有标识符的名称
+     */
+    static String wrapIdentifiers(String name) {
+        return IStrategy.getCurrentStrategy().wrapIdentifier(name);
+    }
+
+    /**
+     * 获取数据库标识符包裹后的名称
+     *
+     * @param names 名称
+     * @return 带有schema前缀后的名称
+     */
+    static String concatWrapIdentifiers(String... names) {
+        return IStrategy.getCurrentStrategy().concatWrapName(names);
+    }
+
+    /**
      * sql包装，如果sql以分号结尾，则不添加分号，否则添加分号
      *
      * @param rawSql 原始sql
@@ -76,14 +113,59 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     }
 
     /**
+     * 数据库标识符引号
+     * <p>MySQL 反引号 `
+     * <p>PostgreSQL 双引号 "
+     * <p>SQL Server 方括号 [ 和 ]
+     * <p>Oracle 双引号 "
+     * <p>SQLite 支持 "、\``、[]`
+     */
+    default String identifier() {
+        return "\"";
+    }
+
+    /**
+     * 使用数据库标识符包裹名称
+     *
+     * @param name 名称
+     * @return 带有标识符的名称
+     */
+    default String wrapIdentifier(String name) {
+        String identifier = identifier();
+        if (!name.startsWith(identifier) || !name.endsWith(identifier)) {
+            return identifier + name + identifier;
+        }
+        return name;
+    }
+
+    /**
+     * 链接schema、表、索引 等名称，并使用数据库标识符包裹
+     *
+     * @param names 名称（表名或者索引名）
+     */
+    default String concatWrapName(String... names) {
+
+        return Arrays.stream(names)
+                .filter(StringUtils::hasText)
+                .map(this::wrapIdentifier)
+                .collect(Collectors.joining("."));
+    }
+
+    /**
+     * 索引名称最大长度: 考虑到大多数数据库，其中oracle的30最小，再就是pg的63了，所以这里取63，oracle自行处理
+     *
+     * @return 索引名称最大长度
+     */
+    default int indexNameMaxLength() {
+        return 63;
+    }
+
+    /**
      * 开始分析实体集合
      *
      * @param entityClass 待处理的实体
      */
     default TABLE_META start(Class<?> entityClass) {
-
-        // 设置当前策略
-        IStrategy.setCurrentStrategy(this);
 
         AutoTableGlobalConfig.instance().getRunBeforeCallbacks().forEach(fn -> fn.before(entityClass));
 
@@ -93,8 +175,6 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
 
         AutoTableGlobalConfig.instance().getRunAfterCallbacks().forEach(fn -> fn.after(entityClass));
 
-        // 清理当前策略
-        IStrategy.clean();
         return tableMetadata;
     }
 
@@ -163,8 +243,9 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void createMode(TABLE_META tableMetadata) {
 
         String schema = tableMetadata.getSchema();
-        String tableName = tableMetadata.getTableName();
+        this.createSchema(schema);
 
+        String tableName = tableMetadata.getTableName();
         // 表是否存在的标记
         log.info("create模式，删除表：{}", tableName);
         // 直接尝试删除表
@@ -187,6 +268,8 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
     default void updateMode(TABLE_META tableMetadata) {
 
         String schema = tableMetadata.getSchema();
+        this.createSchema(schema);
+
         String tableName = tableMetadata.getTableName();
 
         boolean tableNotExist = this.checkTableNotExist(schema, tableName);
@@ -223,6 +306,9 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
         AutoTableGlobalConfig.instance().getCreateTableInterceptors().forEach(fn -> fn.beforeCreateTable(this.databaseDialect(), tableMetadata));
         List<String> sqlList = this.createTable(tableMetadata);
         this.executeSql(tableMetadata, sqlList);
+        // 建表完成，执行表的sql初始化
+        InitDataHandler.initTableData(tableMetadata);
+
         AutoTableGlobalConfig.instance().getCreateTableFinishCallbacks().forEach(fn -> fn.afterCreateTable(this.databaseDialect(), tableMetadata));
     }
 
@@ -259,7 +345,7 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
                         log.info("执行sql({}ms)：{}", executionEndTime - executionTime, sql);
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(String.format("执行SQL期间出错: \n%s\n", String.join("\n", sqlList)), e);
+                    throw new RuntimeException(String.format("执行SQL期间出错: \n%s\n", java.lang.String.join("\n", sqlList)), e);
                 }
                 // 提交
                 connection.commit();
@@ -347,6 +433,14 @@ public interface IStrategy<TABLE_META extends TableMetadata, COMPARE_TABLE_INFO 
      * @return SQL
      */
     String dropTable(String schema, String tableName);
+
+    /**
+     * 创建schema
+     *
+     * @param schema schema名字
+     */
+    default void createSchema(String schema) {
+    }
 
     /**
      * 生成创建表SQL

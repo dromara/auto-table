@@ -1,19 +1,3 @@
-/*
- *  Copyright (c) 2022-2025, Mybatis-Flex (fuhai999@gmail.com).
- *  <p>
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *  <p>
- *  http://www.apache.org/licenses/LICENSE-2.0
- *  <p>
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.dromara.autotable.solon.integration;
 
 import cn.hutool.core.util.ObjUtil;
@@ -25,13 +9,16 @@ import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
+import org.dromara.autotable.core.callback.CreateDatabaseFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
 import org.dromara.autotable.core.callback.RunAfterCallback;
 import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
@@ -43,7 +30,7 @@ import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.solon.adapter.CustomAnnotationFinder;
 import org.dromara.autotable.solon.adapter.SolonDataSourceHandler;
 import org.dromara.autotable.solon.annotation.EnableAutoTable;
-import org.dromara.autotable.solon.properties.AutoTableProperties;
+import org.dromara.autotable.solon.properties.AutoTablePropertiesRegister;
 import org.noear.solon.core.AppContext;
 import org.noear.solon.core.Plugin;
 
@@ -68,10 +55,10 @@ public class AutoTablePlugin implements Plugin {
         }
 
         // 配置 自动装配属性
-        AutoTableProperties autoTableProperties = context.beanMake(AutoTableProperties.class).get();
-
+        context.beanMake(AutoTablePropertiesRegister.class);
+        PropertyConfig autoTableProperties = context.getBean(PropertyConfig.class);
         // 设置全局的配置
-        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties.toConfig());
+        AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties);
 
         // 资源加载完成后启动AutoTable
         context.lifecycle(-100, () -> resourceLoadFinish(context));
@@ -109,6 +96,7 @@ public class AutoTablePlugin implements Plugin {
         this.getAndSetBean(context, RecordSqlHandler.class, AutoTableGlobalConfig.instance()::setCustomRecordSqlHandler);
         // IDataSourceHandler
         this.getAndSetBean(context, IDataSourceHandler.class, AutoTableGlobalConfig.instance()::setDatasourceHandler);
+        this.getAndSetBean(context, DataSourceInfoExtractor.class, AutoTableGlobalConfig.instance()::setDataSourceInfoExtractor);
 
         /* 拦截器 */
         // AutoTableAnnotationInterceptor
@@ -121,6 +109,8 @@ public class AutoTablePlugin implements Plugin {
         this.getAndSetBeans(context, ModifyTableInterceptor.class, AutoTableGlobalConfig.instance()::setModifyTableInterceptors);
 
         /* 回调事件 */
+        // CreateDatabaseFinishCallback
+        this.getAndSetBeans(context, CreateDatabaseFinishCallback.class, AutoTableGlobalConfig.instance()::setCreateDatabaseFinishCallbacks);
         // CreateTableFinishCallback
         this.getAndSetBeans(context, CreateTableFinishCallback.class, AutoTableGlobalConfig.instance()::setCreateTableFinishCallbacks);
         // ModifyTableFinishCallback

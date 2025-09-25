@@ -1,11 +1,10 @@
 package org.dromara.autotable.test.springboot;
 
 import lombok.Data;
-import org.dromara.autotable.annotation.AutoTable;
-import org.dromara.autotable.annotation.ColumnComment;
-import org.dromara.autotable.annotation.ColumnType;
-import org.dromara.autotable.annotation.PrimaryKey;
+import org.dromara.autotable.annotation.*;
 import org.dromara.autotable.annotation.mysql.MysqlTypeConstant;
+import org.dromara.autotable.annotation.oracle.OracleTypeConstant;
+import org.dromara.autotable.core.constants.DatabaseDialect;
 
 @Data
 @AutoTable("sys_user")
@@ -22,6 +21,9 @@ public class User {
     private Integer age;
 
     @ColumnComment("备注")
-    @ColumnType(MysqlTypeConstant.TEXT)
+    @AutoColumns({
+            @AutoColumn(dialect = DatabaseDialect.MySQL, type = MysqlTypeConstant.TEXT)
+            , @AutoColumn(dialect = DatabaseDialect.Oracle, type = OracleTypeConstant.VARCHAR2, length = 4000)
+    })
     private String mark;
 }

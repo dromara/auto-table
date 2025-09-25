@@ -1,12 +1,15 @@
 package org.dromara.autotable.springboot;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableAnnotationFinder;
+import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableClassScanner;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
 import org.dromara.autotable.core.callback.AutoTableFinishCallback;
 import org.dromara.autotable.core.callback.AutoTableReadyCallback;
 import org.dromara.autotable.core.callback.CompareTableFinishCallback;
+import org.dromara.autotable.core.callback.CreateDatabaseFinishCallback;
 import org.dromara.autotable.core.callback.CreateTableFinishCallback;
 import org.dromara.autotable.core.callback.DeleteTableFinishCallback;
 import org.dromara.autotable.core.callback.ModifyTableFinishCallback;
@@ -15,6 +18,7 @@ import org.dromara.autotable.core.callback.RunBeforeCallback;
 import org.dromara.autotable.core.callback.ValidateFinishCallback;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
 import org.dromara.autotable.core.interceptor.AutoTableAnnotationInterceptor;
@@ -25,7 +29,6 @@ import org.dromara.autotable.core.recordsql.RecordSqlHandler;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
-import org.dromara.autotable.springboot.properties.AutoTableProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -37,18 +40,21 @@ import java.util.stream.Collectors;
 /**
  * @author don
  */
+@Slf4j
 @AutoConfigureAfter({DataSourceAutoConfiguration.class})
 @ConditionalOnMissingBean(AutoTableAutoConfig.class)
 public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(
-            AutoTableProperties autoTableProperties,
+            PropertyConfig propertiesConfig,
+            ObjectProvider<InitializeBeans> initializeBeans,
             ObjectProvider<DataSource> dataSource,
             ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> strategies,
             ObjectProvider<AutoTableClassScanner> autoTableClassScanner,
             ObjectProvider<AutoTableAnnotationFinder> autoTableAnnotationFinder,
             ObjectProvider<AutoTableMetadataAdapter> autoTableMetadataAdapter,
             ObjectProvider<IDataSourceHandler> dynamicDataSourceHandler,
+            ObjectProvider<DataSourceInfoExtractor> dataSourceInfoExtractor,
             ObjectProvider<RecordSqlHandler> recordSqlHandler,
             /* 拦截器 */
             ObjectProvider<AutoTableAnnotationInterceptor> autoTableAnnotationInterceptor,
@@ -56,6 +62,7 @@ public class AutoTableAutoConfig {
             ObjectProvider<CreateTableInterceptor> createTableInterceptor,
             ObjectProvider<ModifyTableInterceptor> modifyTableInterceptor,
             /* 回调事件 */
+            ObjectProvider<CreateDatabaseFinishCallback> createDatabaseFinishCallbacks,
             ObjectProvider<CreateTableFinishCallback> createTableFinishCallback,
             ObjectProvider<ModifyTableFinishCallback> modifyTableFinishCallback,
             ObjectProvider<CompareTableFinishCallback> compareTableFinishCallbacks,
@@ -68,11 +75,13 @@ public class AutoTableAutoConfig {
 
             ObjectProvider<JavaTypeToDatabaseTypeConverter> javaTypeToDatabaseTypeConverter) {
 
+        initializeBeans.orderedStream().forEachOrdered(initializeBean -> {
+            log.info("初始化{}", initializeBean.getClass().getName());
+        });
+
         // 默认设置全局的dataSource
         dataSource.ifUnique(DataSourceManager::setDataSource);
 
-        // 设置全局的配置
-        PropertyConfig propertiesConfig = autoTableProperties.toConfig();
         // 假如有注解扫描的包，就覆盖设置
         if (AutoTableImportRegister.basePackagesFromAnno != null) {
             propertiesConfig.setModelPackage(AutoTableImportRegister.basePackagesFromAnno);
@@ -98,6 +107,9 @@ public class AutoTableAutoConfig {
         // 配置自定义的动态数据源处理器
         dynamicDataSourceHandler.ifAvailable(AutoTableGlobalConfig.instance()::setDatasourceHandler);
 
+        // 配置自定义的数据源解析器
+        dataSourceInfoExtractor.ifAvailable(AutoTableGlobalConfig.instance()::setDataSourceInfoExtractor);
+
         // 配置自定义的SQL记录处理器
         recordSqlHandler.ifAvailable(AutoTableGlobalConfig.instance()::setCustomRecordSqlHandler);
 
@@ -112,6 +124,8 @@ public class AutoTableAutoConfig {
         AutoTableGlobalConfig.instance().setModifyTableInterceptors(modifyTableInterceptor.orderedStream().collect(Collectors.toList()));
 
         /* 回调事件 */
+        // 配置自定义的创建库回调
+        AutoTableGlobalConfig.instance().setCreateDatabaseFinishCallbacks(createDatabaseFinishCallbacks.orderedStream().collect(Collectors.toList()));
         // 配置自定义的创建表回调
         AutoTableGlobalConfig.instance().setCreateTableFinishCallbacks(createTableFinishCallback.orderedStream().collect(Collectors.toList()));
         // 配置自定义的修改表回调
@@ -133,5 +147,15 @@ public class AutoTableAutoConfig {
 
         // 配置自定义的java到数据库的转换器
         javaTypeToDatabaseTypeConverter.ifAvailable(AutoTableGlobalConfig.instance()::setJavaTypeToDatabaseTypeConverter);
+
+        this.start();
+    }
+
+    protected void start() {
+        // 单元测试模式下，不主动启动
+        if (!AutoTableGlobalConfig.instance().isUnitTestMode()) {
+            // 启动AutoTable
+            AutoTableBootstrap.start();
+        }
     }
 }

@@ -2,17 +2,23 @@ package org.dromara.autotable.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.config.PropertyConfig;
+import org.dromara.autotable.core.dynamicds.DataSourceInfoExtractor;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.dynamicds.IDataSourceHandler;
+import org.dromara.autotable.core.initdata.InitDataHandler;
+import org.dromara.autotable.core.recordsql.RecordSqlDbHandler;
+import org.dromara.autotable.core.strategy.DatabaseBuilder;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.dromara.autotable.core.utils.SpiLoader;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,63 +52,202 @@ public class AutoTableBootstrap {
         // 注册不同数据源策略
         registerAllDbStrategy();
 
+        // 注册不同数据库的构建器
+        registerAllDatabaseBuilder();
+
         // 扫描所有的类，过滤出指定注解的实体
         Set<Class<?>> classes = findAllEntityClass(autoTableProperties);
 
         AutoTableGlobalConfig.instance().getAutoTableReadyCallbacks().forEach(fn -> fn.ready(classes));
 
         // 获取对应的数据源，根据不同数据库方言，执行不同的处理
+        handleAnalysis(classes);
+
+        AutoTableGlobalConfig.instance().getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
+        AutoTableGlobalConfig.clear();
+        log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
+    }
+
+    /**
+     * 开始分析处理模型
+     * 处理ignore and repeat表
+     *
+     * @param classList 待处理的类
+     */
+    private static void handleAnalysis(Set<Class<?>> classList) {
+
         IDataSourceHandler datasourceHandler = AutoTableGlobalConfig.instance().getDatasourceHandler();
-        datasourceHandler.handleAnalysis(classes, (databaseDialect, entityClasses) -> {
+        // <数据源，Set<表>>
+        Map<String, Set<Class<?>>> needHandleTableMap = classList.stream()
+                .collect(Collectors.groupingBy(datasourceHandler::getDataSourceName, Collectors.toSet()));
+
+        needHandleTableMap.forEach((dataSource, entityClasses) -> {
+            // 使用数据源
+            if (StringUtils.hasText(dataSource)) {
+                log.info("使用数据源：{}", dataSource);
+            }
 
             // 同一个数据源下，检查重名的表
             checkRepeatTableName(entityClasses);
 
-            // 查找对应的数据源策略并执行
-            start(databaseDialect, entityClasses);
+            datasourceHandler.useDataSource(dataSource);
+            DataSourceManager.setDatasourceName(dataSource);
+
+            // 查找实体上的数据库方言标注
+            String dialectOnEntity = findDialectOnEntity(dataSource, entityClasses);
+
+            // 确保数据库存在，不存在则构建数据库
+            DatabaseBuilder.BuildResult buildResult = buildDatabaseIfAbsent(dataSource, entityClasses, dialectOnEntity);
+            boolean buildNewDb = buildResult != null && buildResult.isSuccess();
+
+            try {
+                // 如果实体上没有指定方言，则从链接中获取数据库方言
+                String dialect = StringUtils.hasText(dialectOnEntity) ? dialectOnEntity : getDatabaseDialectFromConnection(dataSource);
+                IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.instance().getStrategy(dialect);
+                if (databaseStrategy == null) {
+                    log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", dialect);
+                    return;
+                }
+
+                // 设置当前策略
+                IStrategy.setCurrentStrategy(databaseStrategy);
+
+                // 执行数据源策略 建表
+                executeStrategy(databaseStrategy, entityClasses);
+
+                // 初始化库数据
+                if (buildNewDb) {
+                    // 创建的新的数据库，执行库级别的sql文件
+                    InitDataHandler.initDbData();
+                }
+            } finally {
+                if (StringUtils.hasText(dataSource)) {
+                    log.info("清理数据源：{}", dataSource);
+                }
+
+                datasourceHandler.clearDataSource(dataSource);
+                DataSourceManager.cleanDatasourceName();
+                // 清理当前策略
+                IStrategy.clean();
+            }
         });
-        AutoTableGlobalConfig.instance().getAutoTableFinishCallbacks().forEach(fn -> fn.finish(classes));
-        AutoTableGlobalConfig.instance().clear();
-        log.info("AutoTable执行结束。耗时：{}ms", System.currentTimeMillis() - start);
     }
 
-    private static void start(String databaseDialect, Set<Class<?>> entityClasses) {
-        IStrategy<?, ?> databaseStrategy = AutoTableGlobalConfig.instance().getStrategy(databaseDialect);
-        if (databaseStrategy != null) {
-            Map<String, Set<String>> registerTableNameMap = new HashMap<>();
-            for (Class<?> entityClass : entityClasses) {
-                log.info("{}执行{}方言策略", entityClass.getName(), databaseDialect);
-                TableMetadata tableMetadata = databaseStrategy.start(entityClass);
-                // 记录声明过的表
-                registerTableNameMap.computeIfAbsent(tableMetadata.getSchema(), k -> new HashSet<>()).add(tableMetadata.getTableName());
-            }
+    private static String findDialectOnEntity(String dataSource, Set<Class<?>> entityClasses) {
+        // dialectInAnnotation可能是 只有一个空字符串的集合（未指定值），也有可能是指定的具体的方言值。但是不能是多种值
+        List<String> dialectInAnnotation = entityClasses.stream()
+                .map(TableMetadataHandler::getTableDialect)
+                .distinct()
+                .collect(Collectors.toList());
+        if (dialectInAnnotation.size() > 1) {
+            throw new RuntimeException("同一个数据源(" + dataSource + ")下，不能同时使用多个数据库方言[" + String.join(",", dialectInAnnotation) + "]");
+        }
 
-            // 删除没有声明的表
-            Boolean autoDropTable = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable();
-            if (autoDropTable) {
-                deleteUnregisterTables(registerTableNameMap, databaseStrategy);
+        return dialectInAnnotation.get(0);
+    }
+
+    private static DatabaseBuilder.BuildResult buildDatabaseIfAbsent(String dataSource, Set<Class<?>> entityClasses, String dialectOnEntity) {
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+
+        boolean autoBuildDatabase = autoTableProperties.getAutoBuildDatabase();
+        if (autoBuildDatabase) {
+            DataSourceInfoExtractor dataSourceInfoExtractor = AutoTableGlobalConfig.instance().getDataSourceInfoExtractor();
+            DataSourceInfoExtractor.DbInfo dbInfo = dataSourceInfoExtractor.extract(DataSourceManager.getDataSource());
+            if (dbInfo == null) {
+                log.warn("数据库信息提取失败，跳过自动建库");
+                return null;
             }
-        } else {
-            log.warn("没有找到对应的数据库（{}）方言策略，无法自动维护表结构", databaseDialect);
+            DatabaseBuilder databaseBuilder = AutoTableGlobalConfig.instance().getDatabaseBuilder(dbInfo.jdbcUrl, dialectOnEntity);
+            if (databaseBuilder != null) {
+                // 构建数据库
+                DatabaseBuilder.BuildResult buildResult = databaseBuilder.build(dbInfo.jdbcUrl, dbInfo.username, dbInfo.password, entityClasses, dbExists -> {
+                    // 如果数据库不存在，且当前是validate模式，则抛出异常
+                    if (!dbExists) {
+                        boolean isValidateMode = autoTableProperties.getMode() == RunMode.validate;
+                        if (isValidateMode) {
+                            throw new RuntimeException("【validate模式】。数据源：" + dataSource + "数据库链接" + dbInfo.jdbcUrl + "无效，请检查数据库连接信息！");
+                        }
+                    }
+                });
+                if (buildResult.isSuccess()) {
+                    // 触发回调
+                    AutoTableGlobalConfig.instance().getCreateDatabaseFinishCallbacks()
+                            .forEach(callback -> callback.afterCreateDatabase(dataSource, entityClasses, dbInfo));
+                    return buildResult;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 自动获取当前数据源的方言
+     *
+     * @param dataSource 数据源名称
+     * @return 返回数据方言
+     */
+    private static String getDatabaseDialectFromConnection(String dataSource) {
+
+        return DataSourceManager.useConnection(connection -> {
+            try {
+                // 通过连接获取DatabaseMetaData对象
+                DatabaseMetaData metaData = connection.getMetaData();
+                // 获取数据库方言
+                String databaseProductName = metaData.getDatabaseProductName();
+                log.debug("数据库链接 => {}, 方言 => {}", metaData.getURL(), databaseProductName);
+                return databaseProductName;
+            } catch (SQLException e) {
+                throw new RuntimeException("获取数据方言失败", e);
+            }
+        });
+    }
+
+    private static void executeStrategy(IStrategy<?, ?> databaseStrategy, Set<Class<?>> entityClasses) {
+        Map<String, Set<String>> registerTableNameMap = new HashMap<>();
+        for (Class<?> entityClass : entityClasses) {
+            log.info("{}执行{}方言策略", entityClass.getName(), databaseStrategy.databaseDialect());
+            TableMetadata tableMetadata = databaseStrategy.start(entityClass);
+            // 记录声明过的表
+            registerTableNameMap.computeIfAbsent(tableMetadata.getSchema(), k -> new HashSet<>()).add(tableMetadata.getTableName());
+        }
+
+        // 删除没有声明的表
+        Boolean autoDropTable = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTable();
+        if (autoDropTable) {
+            deleteUnregisterTables(registerTableNameMap, databaseStrategy);
         }
     }
 
     private static void deleteUnregisterTables(Map<String, Set<String>> registerTableNameMap, IStrategy<?, ?> databaseStrategy) {
 
+        PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+
         registerTableNameMap.forEach((schema, tableNames) -> {
-            List<String> allTableNames = databaseStrategy.listAllTables(schema);
+            List<String> allMatchTableNames = databaseStrategy.listAllTables(schema).stream()
+                    .filter(tableName -> {
+                        String[] autoDropTablePrefix = autoTableProperties.getAutoDropTablePrefix();
+                        if (autoDropTablePrefix.length > 0) {
+                            return Arrays.stream(autoDropTablePrefix).anyMatch(tableName::startsWith);
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
 
             // 剔除掉指定不删除的表
-            String[] autoDropTableIgnores = AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropTableIgnores();
+            String[] autoDropTableIgnores = autoTableProperties.getAutoDropTableIgnores();
             if (autoDropTableIgnores != null) {
-                allTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
+                allMatchTableNames.removeAll(Arrays.asList(autoDropTableIgnores));
             }
 
+            // 剔除掉sql记录表
+            String recordSqlTableName = RecordSqlDbHandler.getRecordSqlTableName();
+            allMatchTableNames.remove(recordSqlTableName);
+
             // 剔除掉声明过的表
-            allTableNames.removeAll(tableNames);
+            allMatchTableNames.removeAll(tableNames);
 
             // 删除剩余的表
-            allTableNames.forEach(tableName -> {
+            allMatchTableNames.forEach(tableName -> {
                 log.info("表{}{}没有声明，执行删除！", StringUtils.hasText(schema) ? schema + "." : "", tableName);
                 DataSourceManager.useConnection(connection -> {
                     String sql = databaseStrategy.dropTable(schema, tableName);
@@ -119,24 +264,60 @@ public class AutoTableBootstrap {
 
     private static void checkRepeatTableName(Set<Class<?>> entityClasses) {
         Map<String, List<Class<?>>> repeatCheckMap = entityClasses.stream()
-                .collect(Collectors.groupingBy(entity -> TableMetadataHandler.getTableSchema(entity) + "." + TableMetadataHandler.getTableName(entity)));
+                .collect(Collectors.groupingBy(entity -> {
+                    String tableSchema = TableMetadataHandler.getTableSchema(entity);
+                    String tableName = TableMetadataHandler.getTableName(entity);
+                    if (StringUtils.hasText(tableSchema)) {
+                        return tableSchema + "." + tableName;
+                    }
+                    return tableName;
+                }));
         for (Map.Entry<String, List<Class<?>>> repeatCheckItem : repeatCheckMap.entrySet()) {
             int sameTableNameCount = repeatCheckItem.getValue().size();
             if (sameTableNameCount > 1) {
                 String tableName = repeatCheckItem.getKey();
-                throw new RuntimeException(String.format("存在重名的表：%s(%s)，请检查！", tableName,
-                        String.join(",", repeatCheckItem.getValue().stream().map(Class::getName).collect(Collectors.toSet()))));
+                String repeatTableNames = repeatCheckItem.getValue().stream().map(Class::getName).collect(Collectors.joining(", "));
+                throw new RuntimeException(String.format("存在重名的表：%s(%s)，请检查！", tableName, repeatTableNames));
             }
         }
     }
 
     private static Set<Class<?>> findAllEntityClass(PropertyConfig autoTableProperties) {
-        Class<?>[] modelClass = autoTableProperties.getModelClass();
-        Set<Class<?>> classes = new HashSet<>(Arrays.asList(modelClass));
-        String[] packs = getModelPackage(autoTableProperties);
-        Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(packs);
-        classes.addAll(packClasses);
+
+        Set<Class<?>> classes = new HashSet<>();
+
+        boolean noConfig = findFromProperties(autoTableProperties, classes);
+        // 扫描类和包都没有指定的情况下，扫描启动类根目录
+        if (noConfig) {
+            // 扫描根目录实体并返回
+            findFromRootPackage(classes);
+        }
+
         return classes;
+
+    }
+
+    private static void findFromRootPackage(Set<Class<?>> classes) {
+        String[] basePackages = {getBootPackage()};
+        Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(basePackages);
+        classes.addAll(packClasses);
+    }
+
+    private static boolean findFromProperties(PropertyConfig autoTableProperties, Set<Class<?>> classes) {
+        Class<?>[] modelClass = autoTableProperties.getModelClass();
+        String[] packs = autoTableProperties.getModelPackage();
+        // 优先添加指定的类
+        boolean customModelClass = modelClass != null && modelClass.length > 0;
+        if (customModelClass) {
+            Collections.addAll(classes, modelClass);
+        }
+        // 添加指定的包下的类
+        boolean customModelPackage = packs != null && packs.length > 0;
+        if (customModelPackage) {
+            Set<Class<?>> packClasses = AutoTableGlobalConfig.instance().getAutoTableClassScanner().scan(packs);
+            classes.addAll(packClasses);
+        }
+        return !customModelClass && !customModelPackage;
     }
 
     private static void registerAllDbStrategy() {
@@ -144,21 +325,19 @@ public class AutoTableBootstrap {
         if (strategies.isEmpty()) {
             log.warn("没有发现任何数据库策略！");
         } else {
-            for (IStrategy provider : strategies) {
-                log.info("注册数据库策略：{}", provider.databaseDialect());
-                AutoTableGlobalConfig.instance().addStrategy(provider);
-            }
+            strategies.forEach(AutoTableGlobalConfig.instance()::addStrategy);
+            List<String> dialects = strategies.stream()
+                    .map(IStrategy::databaseDialect)
+                    .collect(Collectors.toList());
+            log.info("注册数据库表策略：{}", String.join(", ", dialects));
         }
     }
 
-    private static String[] getModelPackage(PropertyConfig autoTableProperties) {
-        String[] packs = autoTableProperties.getModelPackage();
-        Class<?>[] modelClass = autoTableProperties.getModelClass();
-        // 没有指定实体的class，则使用根包扫描
-        if (packs.length == 0 && modelClass.length == 0) {
-            packs = new String[]{getBootPackage()};
+    private static void registerAllDatabaseBuilder() {
+        List<DatabaseBuilder> databaseBuilders = SpiLoader.loadAll(DatabaseBuilder.class);
+        if (!databaseBuilders.isEmpty()) {
+            databaseBuilders.forEach(AutoTableGlobalConfig.instance()::addDatabaseBuilder);
         }
-        return packs;
     }
 
     private static String getBootPackage() {

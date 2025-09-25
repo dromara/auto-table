@@ -1,7 +1,9 @@
 package org.dromara.autotable.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.AutoTable;
 import org.dromara.autotable.annotation.Ignore;
+import org.dromara.autotable.core.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,11 +13,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.JarEntry;
@@ -23,12 +27,14 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 基于注解扫描java类
  *
  * @author don
  */
+@Slf4j
 public abstract class AutoTableClassScanner {
 
     public Set<Class<?>> scan(String[] basePackages) {
@@ -46,6 +52,8 @@ public abstract class AutoTableClassScanner {
         AutoTableAnnotationFinder autoTableAnnotationFinder = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder();
 
         return Arrays.stream(basePackages)
+                .filter(Objects::nonNull)
+                .filter(StringUtils::hasText)
                 .map(basePackage -> {
                     try {
                         return getClasses(basePackage,
@@ -71,7 +79,7 @@ public abstract class AutoTableClassScanner {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String path = packageName.replace('.', '/');
         String basePackage = path.split("/\\*")[0];
-        String patternPackage = packageName
+        String patternPackage = path
                 // 多级路径
                 .replace("**", "[A-Za-z0-9$_/]+")
                 // 单级路径
@@ -102,23 +110,26 @@ public abstract class AutoTableClassScanner {
             return classes;
         }
 
-        Files.walk(directory.toPath())
-                .filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".class"))
-                .forEach(path -> {
-                    try {
-                        String pathUrl = path.toUri().toURL().toString();
-                        Matcher matcher = checkPattern.matcher(pathUrl);
-                        if (matcher.find()) {
-                            String className = matcher.group(1).replace("/", ".");
-                            Class<?> clazz = Class.forName(className);
-                            if (checker.apply(clazz)) { // check annotation
-                                classes.add(clazz);
+        try (Stream<Path> pathStream = Files.walk(directory.toPath())) {
+            pathStream
+                    .filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".class"))
+                    .forEach(path -> {
+                        try {
+                            String pathUrl = path.toUri().toURL().toString();
+                            Matcher matcher = checkPattern.matcher(pathUrl);
+                            if (matcher.find()) {
+                                String className = matcher.group(1).replace("/", ".");
+                                Class<?> clazz = Class.forName(className);
+                                if (checker.apply(clazz)) { // check annotation
+                                    classes.add(clazz);
+                                }
                             }
+                        } catch (ClassNotFoundException | MalformedURLException ignore) {
                         }
-                    } catch (ClassNotFoundException | MalformedURLException e) {
-                        // ignore
-                    }
-                });
+                    });
+        } catch (Exception e) {
+            log.error("查找本地类错误", e);
+        }
         return classes;
     }
 

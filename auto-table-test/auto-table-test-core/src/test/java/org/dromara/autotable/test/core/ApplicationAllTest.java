@@ -23,6 +23,8 @@ public class ApplicationAllTest {
 
         // 配置信息
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        // 开启自动创建数据库
+        autoTableProperties.setAutoBuildDatabase(true);
         // create模式
         autoTableProperties.setMode(RunMode.create);
         // 开启 删除不存在的列
@@ -37,6 +39,7 @@ public class ApplicationAllTest {
     void cleanup() {
         // 清除当前线程中的配置，防止下一个测试复用
         AutoTableGlobalConfig.clear();
+        DataSourceManager.cleanDataSource();
     }
 
     @Test
@@ -92,9 +95,54 @@ public class ApplicationAllTest {
     }
 
     @Test
+    public void testRecordSqlByCustomDadasource() {
+
+        initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        // 指定扫描包
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelPackage(new String[]{
+                "org.dromara.autotable.test.core.entity.common",
+                "org.dromara.autotable.test.core.entity.mysql"
+        });
+
+        // 记录sql
+        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
+        recordSqlProperties.setEnable(true);
+        recordSqlProperties.setVersion(Version.VALUE);
+        // 自定义，以文件形式记录sql
+        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
+        PropertyConfig.Datasource datasource = new PropertyConfig.Datasource();
+        datasource.setUrl("jdbc:mysql://localhost:3306/auto-table-record-sql");
+        datasource.setUsername("root");
+        datasource.setPassword("12345678");
+        recordSqlProperties.setDatasource(datasource);
+        recordSqlProperties.setTableName("auto_table_exe_sql_record");
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
+
+        // 开始
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    private void testRecordSqlByDB() {
+
+        // 记录sql
+        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
+        recordSqlProperties.setEnable(true);
+        recordSqlProperties.setVersion(Version.VALUE);
+        // 以数据库的方式记录sql
+        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
+        recordSqlProperties.setTableName("my_record_sql");
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
+    }
+
+    @Test
     public void testMysqlCreateAndUpdate() {
 
         initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        testRecordSqlByDB();
 
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
@@ -215,18 +263,6 @@ public class ApplicationAllTest {
         });
         // 开始
         AutoTableBootstrap.start();
-    }
-
-    private void testRecordSqlByDB() {
-
-        // 记录sql
-        PropertyConfig.RecordSqlProperties recordSqlProperties = new PropertyConfig.RecordSqlProperties();
-        recordSqlProperties.setEnable(true);
-        recordSqlProperties.setVersion(Version.VALUE);
-        // 以数据库的方式记录sql
-        recordSqlProperties.setRecordType(PropertyConfig.RecordSqlProperties.TypeEnum.db);
-        recordSqlProperties.setTableName("my_record_sql");
-        AutoTableGlobalConfig.instance().getAutoTableProperties().setRecordSql(recordSqlProperties);
     }
 
     private void initSqlSessionFactory(String resource) {

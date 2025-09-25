@@ -26,6 +26,7 @@ public abstract class TableMetadata {
      * schema
      */
     protected String schema;
+    public static String schemaFieldName = "schema";
 
     /**
      * 注释

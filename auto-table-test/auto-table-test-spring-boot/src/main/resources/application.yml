@@ -2,18 +2,23 @@ auto-table:
   enable: true
   mode: create
   auto-drop-column: true
+  auto-drop-index: true
   record-sql:
     # 开启SQL记录
     enable: true
     # 当前版本（此处可保持与计划上线的版本号一致，方便管理SQL文件）
     version: 1.0.0
     # 自定义记录方式
-    record-type: custom
+    record-type: db
+  auto-build-database: true
+
 server:
   port: 9999
 
 
 spring:
+  profiles:
+    active: local
   datasource:
     url: jdbc:mysql://localhost:3306/auto-table?useSSL=false&serverTimezone=UTC
     username: root

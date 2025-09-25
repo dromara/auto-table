@@ -5,15 +5,19 @@ import org.dromara.autotable.annotation.Index;
 import org.dromara.autotable.annotation.IndexField;
 import org.dromara.autotable.annotation.TableIndex;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.IndexRepeatChecker;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.core.utils.TableMetadataHandler;
 
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -118,19 +122,29 @@ public class IndexMetadataBuilder {
 
     protected String getEncryptIndexName(String tableNamePart, String filedNamePart) {
         String prefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getIndexPrefix();
-        String fullIndexName = prefix + tableNamePart + "_" + filedNamePart;
-        int maxLength = 63;
-        if (fullIndexName.length() > maxLength) {
-            String md5 = generateMD5(fullIndexName);
-            if (prefix.length() + md5.length() > maxLength) {
-                throw new RuntimeException("索引名前缀[" + prefix + "]超长，无法生成有效索引名称，请手动指定索引名称");
-            }
-            // 截取前半部分长度的字符，空余足够的位置，给“_”和MD5值
-            String onePart = fullIndexName.substring(0, maxLength - md5.length());
-            return onePart + md5;
+        // 获取当前数据库策略的最大索引名称长度
+        int maxLength = IStrategy.getCurrentStrategy().indexNameMaxLength();
+        if (prefix.length() > maxLength) {
+            throw new RuntimeException("索引名前缀[" + prefix + "]超出索引名最大长度（" + maxLength + "），请手动指定索引名称");
         }
 
-        return replaceDoubleQuote(fullIndexName);
+        String main = tableNamePart + "_" + filedNamePart;
+        String fullIndexName = replaceDoubleQuote(prefix + main);
+        if (fullIndexName.length() > maxLength) {
+            // 索引名称长度超出限制，使用22位MD5进行截取
+            String md5 = generateShortMD5(main);
+
+            if (prefix.length() + md5.length() > maxLength) {
+                // 注意此种情况下，裁切后的md5唯一性降低
+                return prefix + md5.substring(0, maxLength - prefix.length());
+            }
+
+            // 截取原名称前半部分长度的字符，空余足够的位置，给“_”和MD5值
+            String prePart = fullIndexName.substring(0, maxLength - md5.length() - 1);
+            return prePart + "_" + md5;
+        }
+
+        return fullIndexName;
     }
 
     /**
@@ -148,13 +162,27 @@ public class IndexMetadataBuilder {
 
     @SneakyThrows
     private String generateMD5(String text) {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        byte[] hashBytes = md.digest(text.getBytes());
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashBytes) {
-            sb.append(String.format("%02x", b));
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hashBytes = md.digest(text.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("MD5算法不可用", e);
         }
-        return sb.toString();
+    }
+
+    private String generateShortMD5(String text) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hash = md.digest(text.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected IndexMetadata buildIndexMetadata(Class<?> clazz, TableIndex tableIndex) {

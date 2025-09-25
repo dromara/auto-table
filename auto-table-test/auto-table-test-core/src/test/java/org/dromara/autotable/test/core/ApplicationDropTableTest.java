@@ -35,6 +35,7 @@ public class ApplicationDropTableTest {
         initSqlSessionFactory("mybatis-config-mysql-drop-table.xml");
 
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        autoTableProperties.setAutoBuildDatabase(true);
         autoTableProperties.setMode(RunMode.create);
         // 指定扫描包
         Class[] modelClass = {
