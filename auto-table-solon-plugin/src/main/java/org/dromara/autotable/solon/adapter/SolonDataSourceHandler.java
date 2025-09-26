@@ -1,7 +1,6 @@
 package org.dromara.autotable.solon.adapter;
 
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.StrUtil;
+import org.dromara.autotable.solon.util.AutoTableUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +54,7 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
         List<DataSource> dynamicDataSourceList = dataSourceMap.values().stream()
                 .filter(ds -> ds instanceof DynamicDataSource).collect(Collectors.toList());
 
-        Assert.notEmpty(dynamicDataSourceList, () -> new DataSourceNotFoundException("未找到数据源"));
+        AutoTableUtils.notEmpty(dynamicDataSourceList, new DataSourceNotFoundException("未找到数据源"));
 
         if (dynamicDataSourceList.size() != 1) {
             log.warn("项目中存在多个动态数据源，仅使用第一个动态数据源。");
@@ -66,7 +65,7 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
 
         // 获取内部数据源
         DataSource dataSource = dynamicDataSource.getDefaultTargetDataSource();
-        if (StrUtil.isNotBlank(dataSourceName)) {
+        if (AutoTableUtils.isNotBlank(dataSourceName)) {
             dataSource = dynamicDataSource.getTargetDataSource(dataSourceName);
         }
 
@@ -87,7 +86,7 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
         }
         // 动态数据源优先
         String current = DynamicDsKey.current();
-        if (StrUtil.isNotBlank(current)) {
+        if (AutoTableUtils.isNotBlank(current)) {
             return current;
         }
         // 默认数据源
