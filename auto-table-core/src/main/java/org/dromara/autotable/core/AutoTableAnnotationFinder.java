@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
+ * 注解查找接口
  * @author don
  */
 public interface AutoTableAnnotationFinder {
