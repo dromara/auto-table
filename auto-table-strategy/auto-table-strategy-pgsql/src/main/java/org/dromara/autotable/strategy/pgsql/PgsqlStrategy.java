@@ -277,8 +277,10 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
 
         boolean primaryChange = !dbPrimaryColumns.equals(newPrimaryColumns);
         if (primaryChange) {
-            // 标记待删除的主键
-            pgsqlCompareTableInfo.setDropPrimaryKeyName(pgsqlDbPrimary.getPrimaryName());
+            // 如果数据库存在主键，标记待删除的主键
+            if(pgsqlDbPrimary != null) {
+                pgsqlCompareTableInfo.setDropPrimaryKeyName(pgsqlDbPrimary.getPrimaryName());
+            }
         }
         boolean newPrimary = !primaryColumnList.isEmpty() && pgsqlDbPrimary == null;
         if (newPrimary || primaryChange) {
