@@ -24,7 +24,7 @@ public class KingbaseDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:kingbase8:") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.KingBase));
+        return jdbcUrl != null && jdbcUrl.contains(":kingbase8://") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.KingBase));
     }
 
     @Override

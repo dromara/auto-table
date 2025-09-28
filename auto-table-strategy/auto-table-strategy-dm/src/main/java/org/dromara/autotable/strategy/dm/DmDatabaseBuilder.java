@@ -22,7 +22,7 @@ public class DmDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:dm:") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.DM));
+        return jdbcUrl != null && jdbcUrl.contains(":dm://") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.DM));
     }
 
     @Override

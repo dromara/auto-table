@@ -22,7 +22,7 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:oracle:") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.Oracle));
+        return jdbcUrl != null && jdbcUrl.contains(":oracle://") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.Oracle));
     }
 
     @Override

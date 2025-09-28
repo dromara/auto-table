@@ -24,7 +24,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl.startsWith("jdbc:mysql") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.MySQL));
+        return jdbcUrl.contains(":mysql://") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.MySQL));
     }
 
     @Override

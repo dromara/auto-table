@@ -27,7 +27,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl.startsWith("jdbc:postgresql") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.PostgreSQL));
+        return jdbcUrl.contains(":postgresql://") && (StringUtils.noText(dialectOnEntity) || Objects.equals(dialectOnEntity, DatabaseDialect.PostgreSQL));
     }
 
     @Override

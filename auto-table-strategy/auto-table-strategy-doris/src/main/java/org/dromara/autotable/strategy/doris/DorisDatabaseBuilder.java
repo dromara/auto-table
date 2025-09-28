@@ -23,7 +23,7 @@ public class DorisDatabaseBuilder implements DatabaseBuilder {
 
     @Override
     public boolean support(String jdbcUrl, String dialectOnEntity) {
-        return jdbcUrl.startsWith("jdbc:mysql:") && (StringUtils.noText(dialectOnEntity) && Objects.equals(dialectOnEntity, DatabaseDialect.Doris));
+        return jdbcUrl.contains(":mysql://") && (StringUtils.noText(dialectOnEntity) && Objects.equals(dialectOnEntity, DatabaseDialect.Doris));
     }
 
     @Override
