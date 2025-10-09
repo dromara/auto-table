@@ -44,6 +44,11 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
     }
 
     @Override
+    public String identifier() {
+        return "`";
+    }
+
+    @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
         return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
             put(String.class, DorisDefaultTypeEnum.VARCHAR);
@@ -81,7 +86,7 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
 
     @Override
     public String dropTable(String schema, String tableName) {
-        return String.format("drop table if exists `%s`", tableName);
+        return String.format("drop table if exists %s", wrapIdentifier(tableName));
     }
 
     @Override
@@ -123,20 +128,21 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
         List<String> removed_matched = new ArrayList<>();
         // 对比获取修改的列
         List<String> modified = new ArrayList<>();
+        // 正则表达式
+        String identifier = identifier();
+        // String regex = "`([^`]+)`";
+        Pattern pattern = Pattern.compile(identifier + "([^" + identifier + "]+)" + identifier);
         for (String addedLine : added) {
-            // 正则表达式
-            String regex = "`([^`]+)`";
-            Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(addedLine);
             String columnName = matcher.find() ? matcher.group(1) : "";
             if (columnName.isEmpty()) {
                 continue;
             }
-            if (!addedLine.startsWith("`" + columnName + "`")) {
+            if (!addedLine.startsWith(wrapIdentifier(columnName))) {
                 continue;
             }
             String matched = removed.stream()
-                    .filter(line -> line.startsWith("`" + columnName + "`"))
+                    .filter(line -> line.startsWith(wrapIdentifier(columnName)))
                     .findFirst()
                     .orElse("");
             if (matched.isEmpty()) {

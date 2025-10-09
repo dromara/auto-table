@@ -4,6 +4,7 @@ package org.dromara.autotable.strategy.doris.mapper;
 import lombok.Data;
 import org.apache.commons.dbutils.QueryRunner;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.doris.data.dbdata.InformationSchemaColumn;
 import org.dromara.autotable.core.utils.DBHelper;
 
@@ -42,7 +43,13 @@ public class DorisTablesMapper {
         FindTableCreateSqlDTO dto = DataSourceManager.useConnection(connection -> {
             return DBHelper.queryObject(connection, sql, params, FindTableCreateSqlDTO.class);
         });
-        return dto.getCreateTable();
+        String createTable = dto.getCreateTable();
+        // doris bug 处理
+        if(createTable.contains("AUTO PARTITION BY RANGE date_trunc(")){
+            createTable = createTable.replace("AUTO PARTITION BY RANGE date_trunc(", "AUTO PARTITION BY RANGE (date_trunc(");
+            createTable = createTable.replace("')\n()", "'))\n()");
+        }
+        return createTable;
     }
 
     @Data
@@ -50,11 +57,13 @@ public class DorisTablesMapper {
         @DBHelper.ColumnName("Create Table")
         private String createTable;
     }
+    private final QueryRunner queryRunner = new QueryRunner();
 
     public void executeRawSql(String sql) {
         DataSourceManager.useConnection(connection -> {
             try {
-                return new QueryRunner().execute(connection, sql);
+                DBHelper.setParameters(sql, Collections.emptyMap());
+                return queryRunner.execute(connection, sql);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
