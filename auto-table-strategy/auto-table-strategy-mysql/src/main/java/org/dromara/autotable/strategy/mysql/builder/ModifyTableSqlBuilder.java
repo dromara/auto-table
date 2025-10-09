@@ -8,6 +8,8 @@ import org.dromara.autotable.strategy.mysql.data.MysqlCompareTableInfo;
 import org.dromara.autotable.core.utils.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +26,7 @@ public class ModifyTableSqlBuilder {
      * @param mysqlCompareTableInfo 参数
      * @return sql
      */
-    public static String buildSql(MysqlCompareTableInfo mysqlCompareTableInfo) {
+    public static List<String> buildSql(MysqlCompareTableInfo mysqlCompareTableInfo) {
 
         String name = mysqlCompareTableInfo.getName();
 
@@ -39,11 +41,12 @@ public class ModifyTableSqlBuilder {
         List<IndexMetadata> mysqlIndexMetadataList = mysqlCompareTableInfo.getIndexMetadataList();
 
         // 记录所有修改项，（利用数组结构，便于添加,分割）
+        List<String> dropItems = new ArrayList<>();
         List<String> modifyItems = new ArrayList<>();
 
         // 删除表字段处理
         String dropColumnSql = getDropColumnSql(dropColumnList);
-        modifyItems.add(dropColumnSql);
+        dropItems.add(dropColumnSql);
 
         // 拼接每个字段的sql片段
         String columnsSql = getColumnsSql(modifyMysqlColumnMetadataList);
@@ -54,7 +57,7 @@ public class ModifyTableSqlBuilder {
          */
         // 判断是否需要删除原有主键
         if (mysqlCompareTableInfo.isDropPrimary()) {
-            modifyItems.add("DROP PRIMARY KEY");
+            dropItems.add("DROP PRIMARY KEY");
         }
         // 判断是否存在新的主键，添加
         if (!mysqlCompareTableInfo.getNewPrimaries().isEmpty()) {
@@ -67,7 +70,7 @@ public class ModifyTableSqlBuilder {
 
         // 删除索引
         String dropIndexSql = getDropIndexSql(dropIndexList);
-        modifyItems.add(dropIndexSql);
+        dropItems.add(dropIndexSql);
 
         // 添加索引
         String addIndexSql = getAddIndexSql(mysqlIndexMetadataList);
@@ -77,14 +80,33 @@ public class ModifyTableSqlBuilder {
         List<String> tableProperties = CreateTableSqlBuilder.getTableProperties(engine, characterSet, collate, comment);
         modifyItems.addAll(tableProperties);
 
+        List<String> sqlList = new ArrayList<>();
+        String tableName = IStrategy.wrapIdentifiers(name);
+
+        // 组合sql: 过滤空字符项，逗号拼接
+        String dropSql = dropItems.stream()
+                .filter(StringUtils::hasText)
+                .collect(Collectors.joining(","));
+        if(StringUtils.hasText(dropSql)) {
+            String sql = "ALTER TABLE {tableName} {dropItems};"
+                    .replace("{tableName}", tableName)
+                    .replace("{dropItems}", dropSql);
+            sqlList.add(sql);
+        }
+
         // 组合sql: 过滤空字符项，逗号拼接
         String modifySql = modifyItems.stream()
                 .filter(StringUtils::hasText)
                 .collect(Collectors.joining(","));
+        if(StringUtils.hasText(modifySql)) {
+            String sql = "ALTER TABLE {tableName} {modifyItems};"
+                    .replace("{tableName}", tableName)
+                    .replace("{modifyItems}", modifySql);
+            sqlList.add(sql);
+        }
 
-        return "ALTER TABLE {tableName} {modifyItems};"
-                .replace("{tableName}", IStrategy.wrapIdentifiers(name))
-                .replace("{modifyItems}", modifySql);
+        // 修改表，区分开删除和修改 是为了兼容云数据库方面的安全限制，删除和修改不能放在一起
+        return sqlList;
     }
 
     private static String getAddIndexSql(List<IndexMetadata> mysqlIndexMetadataList) {

@@ -152,8 +152,8 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
 
     @Override
     public List<String> modifyTable(MysqlCompareTableInfo mysqlCompareTableInfo) {
-        String sql = ModifyTableSqlBuilder.buildSql(mysqlCompareTableInfo);
-        return Collections.singletonList(sql);
+        List<String> sql = ModifyTableSqlBuilder.buildSql(mysqlCompareTableInfo);
+        return sql;
     }
 
     private void compareIndexes(MysqlTableMetadata mysqlTableMetadata, MysqlCompareTableInfo mysqlCompareTableInfo, Map<String, List<InformationSchemaStatistics>> tableIndexes) {
