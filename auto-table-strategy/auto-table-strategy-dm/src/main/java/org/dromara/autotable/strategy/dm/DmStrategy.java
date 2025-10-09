@@ -4,6 +4,7 @@ import lombok.NonNull;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
 import org.dromara.autotable.core.constants.DatabaseDialect;
+import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
@@ -173,8 +174,14 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     private boolean isColumnDefinitionChanged(ColumnMetadata newCol, DmDbColumn oldCol) {
         // 类型检查
-        String newType = newCol.getType().getDefaultFullType().toUpperCase();
-        String oldType = oldCol.getType().toUpperCase();
+        DatabaseTypeAndLength databaseTypeAndLength = newCol.getType();
+        String newType = databaseTypeAndLength.getDefaultFullType().toUpperCase();
+        String oldType;
+        if (databaseTypeAndLength.getLength() == null) {
+            oldType = oldCol.getType().toUpperCase();
+        } else {
+            oldType = oldCol.getDefaultFullType().toUpperCase();
+        }
         if (!newType.equals(oldType)) {
             return true;
         }

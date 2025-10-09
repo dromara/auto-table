@@ -49,5 +49,16 @@ public class DmDbColumn {
     @DBHelper.ColumnName("COMMENTS")
     private String comment;
 
+    public String getDefaultFullType() {
+        if (scale != null && scale > 0) {
+            return type + "(" + precision + "," + scale + ")";
+        }
+        String fullType = type;
+        if (length != null) {
+            fullType += "(" + length;
+            fullType += ")";
+        }
 
+        return fullType;
+    }
 }
