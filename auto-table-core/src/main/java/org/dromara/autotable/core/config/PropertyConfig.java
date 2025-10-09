@@ -217,6 +217,10 @@ public class PropertyConfig {
          * 自动建库：数据库管理员密码（默认使用数据库链接的password）
          */
         private String adminPassword;
+        /**
+         * 表修改，分离删除的sql
+         */
+        private boolean alterTableSeparateDrop;
     }
 
     @Data

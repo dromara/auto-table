@@ -1,6 +1,7 @@
 package org.dromara.autotable.strategy.mysql.builder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
@@ -44,9 +45,16 @@ public class ModifyTableSqlBuilder {
         List<String> dropItems = new ArrayList<>();
         List<String> modifyItems = new ArrayList<>();
 
+        // 修改表，区分开删除和修改 是为了兼容云数据库方面的安全限制，删除和修改不能放在一起
+        boolean alterTableSeparateDrop = AutoTableGlobalConfig.instance().getAutoTableProperties().getMysql().isAlterTableSeparateDrop();
+
         // 删除表字段处理
         String dropColumnSql = getDropColumnSql(dropColumnList);
-        dropItems.add(dropColumnSql);
+        if(alterTableSeparateDrop) {
+            dropItems.add(dropColumnSql);
+        } else {
+            modifyItems.add(dropColumnSql);
+        }
 
         // 拼接每个字段的sql片段
         String columnsSql = getColumnsSql(modifyMysqlColumnMetadataList);
@@ -57,7 +65,11 @@ public class ModifyTableSqlBuilder {
          */
         // 判断是否需要删除原有主键
         if (mysqlCompareTableInfo.isDropPrimary()) {
-            dropItems.add("DROP PRIMARY KEY");
+            if(alterTableSeparateDrop) {
+                dropItems.add("DROP PRIMARY KEY");
+            } else {
+                modifyItems.add("DROP PRIMARY KEY");
+            }
         }
         // 判断是否存在新的主键，添加
         if (!mysqlCompareTableInfo.getNewPrimaries().isEmpty()) {
@@ -70,7 +82,11 @@ public class ModifyTableSqlBuilder {
 
         // 删除索引
         String dropIndexSql = getDropIndexSql(dropIndexList);
-        dropItems.add(dropIndexSql);
+        if(alterTableSeparateDrop) {
+            dropItems.add(dropIndexSql);
+        } else {
+            modifyItems.add(dropIndexSql);
+        }
 
         // 添加索引
         String addIndexSql = getAddIndexSql(mysqlIndexMetadataList);
@@ -105,7 +121,6 @@ public class ModifyTableSqlBuilder {
             sqlList.add(sql);
         }
 
-        // 修改表，区分开删除和修改 是为了兼容云数据库方面的安全限制，删除和修改不能放在一起
         return sqlList;
     }
 
