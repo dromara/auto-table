@@ -56,7 +56,7 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
     }
 
     private String extractDbNameFromUrl(String jdbcUrl) {
-        Matcher matcher = Pattern.compile("jdbc:mysql://[^/]+/([^?]+)").matcher(jdbcUrl);
+        Matcher matcher = Pattern.compile(".*:mysql://[^/]+/([^?]+)").matcher(jdbcUrl);
         if (matcher.find()) {
             return matcher.group(1);
         }
