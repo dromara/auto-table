@@ -119,7 +119,8 @@ public class ColumnSqlBuilder {
             }
 
             // 字符串类型需要转义单引号
-            return "DEFAULT '" + defaultValue.replace("'", "''") + "'";
+            // return "DEFAULT '" + defaultValue.replace("'", "''") + "'";
+            return "DEFAULT " + defaultValue;
         }
 
         return "";
