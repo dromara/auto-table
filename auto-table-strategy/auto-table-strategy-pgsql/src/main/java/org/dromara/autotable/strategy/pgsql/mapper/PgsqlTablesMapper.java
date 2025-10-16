@@ -113,16 +113,16 @@ public class PgsqlTablesMapper {
      * @param tableName 表明
      * @return 主键名
      */
-    // @Select("SELECT key_col.constraint_name as primary_name, string_agg(key_col.column_name, ',' ORDER BY key_col.ordinal_position ASC) as columns " +
-    //         "FROM information_schema.key_column_usage key_col " +
-    //         "WHERE key_col.table_schema = #{schema} AND key_col.table_name = #{tableName} " +
-    //         "GROUP BY key_col.constraint_name;")
     public PgsqlDbPrimary selectPrimaryKeyName(String schema, String tableName) {
 
-        String sql = "SELECT key_col.constraint_name as primary_name, string_agg(key_col.column_name, ',' ORDER BY key_col.ordinal_position ASC) as columns " +
-                "FROM information_schema.key_column_usage key_col " +
-                "WHERE key_col.table_schema = ':schema' AND key_col.table_name = ':tableName' " +
-                "GROUP BY key_col.constraint_name;";
+        String sql = "SELECT con.conname AS primary_name, string_agg(col.attname, ',' ORDER BY att.ord) AS columns " +
+                "FROM pg_catalog.pg_constraint con " +
+                "JOIN pg_catalog.pg_class cls ON con.conrelid = cls.oid " +
+                "JOIN pg_catalog.pg_namespace nsp ON cls.relnamespace = nsp.oid " +
+                "JOIN pg_catalog.unnest(con.conkey) WITH ORDINALITY AS att(attnum, ord) ON TRUE " +
+                "JOIN pg_catalog.pg_attribute col ON col.attrelid = cls.oid AND col.attnum = att.attnum " +
+                "WHERE nsp.nspname = ':schema' AND cls.relname = ':tableName' AND con.contype = 'p' " +
+                "GROUP BY con.conname;";
 
         return DataSourceManager.useConnection(connection -> {
             return DBHelper.queryObject(connection, sql, new HashMap<String, Object>() {{
