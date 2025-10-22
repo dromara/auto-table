@@ -33,6 +33,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.context.annotation.Lazy;
 
 import javax.sql.DataSource;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
  * @author don
  */
 @Slf4j
+@Lazy(false)
 @AutoConfigureAfter({DataSourceAutoConfiguration.class})
 @ConditionalOnMissingBean(AutoTableAutoConfig.class)
 public class AutoTableAutoConfig {

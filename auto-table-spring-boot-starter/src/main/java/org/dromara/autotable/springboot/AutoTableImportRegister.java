@@ -2,6 +2,7 @@ package org.dromara.autotable.springboot;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
@@ -14,6 +15,7 @@ import java.util.Map;
  * <p> {@link EnableAutoTable}和{@link EnableAutoTableTest}都会激活该类，其中{@link EnableAutoTableTest}是用于单元测试的，因此在执行顺序上优先级要高于{@link EnableAutoTable}
  * @author don
  */
+@Lazy(false)
 public class AutoTableImportRegister implements ImportBeanDefinitionRegistrar {
 
     /**

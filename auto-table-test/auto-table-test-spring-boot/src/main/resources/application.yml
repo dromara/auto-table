@@ -24,6 +24,8 @@ spring:
     username: root
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver
+  main:
+    lazy-initialization: true
 #    url: jdbc:dm://localhost:5236?schema=test
 #    username: dm_user
 #    password: Dm888888
