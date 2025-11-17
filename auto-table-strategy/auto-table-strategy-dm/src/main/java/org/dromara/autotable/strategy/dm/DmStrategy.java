@@ -276,7 +276,7 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
 
     private boolean isIndexChanged(IndexMetadata newIndex, DmDbIndex oldIndex) {
         // 检查索引类型
-        if (!newIndex.getType().name().equals(oldIndex.getIndexType())) {
+        if (!newIndex.getType().name().equals(oldIndex.getUniqueness())) {
             return true;
         }
         // 检查包含字段
