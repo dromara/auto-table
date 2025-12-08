@@ -9,17 +9,17 @@ AutoTable 通过 **策略模式 + SPI 机制** 支持多种数据库，每种数
 
 ## 支持的数据库
 
-| 数据库 | 策略模块 | 测试版本 | 状态 |
-|--------|----------|----------|------|
-| [MySQL](/数据库适配/MySQL) | `auto-table-strategy-mysql` | 5.7+ | ✅ 稳定 |
-| MariaDB | `auto-table-strategy-mysql` | 对应 MySQL | ✅ 稳定 |
-| [PostgreSQL](/数据库适配/PostgreSQL) | `auto-table-strategy-pgsql` | 15.5 | ✅ 稳定 |
-| [Oracle](/数据库适配/Oracle) | `auto-table-strategy-oracle` | 11g / 23ai | ✅ 稳定 |
-| [达梦](/数据库适配/达梦) | `auto-table-strategy-dm` | dm8 | ✅ 稳定 |
-| [人大金仓](/数据库适配/人大金仓) | `auto-table-strategy-kingbase` | V009R001C002B0014 | ✅ 稳定 |
-| [H2](/数据库适配/H2) | `auto-table-strategy-h2` | 2.2.220 | ✅ 稳定 |
-| [SQLite](/数据库适配/SQLite) | `auto-table-strategy-sqlite` | 3.35.5 | ✅ 稳定 |
-| [Doris](/数据库适配/Doris) | `auto-table-strategy-doris` | 2.0 | ✅ 稳定 |
+| 数据库 | 策略模块 | 测试版本 | 状态 | 维护者 |
+|--------|----------|----------|------|------|
+| [MySQL](/数据库适配/MySQL) | `auto-table-strategy-mysql` | 5.7+ | ✅ 稳定 ||
+| MariaDB | `auto-table-strategy-mysql` | 对应 MySQL | ✅ 稳定 ||
+| [PostgreSQL](/数据库适配/PostgreSQL) | `auto-table-strategy-pgsql` | 15.5 | ✅ 稳定 ||
+| [Oracle](/数据库适配/Oracle) | `auto-table-strategy-oracle` | 11g / 23ai | ✅ 稳定 | [@lizhian](https://gitee.com/lizhian) |
+| [达梦](/数据库适配/达梦) | `auto-table-strategy-dm` | dm8 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
+| [人大金仓](/数据库适配/人大金仓) | `auto-table-strategy-kingbase` | V009R001C002B0014 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
+| [H2](/数据库适配/H2) | `auto-table-strategy-h2` | 2.2.220 | ✅ 稳定 ||
+| [SQLite](/数据库适配/SQLite) | `auto-table-strategy-sqlite` | 3.35.5 | ✅ 稳定 ||
+| [Doris](/数据库适配/Doris) | `auto-table-strategy-doris` | 2.0 | ✅ 稳定 | [@lizhian](https://gitee.com/lizhian) |
 
 ## 按需引入
 
