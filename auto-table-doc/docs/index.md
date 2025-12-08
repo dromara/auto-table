@@ -12,10 +12,10 @@ hero:
   actions:
     - theme: brand
       text: 什么是AutoTable？
-      link: /指南/介绍/什么是AutoTable
+      link: /快速开始/简介
     - theme: alt
       text: 快速上手
-      link: /指南/基础/快速上手
+      link: /快速开始/5分钟上手
     - theme: alt
       text: 🌟支持一下
       link: https://gitee.com/tangzc/auto-table

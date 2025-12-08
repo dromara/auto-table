@@ -1,18 +1,59 @@
 import {defineConfig} from 'vitepress'
+import {withMermaid} from 'vitepress-plugin-mermaid'
+
+// 教程侧边栏（快速开始、核心概念、使用指南、高级功能共享）
+function guideSidebar() {
+    return [
+        {
+            text: '快速开始',
+            items: [
+                {text: '简介', link: '/快速开始/简介'},
+                {text: '安装', link: '/快速开始/安装'},
+                {text: '5分钟上手', link: '/快速开始/5分钟上手'},
+            ]
+        },
+        {
+            text: '核心概念',
+            items: [
+                {text: '工作原理', link: '/核心概念/工作原理'},
+                {text: '运行模式', link: '/核心概念/运行模式'},
+                {text: '类型映射', link: '/核心概念/类型映射'},
+                {text: '多数据源', link: '/核心概念/多数据源'},
+            ]
+        },
+        {
+            text: '使用指南',
+            items: [
+                {text: '定义表', link: '/使用指南/定义表'},
+                {text: '定义列', link: '/使用指南/定义列'},
+                {text: '定义索引', link: '/使用指南/定义索引'},
+            ]
+        },
+        {
+            text: '高级功能',
+            items: [
+                {text: '拦截器', link: '/高级功能/拦截器'},
+                {text: '事件回调', link: '/高级功能/事件回调'},
+                {text: 'SQL记录', link: '/高级功能/SQL记录'},
+                {text: '自动建库', link: '/高级功能/自动建库'},
+                {text: '数据初始化', link: '/高级功能/数据初始化'},
+                {text: '自定义策略', link: '/高级功能/自定义策略'},
+            ]
+        }
+    ]
+}
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default withMermaid(defineConfig({
     title: "Dromara AutoTable",
-    titleTemplate: "Auto Table",
-    description: "自动维护数据库",
+    titleTemplate: "AutoTable - 自动维护数据库表结构",
+    description: "自动维护数据库表结构的框架，让你专注于业务逻辑和实体定义",
     head: [
         ['link', {rel: 'icon', href: '/logo.png'}]
     ],
     lastUpdated: true,
-    build: {
-        rollupOptions: {
-            external: ['/flow.png']
-        }
+    sitemap: {
+        hostname: 'https://autotable.tangzc.com'
     },
     // https://vitepress.dev/reference/default-theme-config
     themeConfig: {
@@ -22,129 +63,177 @@ export default defineConfig({
             options: {
                 translations: {
                     button: {
-                        buttonText: '搜索文档'
+                        buttonText: '搜索文档',
+                        buttonAriaLabel: '搜索文档'
+                    },
+                    modal: {
+                        noResultsText: '无法找到相关结果',
+                        resetButtonTitle: '清除查询条件',
+                        footer: {
+                            selectText: '选择',
+                            navigateText: '切换'
+                        }
                     }
                 }
             }
         },
         docFooter: {
-            prev: '上一页',
-            next: '下一页'
+            prev: '上一篇',
+            next: '下一篇'
+        },
+        lastUpdatedText: '最后更新',
+        returnToTopLabel: '返回顶部',
+        darkModeSwitchLabel: '主题',
+        sidebarMenuLabel: '菜单',
+        editLink: {
+            pattern: 'https://gitee.com/tangzc/auto-table/edit/main/auto-table-doc/docs/:path',
+            text: '在 Gitee 上编辑此页'
+        },
+        footer: {
+            message: 'Released under the Apache 2.0 License.',
+            copyright: 'Copyright © 2024 Dromara AutoTable'
         },
         nav: [
-            {text: '指南', link: '/指南/介绍/什么是AutoTable'},
-            {text: '配置', link: '/配置'},
-            {text: '葵花宝典', link: '/葵花宝典/说明'},
+            {text: '指南', link: '/快速开始/简介'},
+            {text: 'API', link: '/API参考/注解速查'},
+            {text: '数据库', link: '/数据库适配/'},
+            {text: '最佳实践', link: '/最佳实践/生产环境部署'},
+            {text: 'FAQ', link: '/常见问题/'},
             {
-                text: '数据库特性', items: [
-                    {text: 'Doris', link: '/数据库特性/Doris/说明'},
-                    {text: 'Oracle', link: '/数据库特性/Oracle/说明'},
+                text: '更多',
+                items: [
+                    {text: '框架集成', link: '/框架集成/'},
+                    {text: '更新日志', link: '/更新日志'},
+                    {text: '社区', link: '/社区/贡献指南'}
                 ]
             },
-            {text: '变更日志', link: '/变更日志'},
-            {text: '第三方框架集成', link: '/第三方框架集成/index'},
-            {text: '支持/联系', link: '/支持联系/支持我'}
+            {
+                text: '2.5.10',
+                items: [
+                    {text: '更新日志', link: '/更新日志'},
+                    {text: 'Gitee', link: 'https://gitee.com/tangzc/auto-table'},
+                    {text: 'GitHub', link: 'https://github.com/dromara/auto-table'}
+                ]
+            }
         ],
         outline: {
-            level: 'deep',
-            label: '目录',
+            level: [2, 3],
+            label: '本页目录',
         },
         sidebar: {
-            // 当用户位于 `/指南` 目录时，会显示此侧边栏
+            // 所有教程页面共享同一个侧边栏
+            '/快速开始/': guideSidebar(),
+            '/核心概念/': guideSidebar(),
+            '/使用指南/': guideSidebar(),
+            '/高级功能/': guideSidebar(),
+            '/数据库适配/': [
+                {
+                    text: '数据库适配',
+                    items: [
+                        {text: '总览', link: '/数据库适配/'},
+                        {text: 'MySQL', link: '/数据库适配/MySQL'},
+                        {text: 'PostgreSQL', link: '/数据库适配/PostgreSQL'},
+                        {text: 'Oracle', link: '/数据库适配/Oracle'},
+                        {text: '达梦', link: '/数据库适配/达梦'},
+                        {text: '人大金仓', link: '/数据库适配/人大金仓'},
+                        {text: 'H2', link: '/数据库适配/H2'},
+                        {text: 'SQLite', link: '/数据库适配/SQLite'},
+                        {text: 'Doris', link: '/数据库适配/Doris'},
+                    ]
+                }
+            ],
+            '/框架集成/': [
+                {
+                    text: '框架集成',
+                    items: [
+                        {text: '总览', link: '/框架集成/'},
+                        {text: 'Mybatis-Plus', link: '/框架集成/Mybatis-Plus'},
+                        {text: 'Mybatis-Flex', link: '/框架集成/Mybatis-Flex'},
+                        {text: 'SpringDoc', link: '/框架集成/SpringDoc'},
+                    ]
+                }
+            ],
+            '/API参考/': [
+                {
+                    text: 'API 参考',
+                    items: [
+                        {text: '注解速查', link: '/API参考/注解速查'},
+                        {text: '配置项', link: '/API参考/配置项'},
+                    ]
+                }
+            ],
+            '/最佳实践/': [
+                {
+                    text: '最佳实践',
+                    items: [
+                        {text: '生产环境部署', link: '/最佳实践/生产环境部署'},
+                        {text: '单元测试', link: '/最佳实践/单元测试'},
+                    ]
+                }
+            ],
+            '/常见问题/': [
+                {
+                    text: '常见问题',
+                    items: [
+                        {text: '问题索引', link: '/常见问题/'},
+                        {text: '表未创建', link: '/常见问题/没有创建表'},
+                        {text: '字段排序', link: '/常见问题/字段排序'},
+                        {text: '父类字段问题', link: '/常见问题/父类字段没有创建'},
+                        {text: '字段删除', link: '/常见问题/字段删除'},
+                        {text: 'Invalid value type', link: '/常见问题/Invalid value type'},
+                        {text: '自定义类型映射', link: '/常见问题/自定义类型映射'},
+                        {text: '启动顺序', link: '/常见问题/启动顺序(时机)'},
+                        {text: '生成Flyway脚本', link: '/常见问题/生成Flyway脚本'},
+                        {text: '与Flyway集成', link: '/常见问题/与Flyway集成'},
+                        {text: '集成SpringDoc', link: '/常见问题/集成springdoc'},
+                        {text: '自定义SQL记录数据源', link: '/常见问题/自定义sql记录数据源'},
+                    ]
+                }
+            ],
+            '/社区/': [
+                {
+                    text: '社区',
+                    items: [
+                        {text: '贡献指南', link: '/社区/贡献指南'},
+                        {text: '贡献者', link: '/社区/贡献者'},
+                        {text: '支持我们', link: '/社区/支持我们'},
+                    ]
+                }
+            ],
+            // 兼容旧路径
             '/指南/': [
                 {
                     text: '介绍',
                     items: [
-                        {text: '什么是AutoTable', link: '/指南/介绍/什么是AutoTable'},
-                        {text: '工作流程', link: '/指南/介绍/工作流程'},
-                        {text: '贡献者', link: '/指南/介绍/贡献者'},
+                        {text: '什么是AutoTable', link: '/快速开始/简介'},
+                        {text: '工作流程', link: '/核心概念/工作原理'},
                     ]
                 },
                 {
                     text: '基础',
                     items: [
-                        {text: '快速上手', link: '/指南/基础/快速上手'},
+                        {text: '快速上手', link: '/快速开始/5分钟上手'},
                     ]
                 },
                 {
                     text: '进阶',
                     items: [
-                        {text: '定义表', link: '/指南/进阶/定义表'},
-                        {text: '定义列', link: '/指南/进阶/定义列'},
-                        {text: '定义索引', link: '/指南/进阶/定义索引'},
+                        {text: '定义表', link: '/使用指南/定义表'},
+                        {text: '定义列', link: '/使用指南/定义列'},
+                        {text: '定义索引', link: '/使用指南/定义索引'},
                     ]
                 },
                 {
                     text: '高级',
                     items: [
-                        {text: '单元测试', link: '/指南/高级/单元测试'},
-                        {text: '生产环境', link: '/指南/高级/开发生产环境'},
-                        {text: '多数据源', link: '/指南/高级/多数据源'},
-                        {text: '拦截器', link: '/指南/高级/拦截器'},
-                        {text: '事件回调', link: '/指南/高级/事件回调'},
-                        {text: '多库适配', link: '/指南/高级/多库适配.md'},
-                        {text: '自动建库', link: '/指南/高级/自动建库.md'},
-                        {text: '自动初始化数据', link: '/指南/高级/自动初始化数据.md'},
-                    ]
-                },
-                {
-                    text: '自定义',
-                    items: [
-                        {text: 'SQL记录', link: '/指南/自定义/SQL记录'},
-                        {text: '类型映射', link: '/指南/自定义/类型映射'},
-                        {text: '数据库策略', link: '/指南/自定义/数据库策略'},
+                        {text: '拦截器', link: '/高级功能/拦截器'},
+                        {text: '事件回调', link: '/高级功能/事件回调'},
+                        {text: '多数据源', link: '/核心概念/多数据源'},
+                        {text: '自动建库', link: '/高级功能/自动建库'},
+                        {text: '自动初始化数据', link: '/高级功能/数据初始化'},
                     ]
                 },
             ],
-            '/第三方框架集成/': [
-                {
-                    text: '第三方集成',
-                    items: [
-                        {text: 'MybatisPlus', link: '/第三方框架集成/MybatisPlus'},
-                        {text: 'MybatisFlex', link: '/第三方框架集成/MybatisFlex'},
-                    ]
-                },
-            ],
-            '/葵花宝典/': [
-                {
-                    items: [
-                        {text: '说明', link: '/葵花宝典/说明'},
-                        {text: '字段排序', link: '/葵花宝典/字段排序'},
-                        {text: '父类字段没有创建', link: '/葵花宝典/父类字段没有创建'},
-                        {text: 'Invalid value type', link: '/葵花宝典/Invalid value type'},
-                        {text: '生成Flyway脚本', link: '/葵花宝典/生成Flyway脚本'},
-                        {text: '启动顺序(时机)', link: '/葵花宝典/启动顺序(时机)'},
-                        {text: '字段删除', link: '/葵花宝典/字段删除'},
-                        {text: '自定义类型映射', link: '/葵花宝典/自定义类型映射'},
-                        {text: '没有创建表', link: '/葵花宝典/没有创建表'},
-                        {text: '集成springdoc', link: '/葵花宝典/集成springdoc.md'},
-                        {text: '自定义sql记录数据源', link: '/葵花宝典/自定义sql记录数据源.md'},
-                    ]
-                },
-            ],
-            '/数据库特性/': [
-                {
-                    text: 'Doris',
-                    items: [
-                        {text: '说明', link: '/数据库特性/Doris/说明'},
-                        {text: '配置', link: '/数据库特性/Doris/配置'},
-                    ]
-                },
-                {
-                    text: 'Oracle',
-                    items: [
-                        {text: '说明', link: '/数据库特性/Oracle/说明'},
-                    ]
-                }
-            ],
-            '/支持联系/': [
-                {
-                    items: [
-                        {text: '支持我', link: '/支持联系/支持我'},
-                        {text: '联系我', link: '/支持联系/联系我'},
-                    ]
-                },
-            ]
         },
         socialLinks: [
             {
@@ -169,13 +258,6 @@ export default defineConfig({
                 icon: "github",
                 link: 'https://github.com/dromara/auto-table',
                 ariaLabel: "GitHub"
-            },
-            {
-                icon: {
-                    svg: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 28 28\" fill=\"none\">\n" +
-                        "    <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M18.059 5.80628C18.2234 5.71425 18.3973 5.61696 18.585 5.51037C18.6076 5.63327 18.6297 5.74058 18.6497 5.83784C18.685 6.00943 18.714 6.15059 18.728 6.29005C18.8392 7.50125 19.448 8.39222 20.3108 8.59286C21.5726 8.88583 22.7623 8.40159 23.4033 7.33318C24.1733 6.05123 23.839 4.4812 22.5279 3.53618C18.8826 0.907049 14.8777 0.18191 10.5636 1.44819C1.2616 4.1927 -1.92121 15.6199 4.68062 22.6274C7.50507 25.6249 11.0914 26.9182 15.1624 26.8204C20.3774 26.6979 24.1333 24.099 26.5309 19.5947C28.2308 16.3988 26.3829 12.9055 22.8439 12.1795C20.8227 11.7726 18.7559 11.6405 16.6993 11.7869C16.0151 11.8526 15.3509 12.0547 14.7459 12.3811C14.0691 12.7324 13.8734 13.4614 13.9493 14.1838C14.02 14.8421 14.5247 15.2369 15.1258 15.3362C16.3361 15.5256 17.5609 15.6357 18.7833 15.7361C19.1371 15.7659 19.4942 15.7694 19.8507 15.773C20.3623 15.7781 20.873 15.7832 21.3718 15.8657C22.7949 16.1009 23.2836 17.2557 22.5517 18.4911C22.3724 18.7882 22.1633 19.0662 21.9277 19.3209C20.9703 20.3738 19.7183 21.1144 18.3344 21.4465C15.8084 22.0649 13.2798 22.0996 10.7655 21.3054C7.90238 20.4021 6.19549 18.2991 6.13552 15.4682C6.1131 13.7223 6.55634 12.002 7.41963 10.4843C7.80967 9.77685 8.02376 9.04827 7.96359 8.24664C7.93826 7.90488 7.92423 7.56273 7.90915 7.19506C7.90113 6.99938 7.89281 6.79647 7.88233 6.58254C8.17231 6.6434 8.45871 6.72023 8.74022 6.81271C9.83531 7.2523 10.9132 7.45284 12.0986 7.13019C12.7728 6.96895 13.4697 6.92433 14.159 6.99829C15.269 7.08878 16.3785 6.81759 17.3215 6.22521C17.5569 6.08724 17.7963 5.9533 18.059 5.80628Z\" fill=\"#DA203E\"/>\n" +
-                        "</svg>"
-                }, link: 'https://gitcode.com/dromara/auto-table', ariaLabel: "GitCode"
             }
         ]
     },
@@ -187,5 +269,39 @@ export default defineConfig({
             infoLabel: '信息',
             detailsLabel: '详细信息'
         }
+    },
+    mermaid: {
+        theme: 'base',
+        themeVariables: {
+            // 主色调
+            primaryColor: '#6366f1',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: '#4f46e5',
+            // 次要色调
+            secondaryColor: '#f0abfc',
+            secondaryTextColor: '#1e1e1e',
+            secondaryBorderColor: '#d946ef',
+            // 第三色调
+            tertiaryColor: '#a5f3fc',
+            tertiaryTextColor: '#1e1e1e',
+            tertiaryBorderColor: '#06b6d4',
+            // 背景和线条
+            background: '#ffffff',
+            mainBkg: '#f8fafc',
+            lineColor: '#64748b',
+            // 节点样式
+            nodeBorder: '#4f46e5',
+            nodeTextColor: '#1e1e1e',
+            // 流程图
+            edgeLabelBackground: '#ffffff',
+            clusterBkg: '#f1f5f9',
+            clusterBorder: '#cbd5e1',
+            // 字体
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontSize: '14px'
+        }
+    },
+    mermaidPlugin: {
+        class: 'mermaid-diagram'
     }
-})
+}))
