@@ -272,6 +272,7 @@ export default withMermaid(defineConfig({
     },
     mermaid: {
         theme: 'base',
+        // mermaid 主题变量，参照 https://mermaid.js.org/config/theming.html
         themeVariables: {
             // 主色调
             primaryColor: '#6366f1',
@@ -296,6 +297,8 @@ export default withMermaid(defineConfig({
             edgeLabelBackground: '#ffffff',
             clusterBkg: '#f1f5f9',
             clusterBorder: '#cbd5e1',
+            // 类图样式 - 修复文字颜色太浅的问题
+            classText: '#1e1e1e',
             // 字体
             fontFamily: 'system-ui, -apple-system, sans-serif',
             fontSize: '14px'
