@@ -5,26 +5,13 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
-import org.dromara.autotable.core.config.PropertyConfig;
-import org.dromara.autotable.core.constants.DatabaseDialect;
-import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
-import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
-import org.dromara.autotable.strategy.h2.data.H2DefaultTypeEnum;
-import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
-import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
-import org.dromara.autotable.test.core.entity.h2.TestH2;
-import org.dromara.autotable.test.core.entity.mysql.custome_add_column.MyBuildTableMetadataInterceptor;
-import org.dromara.autotable.test.core.entity.pgsql.TestNoColumnComment;
-import org.dromara.autotable.test.core.entity.sqlite.TestSqlite;
+import org.dromara.autotable.test.core.entity.mysql.TestTableIndexes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 public class ApplicationSimpleTest {
 
@@ -43,7 +30,7 @@ public class ApplicationSimpleTest {
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
         AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
-                org.dromara.autotable.test.core.entity.mysql.TestIndex.class
+                TestTableIndexes.class
         });
         // 开始
         AutoTableBootstrap.start();

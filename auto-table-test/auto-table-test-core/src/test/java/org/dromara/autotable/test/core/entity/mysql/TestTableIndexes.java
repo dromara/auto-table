@@ -7,11 +7,11 @@ import org.dromara.autotable.annotation.TableIndexes;
 
 @FieldNameConstants
 @TableIndexes({
-        @TableIndex(fields = {TestIndex.Fields.testColumn}, comment = "测试索引1"),
-        @TableIndex(fields = {TestIndex.Fields.testColumn2}, comment = "测试索引2"),
+        @TableIndex(fields = {TestTableIndexes.Fields.testColumn}, comment = "测试索引1"),
+        @TableIndex(fields = {TestTableIndexes.Fields.testColumn2}, comment = "测试索引2"),
 })
 @AutoTable
-public class TestIndex {
+public class TestTableIndexes {
     private String testColumn;
     private String testColumn2;
     private String testColumn3;

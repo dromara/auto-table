@@ -30,9 +30,7 @@ import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.TableMetadata;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Lazy;
 
 import javax.sql.DataSource;
@@ -43,7 +41,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Lazy(false)
-@AutoConfigureAfter({DataSourceAutoConfiguration.class})
 @ConditionalOnMissingBean(AutoTableAutoConfig.class)
 public class AutoTableAutoConfig {
 

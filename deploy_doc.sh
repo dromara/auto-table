@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 发布文档
+
 # 构建项目
 cd auto-table-doc || exit
 npm run docs:build
