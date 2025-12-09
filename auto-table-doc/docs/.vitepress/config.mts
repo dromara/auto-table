@@ -108,7 +108,7 @@ export default withMermaid(defineConfig({
                 ]
             },
             {
-                text: '2.5.10',
+                text: '2.5.11',
                 items: [
                     {text: '更新日志', link: '/更新日志'},
                     {text: 'Gitee', link: 'https://gitee.com/tangzc/auto-table'},
