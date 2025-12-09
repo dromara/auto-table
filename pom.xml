@@ -52,7 +52,7 @@
 
         <mybatis.version>3.5.14</mybatis.version>
         <spring.version>5.3.31</spring.version>
-        <solon.version>3.5.2</solon.version>
+        <solon.version>3.7.3</solon.version>
         <spring-boot.version>2.7.18</spring-boot.version>
         <mybatis-spring.version>2.1.2</mybatis-spring.version>
         <lombok.version>1.18.34</lombok.version>
