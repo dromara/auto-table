@@ -3,6 +3,9 @@ package org.dromara.autotable.core.converter;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 数据库类型定义
+ */
 @Data
 @RequiredArgsConstructor
 public class DatabaseTypeDefine implements DefaultTypeEnumInterface {

@@ -1,7 +1,9 @@
 package org.dromara.autotable.springboot;
 
 import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.springframework.context.annotation.Lazy;
 
+@Lazy(false)
 public class AutoTableTest {
 
     public AutoTableTest() {

@@ -78,8 +78,12 @@ public interface JavaTypeToDatabaseTypeConverter {
             // 如果没有指定明确的类型名，但是却指定了长度。那么使用默认类型+指定长度
             if (length != null || decimalLength != null) {
                 DatabaseTypeAndLength typeAndLength = getDatabaseTypeAndLength(databaseDialect, clazz, field);
-                typeAndLength.setLength(length);
-                typeAndLength.setDecimalLength(decimalLength);
+                if (length != null) {
+                    typeAndLength.setLength(length);
+                }
+                if (decimalLength != null) {
+                    typeAndLength.setDecimalLength(decimalLength);
+                }
                 return typeAndLength;
             }
         }

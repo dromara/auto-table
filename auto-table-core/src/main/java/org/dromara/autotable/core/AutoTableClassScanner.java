@@ -98,7 +98,10 @@ public abstract class AutoTableClassScanner {
                 classes.addAll(findLocalClasses(checkPattern, new File(decodedPath), checker));
             } else if ("jar".equals(resource.getProtocol())) {
                 JarURLConnection jarURLConnection = (JarURLConnection) resource.openConnection();
-                classes.addAll(findJarClasses(checkPattern, jarURLConnection.getJarFile(), checker));
+                jarURLConnection.setUseCaches(false);  // 禁用缓存，避免共享导致的关闭问题
+                try (JarFile jarFile = jarURLConnection.getJarFile()) {
+                    classes.addAll(findJarClasses(checkPattern, jarFile, checker));
+                }
             }
         }
         return classes;

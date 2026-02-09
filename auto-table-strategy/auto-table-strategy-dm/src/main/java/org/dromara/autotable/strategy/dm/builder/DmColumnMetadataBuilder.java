@@ -4,8 +4,8 @@ import org.dromara.autotable.annotation.ColumnDefault;
 import org.dromara.autotable.core.builder.ColumnMetadataBuilder;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
-import org.dromara.autotable.strategy.dm.data.DmTypeHelper;
 import org.dromara.autotable.core.utils.StringUtils;
+import org.dromara.autotable.strategy.dm.data.DmTypeHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +67,7 @@ public class DmColumnMetadataBuilder extends ColumnMetadataBuilder {
     }
 
     private String wrapQuotesIfNeeded(String value, DatabaseTypeAndLength type) {
-        if (DmTypeHelper.isCharString(type) || DmTypeHelper.isTime(type)) {
+        if (DmTypeHelper.isTime(type)) {
             if (!value.startsWith("'")) {
                 return "'" + value.replace("'", "''") + "'";
             }

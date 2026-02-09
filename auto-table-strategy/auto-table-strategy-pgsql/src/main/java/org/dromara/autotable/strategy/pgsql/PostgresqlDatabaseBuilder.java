@@ -85,7 +85,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
     }
 
     private String extractDbNameFromUrl(String jdbcUrl) {
-        Matcher matcher = Pattern.compile("jdbc:postgresql://[^/]+/([^?]+)").matcher(jdbcUrl);
+        Matcher matcher = Pattern.compile(".*:postgresql://[^/]+/([^?]+)").matcher(jdbcUrl);
         if (matcher.find()) {
             return matcher.group(1);
         }
