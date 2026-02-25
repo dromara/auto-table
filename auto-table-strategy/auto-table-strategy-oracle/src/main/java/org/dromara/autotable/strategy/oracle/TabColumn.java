@@ -55,7 +55,7 @@ public class TabColumn {
         }
         if (data_precision != null) {
             fullType += "(" + data_precision;
-            if (data_scale != null) {
+            if (data_scale != null && data_scale > 0) {
                 fullType += "," + data_scale;
             }
             fullType += ")";
