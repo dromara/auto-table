@@ -49,6 +49,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
     /**
      * 索引名称最大长度: 考虑到大多数数据库，其中oracle的30最小，再就是pg的63了，所以这里取63，oracle自行处理
+     *
      * @return 索引名称最大长度
      */
     @Override
@@ -333,7 +334,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     // 类型是否修改
                     String newType = newColumn.getType().getDefaultFullType();
                     String oldType = oldColumn.getFullType();
-                    if (!newType.equalsIgnoreCase(oldType)) {
+                    if (isSameType(newType, oldType)) {
                         change = true;
                         updateColumnSet.add(newColumn.getName().toLowerCase());
                         newColumnSql += " " + newType;
@@ -447,6 +448,15 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         compareTableInfo.setDeleteIndexList(deleteIndexList);
         compareTableInfo.setCreateIndexList(createIndexList);
         return compareTableInfo;
+    }
+
+    private boolean isSameType(String newType, String oldType) {
+        if (newType.equalsIgnoreCase(oldType)) {
+            return true;
+        }
+        String newTypeReplace = newType.replace(",0)", ")");
+        String oldTypeReplace = oldType.replace(",0)", ")");
+        return newTypeReplace.equalsIgnoreCase(oldTypeReplace);
     }
 
 

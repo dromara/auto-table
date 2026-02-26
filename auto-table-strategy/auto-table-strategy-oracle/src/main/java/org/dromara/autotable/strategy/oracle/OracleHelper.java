@@ -49,37 +49,37 @@ public class OracleHelper {
 
     public static class DB {
         /**
- * 查询返回列表
- * 使用泛型来处理不同的结果类型
- *
- * @param sql           查询的 SQL 语句
- * @param params        SQL 参数，用于替换 SQL 中的占位符
- * @param resultClass   结果集中的对象类型
- * @return              查询结果列表
- */
-public static <T> List<T> queryList(String sql, Map<String, Object> params, Class<T> resultClass) {
-    // 使用数据源管理器的连接执行查询
-    return DataSourceManager.useConnection(connection -> {
-        // 设置 SQL 参数
-        String finalSql = DBHelper.setParameters(sql, params);
-        try {
-            // 执行查询并使用 BeanListHandler 处理结果集
-            return queryRunner.query(connection, finalSql, new BeanListHandler<>(resultClass, convert));
-        } catch (SQLException e) {
-            // 将 SQL 异常包装为运行时异常
-            throw new RuntimeException(e);
+         * 查询返回列表
+         * 使用泛型来处理不同的结果类型
+         *
+         * @param sql         查询的 SQL 语句
+         * @param params      SQL 参数，用于替换 SQL 中的占位符
+         * @param resultClass 结果集中的对象类型
+         * @return 查询结果列表
+         */
+        public static <T> List<T> queryList(String sql, Map<String, Object> params, Class<T> resultClass) {
+            // 使用数据源管理器的连接执行查询
+            return DataSourceManager.useConnection(connection -> {
+                // 设置 SQL 参数
+                String finalSql = DBHelper.setParameters(sql, params);
+                try {
+                    // 执行查询并使用 BeanListHandler 处理结果集
+                    return queryRunner.query(connection, finalSql, new BeanListHandler<>(resultClass, convert));
+                } catch (SQLException e) {
+                    // 将 SQL 异常包装为运行时异常
+                    throw new RuntimeException(e);
+                }
+            });
         }
-    });
-}
 
 
         /**
          * 根据SQL查询返回单个对象
          * 该方法用于执行一个查询，并期望得到最多一个结果该方法主要用于那些查询结果只应包含零个或一个元素的场景
          *
-         * @param <T> 期望返回的对象类型，由调用者指定
-         * @param sql SQL查询语句，可以包含命名参数
-         * @param params 一个包含命名参数和对应值的Map，用于替换SQL语句中的命名参数
+         * @param <T>         期望返回的对象类型，由调用者指定
+         * @param sql         SQL查询语句，可以包含命名参数
+         * @param params      一个包含命名参数和对应值的Map，用于替换SQL语句中的命名参数
          * @param resultClass 期望返回对象的类，用于指定查询结果的类型
          * @return 返回查询结果中的第一个对象，如果没有结果则返回null
          */
