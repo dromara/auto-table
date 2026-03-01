@@ -108,7 +108,7 @@ export default withMermaid(defineConfig({
                 ]
             },
             {
-                text: '2.5.13', // @auto-table-version
+                text: '2.5.14', // @auto-table-version
                 items: [
                     {text: '更新日志', link: '/更新日志'},
                     {text: 'Gitee', link: 'https://gitee.com/tangzc/auto-table'},
