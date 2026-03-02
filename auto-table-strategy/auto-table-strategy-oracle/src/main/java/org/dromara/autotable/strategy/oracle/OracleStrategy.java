@@ -334,7 +334,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     // 类型是否修改
                     String newType = newColumn.getType().getDefaultFullType();
                     String oldType = oldColumn.getFullType();
-                    if (isSameType(newType, oldType)) {
+                    if (!isSameType(newType, oldType)) {
                         change = true;
                         updateColumnSet.add(newColumn.getName().toLowerCase());
                         newColumnSql += " " + newType;
