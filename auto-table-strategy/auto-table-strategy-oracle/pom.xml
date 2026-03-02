@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.dromara.autotable</groupId>
         <artifactId>auto-table-strategy</artifactId>
-        <version>2.5.13</version>
+        <version>2.5.14</version>
     </parent>
 
     <name>auto-table-strategy-oracle</name>

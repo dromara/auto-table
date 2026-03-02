@@ -9,8 +9,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
-import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -48,7 +46,6 @@ public class DataSourceManager {
     }
 
     public static void setDataSource(@NonNull DataSource dataSource) {
-        log.debug("DSM添加数据源");
         DataSourceManager.DATA_SOURCE_THREAD_LOCAL.get().push(dataSource);
     }
 
@@ -61,7 +58,6 @@ public class DataSourceManager {
     }
 
     public static void cleanDataSource() {
-        log.debug("DSM清除数据源");
         DATA_SOURCE_THREAD_LOCAL.get().pop();
     }
 
