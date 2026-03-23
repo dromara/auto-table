@@ -47,15 +47,18 @@ public class TabColumn {
         if (fullType.contains("(") && fullType.contains(")")) {
             return fullType;
         }
-        if (data_length == null && data_precision == null && data_scale == null) {
+        boolean dataLengthAvailable = data_length != null && data_length > 0;
+        boolean dataPrecisionAvailable = data_precision != null && data_precision > 0;
+        boolean dataScaleAvailable = data_scale != null && data_scale > 0;
+        if (!dataLengthAvailable && !dataPrecisionAvailable && !dataScaleAvailable) {
             return fullType;
         }
-        if (data_precision == null && data_scale == null) {
+        if (!dataPrecisionAvailable && dataLengthAvailable) {
             return fullType + "(" + data_length + ")";
         }
-        if (data_precision != null) {
+        if (dataPrecisionAvailable) {
             fullType += "(" + data_precision;
-            if (data_scale != null && data_scale > 0) {
+            if (dataScaleAvailable) {
                 fullType += "," + data_scale;
             }
             fullType += ")";
