@@ -23,6 +23,9 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -158,6 +161,88 @@ public class ApplicationSingleTest {
         autoTableProperties.setModelClass(new Class[]{
                 org.dromara.autotable.test.core.entity.common_update.TestTableIndex.class
         });
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
+    public void testMysqlFullTextIndex() {
+
+        initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
+        // 指定扫描包
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
+                org.dromara.autotable.test.core.entity.mysql.TestFullTextIndex.class
+        });
+
+        CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
+            assert databaseDialect.equals(DatabaseDialect.MySQL);
+            assert tableMetadata instanceof MysqlTableMetadata;
+            MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
+            List<org.dromara.autotable.core.strategy.IndexMetadata> indexMetadataList = mysqlTableMetadata.getIndexMetadataList();
+
+            // 验证生成了两个全文索引
+            assert indexMetadataList.size() == 2;
+
+            // 验证第一个索引是全文索引
+            org.dromara.autotable.core.strategy.IndexMetadata firstIndex = indexMetadataList.get(0);
+            assert firstIndex instanceof MysqlIndexMetadata;
+            MysqlIndexMetadata mysqlFirstIndex = (MysqlIndexMetadata) firstIndex;
+            assert mysqlFirstIndex.isFullText();
+            assert "content".equals(mysqlFirstIndex.getColumns().get(0).getColumn());
+
+            // 验证第二个索引是全文索引，并指定了分词器
+            org.dromara.autotable.core.strategy.IndexMetadata secondIndex = indexMetadataList.get(1);
+            assert secondIndex instanceof MysqlIndexMetadata;
+            MysqlIndexMetadata mysqlSecondIndex = (MysqlIndexMetadata) secondIndex;
+            assert mysqlSecondIndex.isFullText();
+            assert "ngram".equals(mysqlSecondIndex.getParser());
+            assert "description".equals(mysqlSecondIndex.getColumns().get(0).getColumn());
+        };
+        AutoTableGlobalConfig.instance().setCreateTableInterceptors(Collections.singletonList(
+                createTableInterceptor
+        ));
+
+        // 开始
+        AutoTableBootstrap.start();
+    }
+
+    @Test
+    public void testMysqlTableFullTextIndex() {
+
+        initSqlSessionFactory("mybatis-config-mysql.xml");
+
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
+        // 指定扫描包
+        AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
+                org.dromara.autotable.test.core.entity.mysql.TestTableFullTextIndex.class
+        });
+
+        CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
+            assert databaseDialect.equals(DatabaseDialect.MySQL);
+            assert tableMetadata instanceof MysqlTableMetadata;
+            MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
+            List<org.dromara.autotable.core.strategy.IndexMetadata> indexMetadataList = mysqlTableMetadata.getIndexMetadataList();
+
+            // 验证生成了一个全文索引
+            assert indexMetadataList.size() == 1;
+
+            // 验证是全文索引
+            org.dromara.autotable.core.strategy.IndexMetadata indexMetadata = indexMetadataList.get(0);
+            assert indexMetadata instanceof MysqlIndexMetadata;
+            MysqlIndexMetadata mysqlIndexMetadata = (MysqlIndexMetadata) indexMetadata;
+            assert mysqlIndexMetadata.isFullText();
+            assert "内容全文索引".equals(mysqlIndexMetadata.getComment());
+            // 验证包含两个字段
+            assert mysqlIndexMetadata.getColumns().size() == 2;
+            assert "content".equals(mysqlIndexMetadata.getColumns().get(0).getColumn());
+            assert "description".equals(mysqlIndexMetadata.getColumns().get(1).getColumn());
+        };
+        AutoTableGlobalConfig.instance().setCreateTableInterceptors(Collections.singletonList(
+                createTableInterceptor
+        ));
+
         // 开始
         AutoTableBootstrap.start();
     }

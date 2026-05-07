@@ -182,6 +182,14 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                     mysqlCompareTableInfo.getIndexMetadataList().add(indexMetadata);
                 } else {
                     // 牵扯的字段数目一致，再按顺序逐个比较每个位置的列名及其排序方式是否相同
+                    // 先判断索引类型（全文索引 vs 普通索引）是否一致
+                    boolean indexTypeDiff = false;
+                    if (indexMetadata instanceof org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) {
+                        org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata mysqlIndexMetadata = (org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) indexMetadata;
+                        boolean isFullText = mysqlIndexMetadata.isFullText();
+                        boolean dbIsFullText = "FULLTEXT".equalsIgnoreCase(theIndexColumns.get(0).getIndexType());
+                        indexTypeDiff = isFullText != dbIsFullText;
+                    }
                     for (int i = 0; i < theIndexColumns.size(); i++) {
                         InformationSchemaStatistics informationSchemaStatistics = theIndexColumns.get(i);
                         IndexSortTypeEnum indexSort = IndexSortTypeEnum.parseFromMysql(informationSchemaStatistics.getCollation());
@@ -192,7 +200,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                         boolean nameIsDiff = !informationSchemaStatistics.getColumnName().equals(indexColumnParam.getColumn());
                         // 类注解指定排序方式不为空的情况下，与库中的值不同即不同
                         boolean sortTypeIsDiff = indexColumnParamSort != null && indexColumnParamSort != indexSort;
-                        if (nameIsDiff || sortTypeIsDiff) {
+                        if (nameIsDiff || sortTypeIsDiff || indexTypeDiff) {
                             // 同名的索引，但是表上的字段数量跟Bean上指定的不一致，需要修改（先删除，再新增）
                             mysqlCompareTableInfo.getDropIndexList().add(indexName);
                             mysqlCompareTableInfo.getIndexMetadataList().add(indexMetadata);

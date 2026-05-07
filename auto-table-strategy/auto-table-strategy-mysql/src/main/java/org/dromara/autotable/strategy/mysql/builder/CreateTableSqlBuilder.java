@@ -117,7 +117,28 @@ public class CreateTableSqlBuilder {
     }
 
     public static String getIndexSql(IndexMetadata indexMetadata) {
-        // 例子： UNIQUE INDEX `unique_name_age`(`name` ASC, `age` DESC) COMMENT '姓名、年龄索引',
+        // 判断是否为 MySQL 全文索引
+        if (indexMetadata instanceof org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) {
+            org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata mysqlIndexMetadata = (org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) indexMetadata;
+            if (mysqlIndexMetadata.isFullText()) {
+                return StringConnectHelper.newInstance("{indexType} INDEX {indexName}({columns}){indexComment}{parser}")
+                        .replace("{indexType}", "FULLTEXT")
+                        .replace("{indexName}", IStrategy.wrapIdentifiers(indexMetadata.getName()))
+                        .replace("{columns}", () -> {
+                            List<IndexMetadata.IndexColumnParam> columnParams = indexMetadata.getColumns();
+                            return columnParams.stream().map(column ->
+                                    "{column}{sortMode}"
+                                            .replace("{column}", IStrategy.wrapIdentifiers(column.getColumn()))
+                                            .replace("{sortMode}", column.getSort() != null ? (" " + column.getSort().name()) : "")
+                            ).collect(Collectors.joining(","));
+                        })
+                        .replace("{indexComment}", StringUtils.hasText(indexMetadata.getComment()) ? " COMMENT '" + indexMetadata.getComment() + "'" : "")
+                        .replace("{parser}", StringUtils.hasText(mysqlIndexMetadata.getParser()) ? " WITH PARSER " + mysqlIndexMetadata.getParser() : "")
+                        .toString();
+            }
+        }
+
+        // 例子： UNIQUE INDEX `unique_name_age`(`name` ASC, `age` DESC) COMMENT '姓名、年龄索引' USING BTREE
         return StringConnectHelper.newInstance("{indexType} INDEX {indexName}({columns}) {method} {indexComment}")
                 .replace("{indexType}", indexMetadata.getType() == IndexTypeEnum.UNIQUE ? "UNIQUE" : "")
                 .replace("{indexName}", IStrategy.wrapIdentifiers(indexMetadata.getName()))

@@ -57,7 +57,7 @@ public class MysqlTableMetadataBuilder {
 
         List<MysqlColumnMetadata> columnMetadataList = new MysqlColumnMetadataBuilder().buildList(clazz, fields);
         mysqlTableMetadata.setColumnMetadataList(columnMetadataList);
-        List<IndexMetadata> indexMetadataList = new IndexMetadataBuilder().buildList(clazz, fields);
+        List<IndexMetadata> indexMetadataList = new MysqlIndexMetadataBuilder().buildList(clazz, fields);
         mysqlTableMetadata.setIndexMetadataList(indexMetadataList);
 
         return mysqlTableMetadata;

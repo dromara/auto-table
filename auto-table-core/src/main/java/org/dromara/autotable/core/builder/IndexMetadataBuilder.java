@@ -77,6 +77,7 @@ public class IndexMetadataBuilder {
             indexMetadata.setMethod(index.method());
             indexMetadata.setComment(index.comment());
             indexMetadata.getColumns().add(IndexMetadata.IndexColumnParam.newInstance(realColumnName, null));
+            customBuild(indexMetadata, clazz, field);
             return indexMetadata;
         }
         return null;
@@ -114,7 +115,7 @@ public class IndexMetadataBuilder {
         }
     }
 
-    private static String getIndexNameWithPrefix(String indexName) {
+    protected static String getIndexNameWithPrefix(String indexName) {
         String indexPrefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getIndexPrefix();
         String fullIndexName = indexPrefix + indexName;
         return replaceDoubleQuote(fullIndexName);
@@ -185,6 +186,14 @@ public class IndexMetadataBuilder {
         }
     }
 
+    protected void customBuild(IndexMetadata indexMetadata, Class<?> clazz, Field field) {
+        // 子类可覆盖此方法，注入自定义属性
+    }
+
+    protected void customBuild(IndexMetadata indexMetadata, Class<?> clazz, TableIndex tableIndex) {
+        // 子类可覆盖此方法，注入自定义属性
+    }
+
     protected IndexMetadata buildIndexMetadata(Class<?> clazz, TableIndex tableIndex) {
 
         // 获取当前字段的@Index注解
@@ -197,6 +206,7 @@ public class IndexMetadataBuilder {
             indexMetadata.setType(tableIndex.type());
             indexMetadata.setComment(tableIndex.comment());
             indexMetadata.setColumns(columnParams);
+            customBuild(indexMetadata, clazz, tableIndex);
             return indexMetadata;
         }
         return null;
