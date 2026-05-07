@@ -31,7 +31,7 @@ public interface JavaTypeToDatabaseTypeConverter {
     /**
      * 类型映射，在注册数据库策略的时候，注入进来，详见{@link AutoTableGlobalConfig#addStrategy}
      */
-    Map<String, Map<Class<?>, DefaultTypeEnumInterface>> JAVA_TO_DB_TYPE_MAPPING = new HashMap<>();
+    Map<String, Map<String, DefaultTypeEnumInterface>> JAVA_TO_DB_TYPE_MAPPING = new HashMap<>();
 
     /**
      * 添加类型映射
@@ -41,7 +41,7 @@ public interface JavaTypeToDatabaseTypeConverter {
      * @param typeEnum        数据库类型
      */
     static void addTypeMapping(String databaseDialect, Class<?> clazz, DefaultTypeEnumInterface typeEnum) {
-        JAVA_TO_DB_TYPE_MAPPING.computeIfAbsent(databaseDialect, k -> new HashMap<>()).put(clazz, typeEnum);
+        JAVA_TO_DB_TYPE_MAPPING.computeIfAbsent(databaseDialect, k -> new HashMap<>()).put(clazz.getName(), typeEnum);
     }
 
     /**
@@ -51,7 +51,11 @@ public interface JavaTypeToDatabaseTypeConverter {
      * @param typeEnumMap     字段类型-》数据库类型 映射
      */
     static void addTypeMapping(String databaseDialect, Map<Class<?>, DefaultTypeEnumInterface> typeEnumMap) {
-        JAVA_TO_DB_TYPE_MAPPING.computeIfAbsent(databaseDialect, k -> new HashMap<>()).putAll(typeEnumMap);
+        Map<String, DefaultTypeEnumInterface> stringKeyMap = new HashMap<>();
+        for (Map.Entry<Class<?>, DefaultTypeEnumInterface> entry : typeEnumMap.entrySet()) {
+            stringKeyMap.put(entry.getKey().getName(), entry.getValue());
+        }
+        JAVA_TO_DB_TYPE_MAPPING.computeIfAbsent(databaseDialect, k -> new HashMap<>()).putAll(stringKeyMap);
     }
 
     /**
@@ -117,13 +121,13 @@ public interface JavaTypeToDatabaseTypeConverter {
             fieldClass = getFieldType(clazz, field);
         }
 
-        Map<Class<?>, DefaultTypeEnumInterface> typeMap = JAVA_TO_DB_TYPE_MAPPING.getOrDefault(databaseDialect, Collections.emptyMap());
+        Map<String, DefaultTypeEnumInterface> typeMap = JAVA_TO_DB_TYPE_MAPPING.getOrDefault(databaseDialect, Collections.emptyMap());
         if (typeMap.isEmpty()) {
             log.warn("数据库方言{}没有找到对应的数据库类型映射关系", databaseDialect);
         }
-        DefaultTypeEnumInterface sqlType = typeMap.get(fieldClass);
+        DefaultTypeEnumInterface sqlType = typeMap.get(fieldClass.getName());
         if (sqlType == null) {
-            sqlType = typeMap.get(String.class);
+            sqlType = typeMap.get(String.class.getName());
             if (sqlType == null) {
                 throw new RuntimeException("数据库方言" + databaseDialect + "下没有找到类型" + fieldClass.getName() + "对应的数据库类型映射关系");
             }
