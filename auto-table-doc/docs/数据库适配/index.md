@@ -12,7 +12,7 @@ AutoTable 通过 **策略模式 + SPI 机制** 支持多种数据库，每种数
 | 数据库 | 策略模块 | 测试版本 | 状态 | 维护者 |
 |--------|----------|----------|------|------|
 | [MySQL](/数据库适配/MySQL) | `auto-table-strategy-mysql` | 5.7+ | ✅ 稳定 ||
-| MariaDB | `auto-table-strategy-mysql` | 对应 MySQL | ✅ 稳定 ||
+| MariaDB | `auto-table-strategy-mysql`（复用 MySQL 策略） | 对应 MySQL | ✅ 稳定 ||
 | [PostgreSQL](/数据库适配/PostgreSQL) | `auto-table-strategy-pgsql` | 15.5 | ✅ 稳定 ||
 | [Oracle](/数据库适配/Oracle) | `auto-table-strategy-oracle` | 11g / 23ai | ✅ 稳定 | [@lizhian](https://gitee.com/lizhian) |
 | [达梦](/数据库适配/达梦) | `auto-table-strategy-dm` | dm8 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
