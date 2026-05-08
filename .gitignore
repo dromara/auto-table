@@ -1,5 +1,6 @@
 .claude
 CLAUDE.md
+.serena
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
