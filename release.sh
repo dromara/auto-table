@@ -6,6 +6,22 @@
 
 set -e
 
+# ---------- 前置检查 ----------
+
+# 检查是否在 git 仓库根目录
+if [ ! -d ".git" ]; then
+    echo "错误：当前目录不是 git 仓库根目录，请 cd 到项目根目录执行"
+    exit 1
+fi
+
+# 检查依赖脚本是否有执行权限
+for script in upgrade.sh deploy_doc.sh; do
+    if [ ! -x "$script" ]; then
+        echo "检测到 ${script} 缺少执行权限，正在修复..."
+        chmod +x "$script"
+    fi
+done
+
 # 参数校验
 if [ -z "$1" ]; then
     echo "Usage: $0 <version>"
@@ -26,6 +42,16 @@ if grep -q "^## ${version}$" "${changelog_file}"; then
     exit 1
 fi
 
+# 检查是否有未提交的代码改动（允许存在，但提醒用户）
+if [ -n "$(git status --porcelain)" ]; then
+    echo ""
+    echo "【警告】当前存在未提交的代码改动，将包含在本次发布中："
+    git status --short
+    echo ""
+    echo "如需中止发布，请在 5 秒内按 Ctrl+C"
+    sleep 5
+fi
+
 # 获取上一个 tag
 last_tag=$(git describe --tags --abbrev=0 2>/dev/null)
 if [ -z "$last_tag" ]; then
@@ -34,6 +60,8 @@ if [ -z "$last_tag" ]; then
 fi
 
 echo "上一个版本 tag：${last_tag}"
+
+# ---------- 生成变更日志 ----------
 
 # 获取自上一个 tag 以来的提交记录（排除合并和无关提交）
 commits=$(git log ${last_tag}..HEAD --oneline --no-merges | \
@@ -70,15 +98,28 @@ echo "变更日志已更新：${changelog_file}"
 git add "${changelog_file}"
 git commit -m "docs(changelog): 更新版本 ${version} 的变更日志"
 
-# 执行版本升级（修改版本号、commit、tag、push、mvn deploy）
+# ---------- 执行版本升级 ----------
+
 echo "================================"
 echo "开始执行版本升级..."
-./upgrade.sh "${version}"
+if ! ./upgrade.sh "${version}"; then
+    echo ""
+    echo "【错误】upgrade.sh 执行失败。请检查上述错误信息。"
+    echo "如需重试版本升级，请手动执行：./upgrade.sh ${version}"
+    echo "变更日志已提交，可以继续重试。"
+    exit 1
+fi
 
-# 发布文档
+# ---------- 发布文档 ----------
+
 echo "================================"
 echo "开始发布文档..."
-./deploy_doc.sh
+if ! ./deploy_doc.sh; then
+    echo ""
+    echo "【错误】deploy_doc.sh 执行失败。请检查上述错误信息。"
+    echo "如需重试文档发布，请手动执行：./deploy_doc.sh"
+    exit 1
+fi
 
 echo "================================"
 echo "版本 ${version} 发布完成！"
