@@ -42,7 +42,7 @@ public class DmTablesMapper {
         String sql = "SELECT DISTINCT c.COLUMN_NAME, c.DATA_TYPE, c.DATA_LENGTH, c.DATA_PRECISION, c.DATA_SCALE,  \n" +
                 "       c.NULLABLE, c.DATA_DEFAULT, com.COMMENTS  \n" +
                 "FROM ALL_TAB_COLUMNS c  \n" +
-                "LEFT JOIN USER_COL_COMMENTS com ON c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME" +
+                "LEFT JOIN ALL_COL_COMMENTS com ON c.TABLE_NAME = com.TABLE_NAME AND c.COLUMN_NAME = com.COLUMN_NAME AND c.OWNER = com.OWNER" +
                 "  \n" +
                 "WHERE c.TABLE_NAME = ':tableName' \n" +
                 "AND c.OWNER = ':schema';";
