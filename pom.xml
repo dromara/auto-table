@@ -176,6 +176,13 @@
                     <additionalJOptions>
                         -Xdoclint:none
                     </additionalJOptions><!-- 禁用 doclint 检查 -->
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
                 </configuration>
                 <executions>
                     <execution>
