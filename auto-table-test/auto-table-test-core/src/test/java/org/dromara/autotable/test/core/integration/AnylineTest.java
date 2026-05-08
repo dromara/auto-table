@@ -1,4 +1,4 @@
-package org.dromara.autotable.test.core;
+package org.dromara.autotable.test.core.integration;
 
 import org.anyline.adapter.init.DefaultEnvironmentWorker;
 import org.anyline.data.datasource.DataSourceHolder;

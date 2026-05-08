@@ -1,4 +1,4 @@
-package org.dromara.autotable.test.core.initdata;
+package org.dromara.autotable.test.core.integration.initdata;
 
 import org.dromara.autotable.annotation.AutoTable;
 

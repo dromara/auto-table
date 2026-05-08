@@ -1,22 +1,17 @@
-package org.dromara.autotable.test.core;
+package org.dromara.autotable.test.core.integration;
 
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.Version;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
-import org.junit.jupiter.api.AfterEach;
+import org.dromara.autotable.test.core.RecordSqlFlywayHandler;
+import org.dromara.autotable.test.core.base.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.InputStream;
-
-public class ApplicationAllTest {
+public class ApplicationAllTest extends AbstractIntegrationTest {
 
     @BeforeEach
     public void init() {
@@ -33,13 +28,6 @@ public class ApplicationAllTest {
         autoTableProperties.setSuperInsertPosition(PropertyConfig.SuperInsertPosition.after);
 
         AutoTableGlobalConfig.instance().setAutoTableProperties(autoTableProperties);
-    }
-
-    @AfterEach
-    void cleanup() {
-        // 清除当前线程中的配置，防止下一个测试复用
-        AutoTableGlobalConfig.clear();
-        DataSourceManager.cleanDataSource();
     }
 
     @Test
@@ -263,17 +251,5 @@ public class ApplicationAllTest {
         });
         // 开始
         AutoTableBootstrap.start();
-    }
-
-    private void initSqlSessionFactory(String resource) {
-        try (InputStream inputStream = ApplicationAllTest.class.getClassLoader().getResourceAsStream(resource)) {
-            // 使用SqlSessionFactoryBuilder加载配置文件
-            SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
-            // 设置当前数据源
-            DataSource dataSource = sessionFactory.getConfiguration().getEnvironment().getDataSource();
-            DataSourceManager.setDataSource(dataSource);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

@@ -1,4 +1,4 @@
-package org.dromara.autotable.test.core.converter;
+package org.dromara.autotable.test.core.unit.converter;
 
 /**
  * 用于 JavaTypeToDatabaseTypeConverter 测试的枚举类

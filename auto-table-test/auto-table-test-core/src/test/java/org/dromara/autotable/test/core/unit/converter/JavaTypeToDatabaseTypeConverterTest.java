@@ -1,4 +1,4 @@
-package org.dromara.autotable.test.core.converter;
+package org.dromara.autotable.test.core.unit.converter;
 
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
@@ -35,7 +35,7 @@ public class JavaTypeToDatabaseTypeConverterTest {
     @Test
     public void testAddTypeMappingWithDifferentClassLoader() throws Exception {
         // 1. 使用自定义类加载器加载一个测试类
-        String className = "org.dromara.autotable.test.core.converter.TestEnumForConverter";
+        String className = "org.dromara.autotable.test.core.unit.converter.TestEnumForConverter";
         ClassLoader customLoader = new ClassLoader(JavaTypeToDatabaseTypeConverterTest.class.getClassLoader()) {
             @Override
             public Class<?> loadClass(String name) throws ClassNotFoundException {
@@ -110,6 +110,9 @@ public class JavaTypeToDatabaseTypeConverterTest {
      */
     @Test
     public void testAddTypeMappingWithMap() {
+        // 先清理已有的映射
+        JavaTypeToDatabaseTypeConverter.JAVA_TO_DB_TYPE_MAPPING.clear();
+
         DefaultTypeEnumInterface mockType = new DefaultTypeEnumInterface() {
             @Override
             public String getTypeName() {

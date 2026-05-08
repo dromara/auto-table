@@ -1,46 +1,35 @@
-package org.dromara.autotable.test.core;
+package org.dromara.autotable.test.core.integration;
 
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.dromara.autotable.core.AutoTableBootstrap;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
-import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
 import org.dromara.autotable.strategy.h2.data.H2DefaultTypeEnum;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
+import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
+import org.dromara.autotable.test.core.base.AbstractIntegrationTest;
 import org.dromara.autotable.test.core.entity.h2.TestH2;
 import org.dromara.autotable.test.core.entity.mysql.custome_add_column.MyBuildTableMetadataInterceptor;
 import org.dromara.autotable.test.core.entity.pgsql.TestNoColumnComment;
 import org.dromara.autotable.test.core.entity.sqlite.TestSqlite;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
-import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
-
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ApplicationSingleTest {
+import static org.junit.jupiter.api.Assertions.*;
 
-    @AfterEach
-    void cleanup() {
-        // 清除当前线程中的配置，防止下一个测试复用
-        AutoTableGlobalConfig.clear();
-    }
+public class ApplicationSingleTest extends AbstractIntegrationTest {
 
     @Test
     public void testMysqlColumnSort() {
 
-        initSqlSessionFactory("mybatis-config-mysql.xml");
+        initMySqlDataSource();
 
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
@@ -49,12 +38,12 @@ public class ApplicationSingleTest {
         });
 
         CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
-            assert databaseDialect.equals(DatabaseDialect.MySQL);
-            assert tableMetadata instanceof MysqlTableMetadata;
+            assertEquals(DatabaseDialect.MySQL, databaseDialect);
+            assertTrue(tableMetadata instanceof MysqlTableMetadata);
             MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
             List<MysqlColumnMetadata> columnMetadataList = mysqlTableMetadata.getColumnMetadataList();
-            assert "id".equals(columnMetadataList.get(0).getName());
-            assert "update_time".equals(columnMetadataList.get(columnMetadataList.size() - 1).getName());
+            assertEquals("id", columnMetadataList.get(0).getName());
+            assertEquals("update_time", columnMetadataList.get(columnMetadataList.size() - 1).getName());
         };
         AutoTableGlobalConfig.instance().setCreateTableInterceptors(Collections.singletonList(
                 createTableInterceptor
@@ -70,7 +59,7 @@ public class ApplicationSingleTest {
     @Test
     public void testMysqlConsumeAddColumn() {
 
-        initSqlSessionFactory("mybatis-config-mysql.xml");
+        initMySqlDataSource();
 
         AutoTableGlobalConfig.instance().setBuildTableMetadataInterceptors(Collections.singletonList(new MyBuildTableMetadataInterceptor()));
         // 指定扫描包
@@ -85,7 +74,7 @@ public class ApplicationSingleTest {
                 Collections.singletonList((databaseDialect, tableMetadata, compareTableInfo) -> {
                     boolean needModify = compareTableInfo.needModify();
                     // 判断是否需要更新
-                    assert !needModify;
+                    assertFalse(needModify);
                 })
         );
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.update);
@@ -96,7 +85,7 @@ public class ApplicationSingleTest {
     @Test
     public void testH2Create() {
 
-        initSqlSessionFactory("mybatis-config-h2.xml");
+        initH2DataSource();
 
         /* 修改表的逻辑 */
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
@@ -117,7 +106,7 @@ public class ApplicationSingleTest {
     @Test
     public void testSqliteCreate() {
 
-        initSqlSessionFactory("mybatis-config-sqlite.xml");
+        initSqliteDataSource();
 
         /* 修改表的逻辑 */
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
@@ -134,7 +123,7 @@ public class ApplicationSingleTest {
     @Test
     public void testPgsqlCreate() {
 
-        initSqlSessionFactory("mybatis-config-pgsql.xml");
+        initPgSqlDataSource();
 
         /* 修改表的逻辑 */
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
@@ -151,7 +140,7 @@ public class ApplicationSingleTest {
     @Test
     public void testPgsqlUpdate() {
 
-        initSqlSessionFactory("mybatis-config-pgsql.xml");
+        initPgSqlDataSource();
 
         /* 修改表的逻辑 */
         PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
@@ -168,7 +157,7 @@ public class ApplicationSingleTest {
     @Test
     public void testMysqlFullTextIndex() {
 
-        initSqlSessionFactory("mybatis-config-mysql.xml");
+        initMySqlDataSource();
 
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
@@ -177,28 +166,28 @@ public class ApplicationSingleTest {
         });
 
         CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
-            assert databaseDialect.equals(DatabaseDialect.MySQL);
-            assert tableMetadata instanceof MysqlTableMetadata;
+            assertEquals(DatabaseDialect.MySQL, databaseDialect);
+            assertTrue(tableMetadata instanceof MysqlTableMetadata);
             MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
             List<org.dromara.autotable.core.strategy.IndexMetadata> indexMetadataList = mysqlTableMetadata.getIndexMetadataList();
 
             // 验证生成了两个全文索引
-            assert indexMetadataList.size() == 2;
+            assertEquals(2, indexMetadataList.size());
 
             // 验证第一个索引是全文索引
             org.dromara.autotable.core.strategy.IndexMetadata firstIndex = indexMetadataList.get(0);
-            assert firstIndex instanceof MysqlIndexMetadata;
+            assertTrue(firstIndex instanceof MysqlIndexMetadata);
             MysqlIndexMetadata mysqlFirstIndex = (MysqlIndexMetadata) firstIndex;
-            assert mysqlFirstIndex.isFullText();
-            assert "content".equals(mysqlFirstIndex.getColumns().get(0).getColumn());
+            assertTrue(mysqlFirstIndex.isFullText());
+            assertEquals("content", mysqlFirstIndex.getColumns().get(0).getColumn());
 
             // 验证第二个索引是全文索引，并指定了分词器
             org.dromara.autotable.core.strategy.IndexMetadata secondIndex = indexMetadataList.get(1);
-            assert secondIndex instanceof MysqlIndexMetadata;
+            assertTrue(secondIndex instanceof MysqlIndexMetadata);
             MysqlIndexMetadata mysqlSecondIndex = (MysqlIndexMetadata) secondIndex;
-            assert mysqlSecondIndex.isFullText();
-            assert "ngram".equals(mysqlSecondIndex.getParser());
-            assert "description".equals(mysqlSecondIndex.getColumns().get(0).getColumn());
+            assertTrue(mysqlSecondIndex.isFullText());
+            assertEquals("ngram", mysqlSecondIndex.getParser());
+            assertEquals("description", mysqlSecondIndex.getColumns().get(0).getColumn());
         };
         AutoTableGlobalConfig.instance().setCreateTableInterceptors(Collections.singletonList(
                 createTableInterceptor
@@ -211,7 +200,7 @@ public class ApplicationSingleTest {
     @Test
     public void testMysqlTableFullTextIndex() {
 
-        initSqlSessionFactory("mybatis-config-mysql.xml");
+        initMySqlDataSource();
 
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
@@ -220,24 +209,24 @@ public class ApplicationSingleTest {
         });
 
         CreateTableInterceptor createTableInterceptor = (databaseDialect, tableMetadata) -> {
-            assert databaseDialect.equals(DatabaseDialect.MySQL);
-            assert tableMetadata instanceof MysqlTableMetadata;
+            assertEquals(DatabaseDialect.MySQL, databaseDialect);
+            assertTrue(tableMetadata instanceof MysqlTableMetadata);
             MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
             List<org.dromara.autotable.core.strategy.IndexMetadata> indexMetadataList = mysqlTableMetadata.getIndexMetadataList();
 
             // 验证生成了一个全文索引
-            assert indexMetadataList.size() == 1;
+            assertEquals(1, indexMetadataList.size());
 
             // 验证是全文索引
             org.dromara.autotable.core.strategy.IndexMetadata indexMetadata = indexMetadataList.get(0);
-            assert indexMetadata instanceof MysqlIndexMetadata;
+            assertTrue(indexMetadata instanceof MysqlIndexMetadata);
             MysqlIndexMetadata mysqlIndexMetadata = (MysqlIndexMetadata) indexMetadata;
-            assert mysqlIndexMetadata.isFullText();
-            assert "内容全文索引".equals(mysqlIndexMetadata.getComment());
+            assertTrue(mysqlIndexMetadata.isFullText());
+            assertEquals("内容全文索引", mysqlIndexMetadata.getComment());
             // 验证包含两个字段
-            assert mysqlIndexMetadata.getColumns().size() == 2;
-            assert "content".equals(mysqlIndexMetadata.getColumns().get(0).getColumn());
-            assert "description".equals(mysqlIndexMetadata.getColumns().get(1).getColumn());
+            assertEquals(2, mysqlIndexMetadata.getColumns().size());
+            assertEquals("content", mysqlIndexMetadata.getColumns().get(0).getColumn());
+            assertEquals("description", mysqlIndexMetadata.getColumns().get(1).getColumn());
         };
         AutoTableGlobalConfig.instance().setCreateTableInterceptors(Collections.singletonList(
                 createTableInterceptor
@@ -245,16 +234,5 @@ public class ApplicationSingleTest {
 
         // 开始
         AutoTableBootstrap.start();
-    }
-
-    private void initSqlSessionFactory(String resource) {
-        try (InputStream inputStream = ApplicationSingleTest.class.getClassLoader().getResourceAsStream(resource)) {
-            // 使用SqlSessionFactoryBuilder加载配置文件
-            SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
-            // 设置当前数据源
-            DataSourceManager.setDataSource(sessionFactory.getConfiguration().getEnvironment().getDataSource());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

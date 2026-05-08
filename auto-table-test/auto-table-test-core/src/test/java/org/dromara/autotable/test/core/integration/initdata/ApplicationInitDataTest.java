@@ -1,4 +1,4 @@
-package org.dromara.autotable.test.core.initdata;
+package org.dromara.autotable.test.core.integration.initdata;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -33,7 +33,7 @@ public class ApplicationInitDataTest {
         AutoTableGlobalConfig.instance().getAutoTableProperties().setAutoBuildDatabase(true);
         // 指定扫描包
         AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
-                org.dromara.autotable.test.core.initdata.InitData.class
+                org.dromara.autotable.test.core.integration.initdata.InitData.class
         });
         PropertyConfig.InitDataProperties initData = new PropertyConfig.InitDataProperties();
         // initData.setBasePath("classpath:sql"); // 默认的
@@ -55,7 +55,7 @@ public class ApplicationInitDataTest {
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
         AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
-                org.dromara.autotable.test.core.initdata.InitData.class
+                org.dromara.autotable.test.core.integration.initdata.InitData.class
         });
         PropertyConfig.InitDataProperties initData = new PropertyConfig.InitDataProperties();
         initData.setBasePath("classpath:customize_path");
@@ -76,7 +76,7 @@ public class ApplicationInitDataTest {
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
         AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
-                org.dromara.autotable.test.core.initdata.InitDataCustomizeFile.class
+                org.dromara.autotable.test.core.integration.initdata.InitDataCustomizeFile.class
         });
         PropertyConfig.InitDataProperties initData = new PropertyConfig.InitDataProperties();
         initData.setBasePath("classpath:customize_path");
@@ -97,7 +97,7 @@ public class ApplicationInitDataTest {
         AutoTableGlobalConfig.instance().getAutoTableProperties().setMode(RunMode.create);
         // 指定扫描包
         AutoTableGlobalConfig.instance().getAutoTableProperties().setModelClass(new Class[]{
-                org.dromara.autotable.test.core.initdata.InitDataJavaMethod.class
+                org.dromara.autotable.test.core.integration.initdata.InitDataJavaMethod.class
         });
 
         // 开始
