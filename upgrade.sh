@@ -1,5 +1,15 @@
+#!/bin/bash
+
 # 版本升级
-version=2.5.15
+
+# 参数校验
+if [ -z "$1" ]; then
+    echo "Usage: $0 <version>"
+    echo "Example: $0 2.5.16"
+    exit 1
+fi
+
+version=$1
 
 # 以下不动
 template=$(cat << EOF

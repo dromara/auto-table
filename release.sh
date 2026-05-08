@@ -49,19 +49,18 @@ else
     changelog_items="* （无新增提交）"
 fi
 
+# 将新条目写入临时文件，避免通过 awk -v 传递多行变量
+changelog_temp=$(mktemp)
+{
+    echo ""
+    echo "## ${version}"
+    echo "$changelog_items"
+} > "$changelog_temp"
+
 # 更新变更日志文件
-awk -v ver="$version" -v items="$changelog_items" '
-    /^# 变更日志$/ {
-        print
-        print ""
-        print "## " ver
-        if (items != "") {
-            print items
-        }
-        next
-    }
-    { print }
-' "${changelog_file}" > temp_changelog.md
+awk '/^# 变更日志$/{print; while((getline line < "'$changelog_temp'") > 0) print line; next} {print}' "${changelog_file}" > temp_changelog.md
+
+rm -f "$changelog_temp"
 
 mv temp_changelog.md "${changelog_file}"
 

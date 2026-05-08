@@ -5,6 +5,7 @@ import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
+import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -118,8 +119,8 @@ public class CreateTableSqlBuilder {
 
     public static String getIndexSql(IndexMetadata indexMetadata) {
         // 判断是否为 MySQL 全文索引
-        if (indexMetadata instanceof org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) {
-            org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata mysqlIndexMetadata = (org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) indexMetadata;
+        if (indexMetadata instanceof MysqlIndexMetadata) {
+            MysqlIndexMetadata mysqlIndexMetadata = (MysqlIndexMetadata) indexMetadata;
             if (mysqlIndexMetadata.isFullText()) {
                 return StringConnectHelper.newInstance("{indexType} INDEX {indexName}({columns}){indexComment}{parser}")
                         .replace("{indexType}", "FULLTEXT")
