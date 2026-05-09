@@ -55,6 +55,13 @@ public class PropertyConfig {
      */
     private Boolean autoDropColumn = false;
     /**
+     * 逻辑删除列的前缀。当未开启 autoDropColumn 时，如果配置了该前缀，
+     * 数据库中存在但实体中不存在的列将被重命名为 "前缀 + 原列名"，而不是被物理删除。
+     * 已带有该前缀的列会被视为已逻辑删除，跳过不处理。
+     * 注意：autoDropColumn 优先级高于本配置，若同时开启 autoDropColumn，仍会执行物理删除。
+     */
+    private String logicDropColumnPrefix;
+    /**
      * 是否自动删除名称不匹配的索引（以indexPrefix配置开头的）
      */
     private Boolean autoDropIndex = true;

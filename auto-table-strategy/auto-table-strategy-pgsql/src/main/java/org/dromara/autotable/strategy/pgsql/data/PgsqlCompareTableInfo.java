@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +53,11 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
     private List<String> dropColumnList = new ArrayList<>();
 
     /**
+     * 需要重命名的列（逻辑删除）：Key=原列名, Value=新列名
+     */
+    private Map<String, String> renameColumnMap = new LinkedHashMap<>();
+
+    /**
      * 需要修改的列
      */
     private List<ColumnMetadata> modifyColumnMetadataList = new ArrayList<>();
@@ -83,6 +89,7 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
                 !columnComment.isEmpty() ||
                 !indexComment.isEmpty() ||
                 !dropColumnList.isEmpty() ||
+                !renameColumnMap.isEmpty() ||
                 !modifyColumnMetadataList.isEmpty() ||
                 !newColumnMetadataList.isEmpty() ||
                 !dropIndexList.isEmpty() ||
@@ -109,6 +116,12 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
         }
         if (!dropColumnList.isEmpty()) {
             errorMsg.append("删除列: ").append(String.join(",", dropColumnList)).append("\n");
+        }
+        if (!renameColumnMap.isEmpty()) {
+            String renameColumns = renameColumnMap.entrySet().stream()
+                    .map(entry -> entry.getKey() + " -> " + entry.getValue())
+                    .collect(Collectors.joining(","));
+            errorMsg.append("重命名列（逻辑删除）: ").append(renameColumns).append("\n");
         }
         if (!modifyColumnMetadataList.isEmpty()) {
             errorMsg.append("修改列: ").append(modifyColumnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.joining(","))).append("\n");
@@ -139,6 +152,12 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
 
     public void addDropColumns(Set<String> dropColumnList) {
         this.dropColumnList.addAll(dropColumnList);
+    }
+
+    public void addRenameColumns(Set<String> columnNames, String prefix) {
+        for (String columnName : columnNames) {
+            this.renameColumnMap.put(columnName, prefix + columnName);
+        }
     }
 
     public void addNewIndex(IndexMetadata indexMetadata) {

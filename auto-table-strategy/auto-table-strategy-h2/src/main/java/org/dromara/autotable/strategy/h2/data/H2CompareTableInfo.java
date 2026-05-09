@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +68,11 @@ public class H2CompareTableInfo extends CompareTableInfo {
      */
     private List<IndexMetadata> indexMetadataList = new ArrayList<>();
 
+    /**
+     * 重命名的列 <旧列名, 新列名>
+     */
+    private Map<String, String> renameColumnMap = new LinkedHashMap<>();
+
     public H2CompareTableInfo(@NonNull String name, @NonNull String schema) {
         super(name, schema);
     }
@@ -81,7 +87,8 @@ public class H2CompareTableInfo extends CompareTableInfo {
                 !modifyColumnMetadataList.isEmpty() ||
                 !newColumnMetadataList.isEmpty() ||
                 !dropIndexList.isEmpty() ||
-                !indexMetadataList.isEmpty();
+                !indexMetadataList.isEmpty() ||
+                !renameColumnMap.isEmpty();
     }
 
     @Override
@@ -114,6 +121,9 @@ public class H2CompareTableInfo extends CompareTableInfo {
         if (!indexMetadataList.isEmpty()) {
             errorMsg.append("新增索引: ").append(indexMetadataList.stream().map(IndexMetadata::getName).collect(Collectors.joining(","))).append("\n");
         }
+        if (!renameColumnMap.isEmpty()) {
+            errorMsg.append("重命名列: ").append(renameColumnMap.entrySet().stream().map(entry -> entry.getKey() + " -> " + entry.getValue()).collect(Collectors.joining(", "))).append("\n");
+        }
         return errorMsg.toString();
     }
 
@@ -135,6 +145,12 @@ public class H2CompareTableInfo extends CompareTableInfo {
 
     public void addNewIndex(IndexMetadata indexMetadata) {
         this.indexMetadataList.add(indexMetadata);
+    }
+
+    public void addRenameColumns(Set<String> columnNames, String prefix) {
+        for (String columnName : columnNames) {
+            this.renameColumnMap.put(columnName, prefix + columnName);
+        }
     }
 
     public void addModifyIndex(IndexMetadata indexMetadata) {

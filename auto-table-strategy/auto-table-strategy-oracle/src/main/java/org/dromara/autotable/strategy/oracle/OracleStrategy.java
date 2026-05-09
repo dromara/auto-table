@@ -313,12 +313,25 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         compareTableInfo.setCreateColumnList(createColumnList);
 
         // 删除字段
+        PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
         List<String> deleteColumnList = oldColumnList.stream()
                 .map(TabColumn::getColumn_name)
                 .map(String::toLowerCase)
                 .filter(columnName -> !newColumnNameSet.contains(columnName))
+                .filter(columnName -> !(StringUtils.hasText(logicDropColumnPrefix) && columnName.startsWith(logicDropColumnPrefix)))
                 .collect(Collectors.toList());
         compareTableInfo.setDeleteColumnList(deleteColumnList);
+
+        // 重命名字段（逻辑删除）
+        if (StringUtils.hasText(logicDropColumnPrefix)) {
+            oldColumnList.stream()
+                    .map(TabColumn::getColumn_name)
+                    .map(String::toLowerCase)
+                    .filter(columnName -> !newColumnNameSet.contains(columnName))
+                    .filter(columnName -> !columnName.startsWith(logicDropColumnPrefix))
+                    .forEach(columnName -> compareTableInfo.getRenameColumnMap().put(columnName, logicDropColumnPrefix + columnName));
+        }
 
 
         // 记录需要修改的字段
@@ -486,6 +499,11 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
             for (String column : compareTableInfo.getDeleteColumnList()) {
                 result.add(String.format("ALTER TABLE %s DROP COLUMN %s", tableName, column));
             }
+        }
+
+        // 重命名字段（逻辑删除）
+        for (Map.Entry<String, String> entry : compareTableInfo.getRenameColumnMap().entrySet()) {
+            result.add(String.format("ALTER TABLE %s RENAME COLUMN %s TO %s", tableName, entry.getKey(), entry.getValue()));
         }
 
         // 新增字段

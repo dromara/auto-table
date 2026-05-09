@@ -3,6 +3,7 @@ package org.dromara.autotable.strategy.dm;
 import lombok.NonNull;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
@@ -11,6 +12,7 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.dm.builder.DmCreateTableSqlBuilder;
 import org.dromara.autotable.strategy.dm.builder.DmModifyTableSqlBuilder;
 import org.dromara.autotable.strategy.dm.builder.DmTableMetadataBuilder;
@@ -163,9 +165,21 @@ public class DmStrategy implements IStrategy<DefaultTableMetadata, DmCompareTabl
             }
         }
 
+        // 获取逻辑删除前缀配置
+        PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
+
+        // 过滤掉已带前缀的字段
+        Set<String> remainingColumns = columnMap.keySet().stream()
+                .filter(columnName -> !(StringUtils.hasText(logicDropColumnPrefix) && columnName.startsWith(logicDropColumnPrefix)))
+                .collect(Collectors.toSet());
+
         // 处理需要删除的字段
         if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
-            compareInfo.addDropColumns(columnMap.keySet());
+            compareInfo.addDropColumns(remainingColumns);
+        } else if (StringUtils.hasText(logicDropColumnPrefix)) {
+            // 未开启 autoDropColumn，但配置了前缀，重命名多余字段
+            compareInfo.addRenameColumns(remainingColumns, logicDropColumnPrefix);
         }
 
         // 处理主键变更

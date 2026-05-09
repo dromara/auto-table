@@ -227,6 +227,9 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         // 当前字段信息
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
 
+        PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
+
         for (ColumnMetadata columnMetadata : columnMetadataList) {
             String columnName = columnMetadata.getName();
             PgsqlDbColumn pgsqlDbColumn = pgsqlFieldDetailMap.remove(columnName);
@@ -260,10 +263,18 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         }
         // 需要删除的字段
         Set<String> needRemoveColumns = pgsqlFieldDetailMap.keySet();
+        // 过滤掉已逻辑删除的字段
+        if (StringUtils.hasText(logicDropColumnPrefix)) {
+            needRemoveColumns = needRemoveColumns.stream()
+                    .filter(col -> !col.startsWith(logicDropColumnPrefix))
+                    .collect(Collectors.toSet());
+        }
         if (!needRemoveColumns.isEmpty()) {
             // 根据配置，决定是否删除库上的多余字段
-            if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
+            if (properties.getAutoDropColumn()) {
                 pgsqlCompareTableInfo.addDropColumns(needRemoveColumns);
+            } else if (StringUtils.hasText(logicDropColumnPrefix)) {
+                pgsqlCompareTableInfo.addRenameColumns(needRemoveColumns, logicDropColumnPrefix);
             }
         }
 

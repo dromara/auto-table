@@ -6,7 +6,9 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,10 @@ public class OracleCompareTableInfo extends CompareTableInfo {
      * 删除字段
      */
     private List<String> deleteColumnList;
+    /**
+     * 重命名字段（逻辑删除）：Key=原列名, Value=新列名
+     */
+    private Map<String, String> renameColumnMap = new LinkedHashMap<>();
     /**
      * 更新字段
      */

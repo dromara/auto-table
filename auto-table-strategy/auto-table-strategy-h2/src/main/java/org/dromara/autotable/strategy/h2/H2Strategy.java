@@ -252,11 +252,20 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
             }
         }
         // 需要删除的字段
+        String logicDropColumnPrefix = AutoTableGlobalConfig.instance().getAutoTableProperties().getLogicDropColumnPrefix();
         Set<String> needRemoveColumns = pgsqlFieldDetailMap.keySet();
         if (!needRemoveColumns.isEmpty()) {
             // 根据配置，决定是否删除库上的多余字段
             if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
                 h2CompareTableInfo.addDropColumns(needRemoveColumns);
+            } else if (StringUtils.hasText(logicDropColumnPrefix)) {
+                // 过滤掉已经带前缀的字段
+                Set<String> needRenameColumns = needRemoveColumns.stream()
+                        .filter(columnName -> !columnName.startsWith(logicDropColumnPrefix))
+                        .collect(Collectors.toSet());
+                if (!needRenameColumns.isEmpty()) {
+                    h2CompareTableInfo.addRenameColumns(needRenameColumns, logicDropColumnPrefix);
+                }
             }
         }
     }

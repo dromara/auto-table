@@ -53,6 +53,11 @@ public class DmCompareTableInfo extends CompareTableInfo {
     private List<String> dropColumnList = new ArrayList<>();
 
     /**
+     * 需要重命名的列（逻辑删除）：Key=原列名, Value=新列名
+     */
+    private Map<String, String> renameColumnMap = new LinkedHashMap<>();
+
+    /**
      * 需要修改的列
      */
     private List<ColumnMetadata> modifyColumnMetadataList = new ArrayList<>();
@@ -94,6 +99,7 @@ public class DmCompareTableInfo extends CompareTableInfo {
                 !columnComment.isEmpty() ||
                 !indexComment.isEmpty() ||
                 !dropColumnList.isEmpty() ||
+                !renameColumnMap.isEmpty() ||
                 !modifyColumnMetadataList.isEmpty() ||
                 !newColumnMetadataList.isEmpty() ||
                 !dropIndexList.isEmpty() ||
@@ -122,6 +128,9 @@ public class DmCompareTableInfo extends CompareTableInfo {
         }
         if (!dropColumnList.isEmpty()) {
             dmMsg.append("删除列: ").append(String.join(",", dropColumnList)).append("\n");
+        }
+        if (!renameColumnMap.isEmpty()) {
+            dmMsg.append("重命名列（逻辑删除）: ").append(renameColumnMap.entrySet().stream().map(entry -> entry.getKey() + " -> " + entry.getValue()).collect(Collectors.joining(", "))).append("\n");
         }
         if (!modifyColumnMetadataList.isEmpty()) {
             dmMsg.append("修改列: ").append(modifyColumnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.joining(","))).append("\n");
@@ -161,6 +170,12 @@ public class DmCompareTableInfo extends CompareTableInfo {
 
     public void addDropColumns(Set<String> dropColumnList) {
         this.dropColumnList.addAll(dropColumnList);
+    }
+
+    public void addRenameColumns(Set<String> columnNames, String prefix) {
+        for (String columnName : columnNames) {
+            this.renameColumnMap.put(columnName, prefix + columnName);
+        }
     }
 
     public void addNewIndex(IndexMetadata indexMetadata) {

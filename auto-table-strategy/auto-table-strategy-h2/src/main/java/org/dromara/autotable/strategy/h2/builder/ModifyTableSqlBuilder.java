@@ -49,6 +49,12 @@ public class ModifyTableSqlBuilder {
         modifyColumnList.stream()
                 .map(column -> "ALTER TABLE {tableName} ALTER COLUMN " + CreateTableSqlBuilder.buildColumnSql(column))
                 .forEach(alterTableSqlList::add);
+        // 重命名列
+        Map<String, String> renameColumnMap = compareTableInfo.getRenameColumnMap();
+        renameColumnMap.forEach((oldName, newName) -> {
+            alterTableSqlList.add(String.format("ALTER TABLE {tableName} ALTER COLUMN %s RENAME TO %s",
+                    IStrategy.wrapIdentifiers(oldName), IStrategy.wrapIdentifiers(newName)));
+        });
         // 主键
         List<ColumnMetadata> newPrimaries = compareTableInfo.getNewPrimaries();
         if (!newPrimaries.isEmpty()) {

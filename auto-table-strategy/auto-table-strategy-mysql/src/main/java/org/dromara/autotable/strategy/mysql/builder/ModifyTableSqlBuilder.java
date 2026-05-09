@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +55,16 @@ public class ModifyTableSqlBuilder {
             dropItems.add(dropColumnSql);
         } else {
             modifyItems.add(dropColumnSql);
+        }
+
+        // 重命名表字段处理（逻辑删除）
+        Map<String, String> renameColumnMap = mysqlCompareTableInfo.getRenameColumnMap();
+        Map<String, String> renameColumnTypeMap = mysqlCompareTableInfo.getRenameColumnTypeMap();
+        String renameColumnSql = getRenameColumnSql(renameColumnMap, renameColumnTypeMap);
+        if (alterTableSeparateDrop) {
+            dropItems.add(renameColumnSql);
+        } else {
+            modifyItems.add(renameColumnSql);
         }
 
         // 拼接每个字段的sql片段
@@ -143,6 +154,20 @@ public class ModifyTableSqlBuilder {
                 .map(dropColumn -> "DROP COLUMN {columnName}"
                         .replace("{columnName}", IStrategy.wrapIdentifiers(dropColumn))
                 ).collect(Collectors.joining(","));
+    }
+
+    private static String getRenameColumnSql(Map<String, String> renameColumnMap, Map<String, String> renameColumnTypeMap) {
+        return renameColumnMap.entrySet().stream()
+                .map(entry -> {
+                    String oldName = entry.getKey();
+                    String newName = entry.getValue();
+                    String columnType = renameColumnTypeMap.get(oldName);
+                    // 使用 CHANGE COLUMN 语法兼容 MySQL 5.7+
+                    return "CHANGE COLUMN " + IStrategy.wrapIdentifiers(oldName)
+                            + " " + IStrategy.wrapIdentifiers(newName)
+                            + " " + columnType;
+                })
+                .collect(Collectors.joining(","));
     }
 
     private static String getColumnsSql(List<MysqlCompareTableInfo.MysqlModifyColumnMetadata> modifyMysqlColumnMetadataList) {

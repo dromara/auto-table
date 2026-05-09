@@ -290,8 +290,15 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
         // 获取顺序变更的sql
         ColumnPositionHelper.generateChangePosition(tableColumnList, mysqlColumnMetadataList);
 
+        PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
+
         for (InformationSchemaColumn informationSchemaColumn : tableColumnList) {
             String columnName = informationSchemaColumn.getColumnName();
+            // 已逻辑删除的字段，跳过不处理
+            if (StringUtils.hasText(logicDropColumnPrefix) && columnName.startsWith(logicDropColumnPrefix)) {
+                continue;
+            }
             // 以数据库字段名，从当前Bean上取信息，获取到就从中剔除
             MysqlColumnMetadata mysqlColumnMetadata = columnParamMap.remove(columnName);
             if (mysqlColumnMetadata != null) {
@@ -309,8 +316,12 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                 }
             } else {
                 // 没有取到对应字段，说明库中存在的字段，Bean上不存在，根据配置，决定是否删除库上的多余字段
-                if (AutoTableGlobalConfig.instance().getAutoTableProperties().getAutoDropColumn()) {
+                if (properties.getAutoDropColumn()) {
                     mysqlCompareTableInfo.getDropColumnList().add(columnName);
+                } else if (StringUtils.hasText(logicDropColumnPrefix)) {
+                    // 逻辑删除：重命名字段
+                    String newColumnName = logicDropColumnPrefix + columnName;
+                    mysqlCompareTableInfo.addRenameColumn(columnName, newColumnName, informationSchemaColumn.getColumnType());
                 }
             }
         }

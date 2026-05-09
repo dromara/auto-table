@@ -4,7 +4,8 @@ import lombok.*;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.strategy.doris.data.dbdata.InformationSchemaColumn;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author don
@@ -34,6 +35,10 @@ public class DorisCompareTableInfo extends CompareTableInfo {
     private List<String> added;
     private List<String> modified;
     private List<String> removed;
+    /**
+     * 需要重命名的列（逻辑删除）：Key=原列名, Value=新列名
+     */
+    private Map<String, String> renameColumnMap = new LinkedHashMap<>();
 
 
     public DorisCompareTableInfo(@NonNull String name, @NonNull String schema) {
@@ -42,7 +47,7 @@ public class DorisCompareTableInfo extends CompareTableInfo {
 
     @Override
     public boolean needModify() {
-        return !createTableSql.equals(tempTableInfo.getCreateTableSql());
+        return !createTableSql.equals(tempTableInfo.getCreateTableSql()) || !renameColumnMap.isEmpty();
     }
 
     @Override
@@ -57,7 +62,19 @@ public class DorisCompareTableInfo extends CompareTableInfo {
         for (String line : removed) {
             errorMsg.append("表配置删除：").append(line).append("\n");
         }
+        if (!renameColumnMap.isEmpty()) {
+            String renameColumns = renameColumnMap.entrySet().stream()
+                    .map(entry -> entry.getKey() + " -> " + entry.getValue())
+                    .collect(Collectors.joining(","));
+            errorMsg.append("重命名列（逻辑删除）：").append(renameColumns).append("\n");
+        }
         return errorMsg.toString();
+    }
+
+    public void addRenameColumns(Set<String> columnNames, String prefix) {
+        for (String columnName : columnNames) {
+            this.renameColumnMap.put(columnName, prefix + columnName);
+        }
     }
 
     @Data

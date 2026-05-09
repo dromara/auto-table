@@ -46,6 +46,13 @@ public class ModifyTableSqlBuilder {
         dropColumnList.stream()
                 .map(columnName -> String.format("  DROP COLUMN %s", IStrategy.wrapIdentifiers(columnName)))
                 .forEach(alterTableSqlList::add);
+        // 重命名列（逻辑删除）
+        Map<String, String> renameColumnMap = pgsqlCompareTableInfo.getRenameColumnMap();
+        renameColumnMap.forEach((oldName, newName) -> {
+            alterTableSqlList.add(String.format("  RENAME COLUMN %s TO %s",
+                    IStrategy.wrapIdentifiers(oldName),
+                    IStrategy.wrapIdentifiers(newName)));
+        });
         // 新增列
         List<ColumnMetadata> newColumnList = pgsqlCompareTableInfo.getNewColumnMetadataList();
         newColumnList.stream()

@@ -9,7 +9,10 @@ import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +51,14 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
      */
     private final List<String> dropColumnList = new ArrayList<>();
     /**
+     * 重命名的列（逻辑删除）：Key=原列名, Value=新列名
+     */
+    private final Map<String, String> renameColumnMap = new LinkedHashMap<>();
+    /**
+     * 重命名列时需要的列类型信息（用于 CHANGE COLUMN 语法）
+     */
+    private final Map<String, String> renameColumnTypeMap = new HashMap<>();
+    /**
      * 修改的列，包含新增、修改
      */
     private final List<MysqlModifyColumnMetadata> modifyMysqlColumnMetadataList = new ArrayList<>();
@@ -76,6 +87,7 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
                 dropPrimary ||
                 !newPrimaries.isEmpty() ||
                 !dropColumnList.isEmpty() ||
+                !renameColumnMap.isEmpty() ||
                 !modifyMysqlColumnMetadataList.isEmpty() ||
                 !dropIndexList.isEmpty() ||
                 !indexMetadataList.isEmpty();
@@ -104,6 +116,12 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
         }
         if (!dropColumnList.isEmpty()) {
             errorMsg.append("删除列：").append(String.join(",", dropColumnList)).append("\n");
+        }
+        if (!renameColumnMap.isEmpty()) {
+            String renameColumns = renameColumnMap.entrySet().stream()
+                    .map(entry -> entry.getKey() + " -> " + entry.getValue())
+                    .collect(Collectors.joining(","));
+            errorMsg.append("重命名列（逻辑删除）：").append(renameColumns).append("\n");
         }
         if (!modifyMysqlColumnMetadataList.isEmpty()) {
             String addColumn = modifyMysqlColumnMetadataList.stream()
@@ -138,6 +156,14 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
 
     public void addEditColumnMetadata(MysqlColumnMetadata mysqlColumnMetadata) {
         this.modifyMysqlColumnMetadataList.add(new MysqlModifyColumnMetadata(ModifyType.MODIFY, mysqlColumnMetadata));
+    }
+
+    /**
+     * 添加需要重命名的列（逻辑删除）
+     */
+    public void addRenameColumn(String oldName, String newName, String columnType) {
+        this.renameColumnMap.put(oldName, newName);
+        this.renameColumnTypeMap.put(oldName, columnType);
     }
 
     /**

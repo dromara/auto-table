@@ -3,9 +3,11 @@ package org.dromara.autotable.strategy.doris;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.doris.builder.DorisMetadataBuilder;
 import org.dromara.autotable.strategy.doris.builder.DorisSqlBuilder;
 import org.dromara.autotable.strategy.doris.data.DorisCompareTableInfo;
@@ -157,8 +159,30 @@ public class DorisStrategy implements IStrategy<DorisTableMetadata, DorisCompare
         removed = removed.stream()
                 .filter(it -> !removed_matched.contains(it))
                 .collect(Collectors.toList());
+
+        // 处理 logicDropColumnPrefix：过滤已带前缀的字段，剩余字段标记为逻辑删除
+        PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
         // 创建DorisCompareTableInfo对象，用于存储比较结果
         DorisCompareTableInfo compareTableInfo = new DorisCompareTableInfo(tableName, tableMetadata.getSchema());
+        if (StringUtils.hasText(logicDropColumnPrefix)) {
+            Set<String> needRenameColumns = new HashSet<>();
+            removed = removed.stream()
+                    .filter(line -> {
+                        Matcher matcher = pattern.matcher(line);
+                        String columnName = matcher.find() ? matcher.group(1) : "";
+                        if (!StringUtils.hasText(columnName) || columnName.startsWith(logicDropColumnPrefix)) {
+                            return true;
+                        }
+                        needRenameColumns.add(columnName);
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+            if (!needRenameColumns.isEmpty()) {
+                compareTableInfo.addRenameColumns(needRenameColumns, logicDropColumnPrefix);
+            }
+        }
+
         compareTableInfo.setTableDataLength(tableDataLength);
         compareTableInfo.setCreateTableSql(createTableSql);
         compareTableInfo.setColumns(columns);

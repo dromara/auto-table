@@ -49,6 +49,13 @@ public class DmModifyTableSqlBuilder {
                         + " DROP COLUMN " + IStrategy.wrapIdentifiers(column) + ";")
         );
 
+        // 重命名列（逻辑删除，每个列独立）
+        compareInfo.getRenameColumnMap().forEach((oldName, newName) ->
+                sqlList.add("ALTER TABLE " + qualifiedTableName
+                        + " RENAME COLUMN " + IStrategy.wrapIdentifiers(oldName)
+                        + " TO " + IStrategy.wrapIdentifiers(newName) + ";")
+        );
+
         // 新增列（每个列独立）
         compareInfo.getNewColumnMetadataList().forEach(column ->
                 sqlList.add("ALTER TABLE " + qualifiedTableName

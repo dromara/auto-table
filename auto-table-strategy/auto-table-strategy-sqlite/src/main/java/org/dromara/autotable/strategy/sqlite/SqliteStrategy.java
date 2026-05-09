@@ -1,6 +1,8 @@
 package org.dromara.autotable.strategy.sqlite;
 
 import lombok.NonNull;
+import org.dromara.autotable.core.AutoTableGlobalConfig;
+import org.dromara.autotable.core.config.PropertyConfig;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.converter.DefaultTypeEnumInterface;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
@@ -25,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -110,17 +113,57 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         String schema = tableMetadata.getSchema();
         SqliteCompareTableInfo sqliteCompareTableInfo = new SqliteCompareTableInfo(tableName, schema);
 
+        // 获取配置
+        PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
+        String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
+
         // 判断表是否需要重建
         String orgBuildTableSql = mapper.queryBuildTableSql(tableName);
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
         String newBuildTableSql = CreateTableSqlBuilder.buildTableSql(tableMetadata.getTableName(), tableMetadata.getComment(), columnMetadataList);
+
+        // 查询现有表列
+        List<SqliteColumns> oldColumns = mapper.queryTableColumns(tableName);
+        Set<String> oldColumnNames = oldColumns.stream().map(SqliteColumns::getName).collect(Collectors.toSet());
+        Set<String> newColumnNames = columnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.toSet());
+
+        // 处理多余字段（逻辑删除）
+        Set<String> extraColumnNames = new HashSet<>(oldColumnNames);
+        extraColumnNames.removeAll(newColumnNames);
+
+        boolean hasLogicDropColumns = false;
+        for (String extraColumn : extraColumnNames) {
+            // 已带前缀的字段跳过不处理
+            if (StringUtils.hasText(logicDropColumnPrefix) && extraColumn.startsWith(logicDropColumnPrefix)) {
+                continue;
+            }
+            // 逻辑删除：重命名字段
+            if (StringUtils.hasText(logicDropColumnPrefix)) {
+                String newColumnName = logicDropColumnPrefix + extraColumn;
+                sqliteCompareTableInfo.getRenameColumnMap().put(extraColumn, newColumnName);
+                hasLogicDropColumns = true;
+            }
+        }
+
         boolean needRebuildTable = !Objects.equals(orgBuildTableSql + ";", newBuildTableSql);
+        // 如果配置了逻辑删除，且所有额外列都已标记为逻辑删除，则不需要重建表
+        if (needRebuildTable && hasLogicDropColumns) {
+            Set<String> effectiveOldColumns = new HashSet<>(oldColumnNames);
+            for (Map.Entry<String, String> entry : sqliteCompareTableInfo.getRenameColumnMap().entrySet()) {
+                effectiveOldColumns.remove(entry.getKey());
+            }
+            // 移除已带前缀的列
+            if (StringUtils.hasText(logicDropColumnPrefix)) {
+                effectiveOldColumns.removeIf(col -> col.startsWith(logicDropColumnPrefix));
+            }
+            if (effectiveOldColumns.equals(newColumnNames)) {
+                needRebuildTable = false;
+            }
+        }
+
         if (needRebuildTable) {
 
             // 筛选出数据迁移的列
-            List<SqliteColumns> oldColumns = mapper.queryTableColumns(tableName);
-            Set<String> oldColumnNames = oldColumns.stream().map(SqliteColumns::getName).collect(Collectors.toSet());
-            Set<String> newColumnNames = columnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.toSet());
             List<String> validColumnNames = newColumnNames.stream().filter(oldColumnNames::contains).collect(Collectors.toList());
             sqliteCompareTableInfo.setDataMigrationColumnList(validColumnNames);
 
@@ -181,6 +224,17 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         if (!deleteIndexList.isEmpty()) {
             for (String deleteIndexName : deleteIndexList) {
                 sqlList.add(String.format("drop index if exists %s;", deleteIndexName));
+            }
+        }
+
+        // 重命名列（逻辑删除）
+        Map<String, String> renameColumnMap = sqliteCompareTableInfo.getRenameColumnMap();
+        if (!renameColumnMap.isEmpty()) {
+            String tableName = sqliteCompareTableInfo.getName();
+            for (Map.Entry<String, String> entry : renameColumnMap.entrySet()) {
+                String oldName = entry.getKey();
+                String newName = entry.getValue();
+                sqlList.add(String.format("ALTER TABLE %s RENAME COLUMN %s TO %s;", tableName, oldName, newName));
             }
         }
 
