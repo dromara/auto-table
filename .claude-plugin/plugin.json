@@ -1,7 +1,0 @@
-{
-  "name": "autotable",
-  "version": "1.0.0",
-  "description": "AutoTable 自动建表框架 AI 编码助手技能包：覆盖 29 个注解、9 种数据库、生命周期钩子、SPI 扩展、SQL 审计、多数据源等完整使用指南",
-  "homepage": "https://autotable.tangzc.com",
-  "repository": "https://github.com/dromara/auto-table"
-}
