@@ -251,7 +251,7 @@ Java 枚举默认存 `name()`（如 `ACTIVE`），如需存 code：
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-support-springdoc</artifactId>
-    <version>2.5.17</version>
+    <version>${最新版本}</version>
 </dependency>
 ```
 

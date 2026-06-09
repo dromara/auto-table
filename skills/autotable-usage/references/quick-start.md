@@ -1,5 +1,8 @@
 # AutoTable 快速开始
 
+> **版本号**：本文档中所有 `${最新版本}` 占位符需替换为 Maven Central 上的最新版本。
+> 查询地址：https://central.sonatype.com/artifact/org.dromara.autotable/auto-table-core/versions
+
 ## 安装
 
 ### Maven
@@ -9,34 +12,34 @@
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-spring-boot-starter</artifactId>
-    <version>2.5.17</version>
+    <version>${最新版本}</version>
 </dependency>
 
 <!-- Solon 框架 -->
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-solon-plugin</artifactId>
-    <version>2.5.17</version>
+    <version>${最新版本}</version>
 </dependency>
 
 <!-- 纯 Java（无框架） -->
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-core</artifactId>
-    <version>2.5.17</version>
+    <version>${最新版本}</version>
 </dependency>
 <!-- + 按需引入数据库策略包 -->
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-mysql</artifactId>
-    <version>2.5.17</version>
+    <version>${最新版本}</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'org.dromara.autotable:auto-table-spring-boot-starter:2.5.17'
+implementation 'org.dromara.autotable:auto-table-spring-boot-starter:${最新版本}'
 ```
 
 ## 启用
