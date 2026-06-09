@@ -129,10 +129,10 @@ public class MysqlColumnMetadataBuilder extends ColumnMetadataBuilder {
             }
         }
 
-        if (StringUtils.hasText(charset) && StringUtils.hasText(collate)) {
-            // 字符集
+        if (StringUtils.hasText(charset)) {
             mysqlColumnMetadata.setCharacterSet(charset);
-            // 字符排序
+        }
+        if (StringUtils.hasText(collate)) {
             mysqlColumnMetadata.setCollate(collate);
         }
     }

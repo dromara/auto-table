@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.strategy.mysql.MysqlStrategy;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Collections;
@@ -22,6 +23,11 @@ public class ColumnSqlBuilderTest {
     @BeforeEach
     void setUp() {
         IStrategy.setCurrentStrategy(new MysqlStrategy());
+    }
+
+    @AfterEach
+    void tearDown() {
+        IStrategy.clean();
     }
 
     @Test
@@ -169,5 +175,33 @@ public class ColumnSqlBuilderTest {
         String sql = ColumnSqlBuilder.buildSql(column);
 
         assertTrue(sql.contains("FIRST"));
+    }
+
+    @Test
+    void testBuildSql_commentWithSingleQuote() {
+        MysqlColumnMetadata column = new MysqlColumnMetadata();
+        column.setName("name");
+        column.setType(new DatabaseTypeAndLength("varchar", 100, null, Collections.emptyList()));
+        column.setComment("用户's name");
+
+        String sql = ColumnSqlBuilder.buildSql(column);
+
+        // 单引号应该被转义为 ''
+        assertTrue(sql.contains("COMMENT '用户''s name'"));
+    }
+
+    @Test
+    void testBuildSql_charsetOnlyWithoutCollate() {
+        MysqlColumnMetadata column = new MysqlColumnMetadata();
+        column.setName("name");
+        column.setType(new DatabaseTypeAndLength("varchar", 100, null, Collections.emptyList()));
+        column.setCharacterSet("utf8mb4");
+        // collate 不设置
+
+        String sql = ColumnSqlBuilder.buildSql(column);
+
+        // charset 应该独立生效
+        assertTrue(sql.contains("CHARACTER SET utf8mb4"));
+        assertFalse(sql.contains("COLLATE"));
     }
 }

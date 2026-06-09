@@ -40,10 +40,10 @@ public class MysqlTableMetadataBuilder {
             charset = autoTableProperties.getMysql().getTableDefaultCharset();
             collate = autoTableProperties.getMysql().getTableDefaultCollation();
         }
-        if (StringUtils.hasText(charset) && StringUtils.hasText(collate)) {
-            // 获取表字符集
+        if (StringUtils.hasText(charset)) {
             mysqlTableMetadata.setCharacterSet(charset);
-            // 字符排序
+        }
+        if (StringUtils.hasText(collate)) {
             mysqlTableMetadata.setCollate(collate);
         }
 

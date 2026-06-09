@@ -64,46 +64,53 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
         return "`";
     }
 
+    private static final Map<Class<?>, DefaultTypeEnumInterface> TYPE_MAPPING = new HashMap<>(32);
+
+    static {
+        TYPE_MAPPING.put(String.class, MySqlDefaultTypeEnum.VARCHAR);
+        TYPE_MAPPING.put(Character.class, MySqlDefaultTypeEnum.CHAR);
+        TYPE_MAPPING.put(char.class, MySqlDefaultTypeEnum.CHAR);
+
+        TYPE_MAPPING.put(BigInteger.class, MySqlDefaultTypeEnum.BIGINT);
+        TYPE_MAPPING.put(Long.class, MySqlDefaultTypeEnum.BIGINT);
+        TYPE_MAPPING.put(long.class, MySqlDefaultTypeEnum.BIGINT);
+
+        TYPE_MAPPING.put(Integer.class, MySqlDefaultTypeEnum.INT);
+        TYPE_MAPPING.put(int.class, MySqlDefaultTypeEnum.INT);
+
+        TYPE_MAPPING.put(Short.class, MySqlDefaultTypeEnum.SMALLINT);
+        TYPE_MAPPING.put(short.class, MySqlDefaultTypeEnum.SMALLINT);
+
+        TYPE_MAPPING.put(Byte.class, MySqlDefaultTypeEnum.TINYINT);
+        TYPE_MAPPING.put(byte.class, MySqlDefaultTypeEnum.TINYINT);
+
+        TYPE_MAPPING.put(Boolean.class, MySqlDefaultTypeEnum.BIT);
+        TYPE_MAPPING.put(boolean.class, MySqlDefaultTypeEnum.BIT);
+
+        TYPE_MAPPING.put(Float.class, MySqlDefaultTypeEnum.FLOAT);
+        TYPE_MAPPING.put(float.class, MySqlDefaultTypeEnum.FLOAT);
+        TYPE_MAPPING.put(Double.class, MySqlDefaultTypeEnum.DOUBLE);
+        TYPE_MAPPING.put(double.class, MySqlDefaultTypeEnum.DOUBLE);
+        TYPE_MAPPING.put(BigDecimal.class, MySqlDefaultTypeEnum.DECIMAL);
+
+        TYPE_MAPPING.put(Date.class, MySqlDefaultTypeEnum.DATETIME);
+        TYPE_MAPPING.put(java.sql.Date.class, MySqlDefaultTypeEnum.DATE);
+        TYPE_MAPPING.put(java.sql.Timestamp.class, MySqlDefaultTypeEnum.DATETIME);
+        TYPE_MAPPING.put(java.sql.Time.class, MySqlDefaultTypeEnum.TIME);
+        TYPE_MAPPING.put(LocalDateTime.class, MySqlDefaultTypeEnum.DATETIME);
+        TYPE_MAPPING.put(LocalDate.class, MySqlDefaultTypeEnum.DATE);
+        TYPE_MAPPING.put(LocalTime.class, MySqlDefaultTypeEnum.TIME);
+    }
+
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            put(String.class, MySqlDefaultTypeEnum.VARCHAR);
-            put(Character.class, MySqlDefaultTypeEnum.CHAR);
-            put(char.class, MySqlDefaultTypeEnum.CHAR);
-
-            put(BigInteger.class, MySqlDefaultTypeEnum.BIGINT);
-            put(Long.class, MySqlDefaultTypeEnum.BIGINT);
-            put(long.class, MySqlDefaultTypeEnum.BIGINT);
-
-            put(Integer.class, MySqlDefaultTypeEnum.INT);
-            put(int.class, MySqlDefaultTypeEnum.INT);
-
-            put(Boolean.class, MySqlDefaultTypeEnum.BIT);
-            put(boolean.class, MySqlDefaultTypeEnum.BIT);
-
-            put(Float.class, MySqlDefaultTypeEnum.FLOAT);
-            put(float.class, MySqlDefaultTypeEnum.FLOAT);
-            put(Double.class, MySqlDefaultTypeEnum.DOUBLE);
-            put(double.class, MySqlDefaultTypeEnum.DOUBLE);
-            put(BigDecimal.class, MySqlDefaultTypeEnum.DECIMAL);
-
-            put(Date.class, MySqlDefaultTypeEnum.DATETIME);
-            put(java.sql.Date.class, MySqlDefaultTypeEnum.DATE);
-            put(java.sql.Timestamp.class, MySqlDefaultTypeEnum.DATETIME);
-            put(java.sql.Time.class, MySqlDefaultTypeEnum.TIME);
-            put(LocalDateTime.class, MySqlDefaultTypeEnum.DATETIME);
-            put(LocalDate.class, MySqlDefaultTypeEnum.DATE);
-            put(LocalTime.class, MySqlDefaultTypeEnum.TIME);
-
-            put(Short.class, MySqlDefaultTypeEnum.SMALLINT);
-            put(short.class, MySqlDefaultTypeEnum.SMALLINT);
-        }};
+        return Collections.unmodifiableMap(TYPE_MAPPING);
     }
 
     @Override
     public String dropTable(String schema, String tableName) {
 
-        return String.format("DROP TABLE IF EXISTS `%s`", tableName);
+        return "DROP TABLE IF EXISTS " + IStrategy.wrapIdentifiers(tableName);
     }
 
     @Override
@@ -284,7 +291,6 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
         // 变形：《列名，实体字段描述》
         Map<String, MysqlColumnMetadata> columnParamMap = mysqlColumnMetadataList.stream().collect(Collectors.toMap(MysqlColumnMetadata::getName, Function.identity()));
         // 查询数据库所有列数据
-        // List<InformationSchemaColumn> tableColumnList = DataSourceManager.useMapper(MysqlTablesMapper.class, mapper -> mapper.findTableEnsembleByTableName(tableName));
         List<InformationSchemaColumn> tableColumnList = mapper.findTableEnsembleByTableName(tableName);
 
         // 获取顺序变更的sql
@@ -429,7 +435,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                 isQualifierDiff = true;
             }
             // 零填充比较
-            else if (mysqlColumnMetadata.isZerofill() != dbColumnTypeArr.stream().anyMatch("zerofill"::equalsIgnoreCase)) {
+            if (mysqlColumnMetadata.isZerofill() != dbColumnTypeArr.stream().anyMatch("zerofill"::equalsIgnoreCase)) {
                 isQualifierDiff = true;
             }
         }
@@ -452,16 +458,19 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
         if (StringUtils.hasText(tableComment) && !tableComment.equals(tableInformation.getTableComment())) {
             mysqlCompareTableInfo.setComment(tableComment);
         }
-        // 判断表字符集是否要更新
-        if (StringUtils.hasText(tableCharset)) {
-            String collate = tableInformation.getTableCollation();
-            if (StringUtils.hasText(collate)) {
-                String charset = collate.substring(0, collate.indexOf("_"));
-                if (!tableCharset.equals(charset) || !tableCollate.equals(collate)) {
+        // 判断表字符集/排序规则是否要更新（charset 和 collate 独立比对）
+        String dbCollation = tableInformation.getTableCollation();
+        if (StringUtils.hasText(tableCharset) && StringUtils.hasText(dbCollation)) {
+            int underscoreIdx = dbCollation.indexOf("_");
+            if (underscoreIdx > 0) {
+                String dbCharset = dbCollation.substring(0, underscoreIdx);
+                if (!tableCharset.equals(dbCharset)) {
                     mysqlCompareTableInfo.setCharacterSet(tableCharset);
-                    mysqlCompareTableInfo.setCollate(tableCollate);
                 }
             }
+        }
+        if (StringUtils.hasText(tableCollate) && !tableCollate.equals(dbCollation)) {
+            mysqlCompareTableInfo.setCollate(tableCollate);
         }
         // 判断表引擎是否要更新
         if (StringUtils.hasText(tableEngine) && !tableEngine.equals(tableInformation.getEngine())) {

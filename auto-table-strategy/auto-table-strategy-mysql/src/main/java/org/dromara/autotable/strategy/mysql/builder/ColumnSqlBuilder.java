@@ -27,6 +27,7 @@ public class ColumnSqlBuilder {
                 .replace("{columnName}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                 .replace("{typeAndLength}", MysqlTypeHelper.getFullType(columnMetadata.getType()))
                 // 添加二进制、无符号、补零 等修饰符
+                // MySQL 中 ZEROFILL 隐含 UNSIGNED，因此 zerofill=true 时无条件添加 UNSIGNED
                 .replace("{qualifier}", () -> {
                     Set<String> qualifiers = new HashSet<>();
                     if (columnMetadata.isUnsigned()) {
@@ -71,7 +72,7 @@ public class ColumnSqlBuilder {
                     return "";
                 })
                 .replace("{autoIncrement}", columnMetadata.isAutoIncrement() ? "AUTO_INCREMENT" : "")
-                .replace("{columnComment}", StringUtils.hasText(columnMetadata.getComment()) ? "COMMENT '" + columnMetadata.getComment() + "'" : "")
+                .replace("{columnComment}", StringUtils.hasText(columnMetadata.getComment()) ? "COMMENT '" + columnMetadata.getComment().replace("'", "''") + "'" : "")
                 .replace("{position}", () -> {
                     if (StringUtils.hasText(columnMetadata.getNewPreColumn())) {
                         return "AFTER " + IStrategy.wrapIdentifiers(columnMetadata.getNewPreColumn());

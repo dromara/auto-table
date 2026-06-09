@@ -1,6 +1,5 @@
 package org.dromara.autotable.test.core.unit.builder;
 
-import org.dromara.autotable.annotation.enums.IndexSortTypeEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.IndexMetadata;
@@ -8,7 +7,9 @@ import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.strategy.mysql.builder.CreateTableSqlBuilder;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
+import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,11 @@ public class CreateTableSqlBuilderTest {
     @BeforeEach
     void setUp() {
         IStrategy.setCurrentStrategy(new MysqlStrategy());
+    }
+
+    @AfterEach
+    void tearDown() {
+        IStrategy.clean();
     }
 
     @Test
@@ -157,5 +163,57 @@ public class CreateTableSqlBuilderTest {
         String sql = CreateTableSqlBuilder.getPrimaryKeySql(Arrays.asList("id", "tenant_id"));
 
         assertEquals("PRIMARY KEY (`id`,`tenant_id`)", sql);
+    }
+
+    @Test
+    void testBuildSql_withFullTextIndex() {
+        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_fulltext", "");
+        tableMetadata.setEngine("InnoDB");
+
+        List<MysqlColumnMetadata> columns = new ArrayList<>();
+        MysqlColumnMetadata idColumn = new MysqlColumnMetadata();
+        idColumn.setName("id");
+        idColumn.setType(new DatabaseTypeAndLength("bigint", 20, null, Collections.emptyList()));
+        idColumn.setPrimary(true);
+        idColumn.setPosition(0);
+        columns.add(idColumn);
+
+        MysqlColumnMetadata contentColumn = new MysqlColumnMetadata();
+        contentColumn.setName("content");
+        contentColumn.setType(new DatabaseTypeAndLength("text", null, null, Collections.emptyList()));
+        contentColumn.setPosition(1);
+        columns.add(contentColumn);
+
+        tableMetadata.setColumnMetadataList(columns);
+
+        MysqlIndexMetadata fulltextIndex = new MysqlIndexMetadata();
+        fulltextIndex.setName("ft_content");
+        fulltextIndex.setType(IndexTypeEnum.NORMAL);
+        fulltextIndex.setFullText(true);
+        fulltextIndex.setParser("ngram");
+        fulltextIndex.setColumns(Arrays.asList(
+            IndexMetadata.IndexColumnParam.newInstance("content", null)
+        ));
+        tableMetadata.setIndexMetadataList(Arrays.asList(fulltextIndex));
+
+        String sql = CreateTableSqlBuilder.buildSql(tableMetadata);
+
+        assertTrue(sql.contains("FULLTEXT INDEX `ft_content`(`content`)"));
+        assertTrue(sql.contains("WITH PARSER ngram"));
+    }
+
+    @Test
+    void testGetTableProperties_commentWithSingleQuote() {
+        List<String> properties = CreateTableSqlBuilder.getTableProperties(null, null, null, "用户's table");
+
+        assertTrue(properties.stream().anyMatch(p -> p.contains("用户''s table")));
+    }
+
+    @Test
+    void testGetTableProperties_charsetOnlyWithoutCollate() {
+        List<String> properties = CreateTableSqlBuilder.getTableProperties(null, "utf8mb4", null, null);
+
+        assertEquals(1, properties.size());
+        assertTrue(properties.contains("CHARACTER SET = utf8mb4"));
     }
 }

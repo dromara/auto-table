@@ -6,7 +6,6 @@ import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.dbdata.InformationSchemaColumn;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,33 +85,5 @@ public class ColumnPositionHelper {
     public static class InformationSchemaColumnPosition {
         private String columnName;
         private Integer ordinalPosition;
-    }
-
-    public static void main(String[] args) {
-
-        List<InformationSchemaColumn> dbColumns = Arrays.asList(db(1, "A"), db(2, "B"), db(3, "C"), db(4, "D"), db(5, "E"), db(6, "H"));
-        List<MysqlColumnMetadata> expectPositions = Arrays.asList(app(1, "B"), app(2, "G"), app(3, "F"), app(4, "C"), app(5, "A"), app(6, "E"), app(7, "D"));
-
-
-        generateChangePosition(dbColumns, expectPositions);
-
-        for (MysqlColumnMetadata columnMetadata : expectPositions) {
-            System.out.println(columnMetadata + " - " + columnMetadata.getName());
-        }
-    }
-
-
-    private static InformationSchemaColumn db(int index, String name) {
-        InformationSchemaColumn informationSchemaColumn = new InformationSchemaColumn();
-        informationSchemaColumn.setColumnName(name);
-        informationSchemaColumn.setOrdinalPosition(index);
-        return informationSchemaColumn;
-    }
-
-    private static MysqlColumnMetadata app(int index, String org) {
-        MysqlColumnMetadata informationSchemaColumn = new MysqlColumnMetadata();
-        informationSchemaColumn.setName(org);
-        informationSchemaColumn.setPosition(index);
-        return informationSchemaColumn;
     }
 }

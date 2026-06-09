@@ -26,8 +26,13 @@ public class MysqlStrategyUnitTest {
     @Test
     void testDropTable() {
         MysqlStrategy strategy = new MysqlStrategy();
-        String sql = strategy.dropTable("test_db", "test_table");
-        assertEquals("DROP TABLE IF EXISTS `test_table`", sql);
+        IStrategy.setCurrentStrategy(strategy);
+        try {
+            String sql = strategy.dropTable("test_db", "test_table");
+            assertEquals("DROP TABLE IF EXISTS `test_table`", sql);
+        } finally {
+            IStrategy.clean();
+        }
     }
 
     @Test
@@ -61,5 +66,22 @@ public class MysqlStrategyUnitTest {
         assertTrue(strategy.typeMapping().containsKey(String.class));
         assertTrue(strategy.typeMapping().containsKey(Integer.class));
         assertTrue(strategy.typeMapping().containsKey(Long.class));
+    }
+
+    @Test
+    void testTypeMapping_byteMapping() {
+        MysqlStrategy strategy = new MysqlStrategy();
+        assertTrue(strategy.typeMapping().containsKey(byte.class));
+        assertTrue(strategy.typeMapping().containsKey(Byte.class));
+        assertEquals("tinyint", strategy.typeMapping().get(byte.class).getTypeName());
+        assertEquals("tinyint", strategy.typeMapping().get(Byte.class).getTypeName());
+    }
+
+    @Test
+    void testTypeMapping_isUnmodifiable() {
+        MysqlStrategy strategy = new MysqlStrategy();
+        assertThrows(UnsupportedOperationException.class, () -> {
+            strategy.typeMapping().put(String.class, null);
+        });
     }
 }

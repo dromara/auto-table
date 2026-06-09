@@ -70,18 +70,19 @@ public class MysqlDatabaseBuilder implements DatabaseBuilder {
                 PreparedStatement ps = conn.prepareStatement("SELECT SCHEMA_NAME FROM SCHEMATA WHERE SCHEMA_NAME = ?")
         ) {
             ps.setString(1, dbName);
-            ResultSet rs = ps.executeQuery();
-            boolean exists = rs.next();
-            // 数据库状态回调
-            dbStatusCallback.accept(exists);
-            if (!exists) {
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.executeUpdate("CREATE DATABASE `" + dbName + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                    log.info("成功创建 Mysql 数据库：{}", dbName);
-                    return BuildResult.of(true, dbName);
+            try (ResultSet rs = ps.executeQuery()) {
+                boolean exists = rs.next();
+                // 数据库状态回调
+                dbStatusCallback.accept(exists);
+                if (!exists) {
+                    try (Statement stmt = conn.createStatement()) {
+                        stmt.executeUpdate("CREATE DATABASE `" + dbName + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                        log.info("成功创建 Mysql 数据库：{}", dbName);
+                        return BuildResult.of(true, dbName);
+                    }
+                } else {
+                    log.info("数据库已存在：{}", dbName);
                 }
-            } else {
-                log.info("数据库已存在：{}", dbName);
             }
         }
         return BuildResult.of(false, dbName);

@@ -1,7 +1,6 @@
 package org.dromara.autotable.strategy.mysql.builder;
 
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.annotation.TableIndex;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.annotation.mysql.MysqlFullTextIndex;

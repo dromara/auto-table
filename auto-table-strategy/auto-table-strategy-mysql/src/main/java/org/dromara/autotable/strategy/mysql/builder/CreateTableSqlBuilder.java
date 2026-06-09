@@ -111,7 +111,7 @@ public class CreateTableSqlBuilder {
         if (StringUtils.hasText(comment)) {
             tableProperties.add(
                     "COMMENT = '{comment}'"
-                            .replace("{comment}", comment)
+                            .replace("{comment}", comment.replace("'", "''"))
             );
         }
         return tableProperties;
@@ -133,7 +133,7 @@ public class CreateTableSqlBuilder {
                                             .replace("{sortMode}", column.getSort() != null ? (" " + column.getSort().name()) : "")
                             ).collect(Collectors.joining(","));
                         })
-                        .replace("{indexComment}", StringUtils.hasText(indexMetadata.getComment()) ? " COMMENT '" + indexMetadata.getComment() + "'" : "")
+                        .replace("{indexComment}", StringUtils.hasText(indexMetadata.getComment()) ? " COMMENT '" + indexMetadata.getComment().replace("'", "''") + "'" : "")
                         .replace("{parser}", StringUtils.hasText(mysqlIndexMetadata.getParser()) ? " WITH PARSER " + mysqlIndexMetadata.getParser() : "")
                         .toString();
             }
@@ -153,7 +153,7 @@ public class CreateTableSqlBuilder {
                     ).collect(Collectors.joining(","));
                 })
                 .replace("{method}", StringUtils.hasText(indexMetadata.getMethod()) ? "USING " + indexMetadata.getMethod() : "")
-                .replace("{indexComment}", StringUtils.hasText(indexMetadata.getComment()) ? "COMMENT '" + indexMetadata.getComment() + "'" : "")
+                .replace("{indexComment}", StringUtils.hasText(indexMetadata.getComment()) ? "COMMENT '" + indexMetadata.getComment().replace("'", "''") + "'" : "")
                 .toString();
     }
 
