@@ -34,7 +34,7 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
     public BuildResult build(String jdbcUrl, String username, String password, Set<Class<?>> entityClasses, Consumer<Boolean> dbStatusCallback) {
         String dbName = extractDbNameFromUrl(jdbcUrl);
         if (dbName == null) {
-            return BuildResult.of(false, null);
+            return BuildResult.of(false, dbName);
         }
 
         // 使用 admin 配置优先，否则 fallback 到 username/password
@@ -66,18 +66,19 @@ public class PostgresqlDatabaseBuilder implements DatabaseBuilder {
 
         try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")) {
             ps.setString(1, dbName);
-            ResultSet rs = ps.executeQuery();
-            boolean exists = rs.next();
-            // 回调数据库状态
-            dbStatusCallback.accept(exists);
-            if (!exists) {
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.executeUpdate(String.format(
-                            "CREATE DATABASE \"%s\" WITH ENCODING='%s'",
-                            dbName, "UTF8" // 默认 UTF8
-                    ));
-                    log.info("创建 PostgreSQL 数据库：{}", dbName);
-                    return true;
+            try (ResultSet rs = ps.executeQuery()) {
+                boolean exists = rs.next();
+                // 回调数据库状态
+                dbStatusCallback.accept(exists);
+                if (!exists) {
+                    try (Statement stmt = conn.createStatement()) {
+                        stmt.executeUpdate(String.format(
+                                "CREATE DATABASE \"%s\" WITH ENCODING='%s'",
+                                dbName, "UTF8" // 默认 UTF8
+                        ));
+                        log.info("创建 PostgreSQL 数据库：{}", dbName);
+                        return true;
+                    }
                 }
             }
         }

@@ -92,8 +92,12 @@ public class CreateTableSqlBuilder {
         List<IndexMetadata> indexMetadataList = tableMetadata.getIndexMetadataList();
 
         return getAddColumnCommentSql(schema, tableName, comment,
-                columnMetadataList.stream().collect(Collectors.toMap(ColumnMetadata::getName, ColumnMetadata::getComment)),
-                indexMetadataList.stream().collect(Collectors.toMap(IndexMetadata::getName, IndexMetadata::getComment)));
+                columnMetadataList.stream()
+                        .filter(col -> StringUtils.hasText(col.getComment()))
+                        .collect(Collectors.toMap(ColumnMetadata::getName, ColumnMetadata::getComment)),
+                indexMetadataList.stream()
+                        .filter(idx -> StringUtils.hasText(idx.getComment()))
+                        .collect(Collectors.toMap(IndexMetadata::getName, IndexMetadata::getComment)));
     }
 
     public static String getAddColumnCommentSql(String schema, String tableName, String tableComment, Map<String, String> columnCommentMap, Map<String, String> indexCommentMap) {
@@ -104,7 +108,7 @@ public class CreateTableSqlBuilder {
         if (StringUtils.hasText(tableComment)) {
             String addTableComment = "COMMENT ON TABLE {schemaTableName} IS '{comment}';"
                     .replace("{schemaTableName}", IStrategy.concatWrapIdentifiers(schema, tableName))
-                    .replace("{comment}", tableComment);
+                    .replace("{comment}", tableComment.replace("'", "''"));
             commentList.add(addTableComment);
         }
 
@@ -113,14 +117,14 @@ public class CreateTableSqlBuilder {
                 .map(columnComment -> "COMMENT ON COLUMN {schemaTableName}.{columnName} IS '{comment}';"
                         .replace("{schemaTableName}", IStrategy.concatWrapIdentifiers(schema, tableName))
                         .replace("{columnName}", IStrategy.wrapIdentifiers(columnComment.getKey()))
-                        .replace("{comment}", columnComment.getValue()))
+                        .replace("{comment}", columnComment.getValue() != null ? columnComment.getValue().replace("'", "''") : ""))
                 .forEach(commentList::add);
 
         // 索引备注
         indexCommentMap.entrySet().stream()
                 .map(indexComment -> "COMMENT ON INDEX {schemaIndexName} IS '{comment}';"
                         .replace("{schemaIndexName}", IStrategy.concatWrapIdentifiers(schema, indexComment.getKey()))
-                        .replace("{comment}", indexComment.getValue()))
+                        .replace("{comment}", indexComment.getValue() != null ? indexComment.getValue().replace("'", "''") : ""))
                 .forEach(commentList::add);
 
         return String.join("\n", commentList);

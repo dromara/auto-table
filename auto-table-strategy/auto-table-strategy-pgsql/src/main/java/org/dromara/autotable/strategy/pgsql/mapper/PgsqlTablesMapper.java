@@ -8,6 +8,7 @@ import org.dromara.autotable.core.utils.DBHelper;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -16,6 +17,13 @@ import java.util.List;
  * @author don
  */
 public class PgsqlTablesMapper {
+
+    private static Map<String, Object> params(String schema, String tableName) {
+        Map<String, Object> map = new HashMap<>(4);
+        map.put("tableName", tableName);
+        map.put("schema", schema);
+        return map;
+    }
 
     /**
      * 查询表名注释
@@ -36,10 +44,7 @@ public class PgsqlTablesMapper {
                 "WHERE nams.nspname = ':schema' AND clas.relname = ':tableName' AND des.objsubid = 0;";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryValue(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("schema", schema);
-            }});
+            return DBHelper.queryValue(connection, sql, params(schema, tableName));
         });
     }
 
@@ -60,15 +65,13 @@ public class PgsqlTablesMapper {
         String sql = "SELECT DISTINCT key_col.column_name IS NOT NULL AS primary, des.description, cols.* " +
                 "FROM information_schema.columns cols " +
                 "LEFT JOIN information_schema.key_column_usage key_col ON key_col.column_name = cols.column_name " +
+                "AND key_col.table_name = cols.table_name AND key_col.table_schema = cols.table_schema " +
                 "LEFT JOIN pg_catalog.pg_class clas ON clas.relname = cols.table_name AND clas.relnamespace = ( SELECT oid FROM pg_namespace WHERE nspname = cols.table_schema ) " +
                 "LEFT JOIN pg_catalog.pg_description des ON des.objoid = clas.oid AND cols.ordinal_position = des.objsubid " +
                 "WHERE cols.table_schema = ':schema' AND cols.table_name = ':tableName';";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryObjectList(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("schema", schema);
-            }}, PgsqlDbColumn.class);
+            return DBHelper.queryObjectList(connection, sql, params(schema, tableName), PgsqlDbColumn.class);
         });
     }
 
@@ -100,10 +103,7 @@ public class PgsqlTablesMapper {
                 "WHERE idxs.schemaname = ':schema' AND idxs.tablename = ':tableName' AND cst.contype is null;";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryObjectList(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("schema", schema);
-            }}, PgsqlDbIndex.class);
+            return DBHelper.queryObjectList(connection, sql, params(schema, tableName), PgsqlDbIndex.class);
         });
     }
 
@@ -125,10 +125,7 @@ public class PgsqlTablesMapper {
                 "GROUP BY con.conname;";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryObject(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("schema", schema);
-            }}, PgsqlDbPrimary.class);
+            return DBHelper.queryObject(connection, sql, params(schema, tableName), PgsqlDbPrimary.class);
         });
     }
 }

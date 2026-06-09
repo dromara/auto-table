@@ -34,7 +34,7 @@ public class PgsqlDbIndex {
     private String indexname;
 
     /**
-     *
+     * 索引所在的表空间名称，如果使用了默认表空间则为 null。
      */
     @DBHelper.ColumnName("tablespace")
     private String tablespace;

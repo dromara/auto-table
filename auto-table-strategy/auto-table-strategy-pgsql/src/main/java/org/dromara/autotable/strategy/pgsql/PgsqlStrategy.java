@@ -57,39 +57,45 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         return DatabaseDialect.PostgreSQL;
     }
 
+    private static final Map<Class<?>, DefaultTypeEnumInterface> TYPE_MAPPING = new HashMap<>(32);
+
+    static {
+        TYPE_MAPPING.put(String.class, PgsqlDefaultTypeEnum.VARCHAR);
+        TYPE_MAPPING.put(Character.class, PgsqlDefaultTypeEnum.CHAR);
+        TYPE_MAPPING.put(char.class, PgsqlDefaultTypeEnum.CHAR);
+
+        TYPE_MAPPING.put(Short.class, PgsqlDefaultTypeEnum.INT2);
+        TYPE_MAPPING.put(short.class, PgsqlDefaultTypeEnum.INT2);
+        TYPE_MAPPING.put(Byte.class, PgsqlDefaultTypeEnum.INT2);
+        TYPE_MAPPING.put(byte.class, PgsqlDefaultTypeEnum.INT2);
+        TYPE_MAPPING.put(int.class, PgsqlDefaultTypeEnum.INT4);
+        TYPE_MAPPING.put(Integer.class, PgsqlDefaultTypeEnum.INT4);
+        TYPE_MAPPING.put(Long.class, PgsqlDefaultTypeEnum.INT8);
+        TYPE_MAPPING.put(long.class, PgsqlDefaultTypeEnum.INT8);
+        TYPE_MAPPING.put(BigInteger.class, PgsqlDefaultTypeEnum.INT8);
+
+        TYPE_MAPPING.put(Boolean.class, PgsqlDefaultTypeEnum.BOOL);
+        TYPE_MAPPING.put(boolean.class, PgsqlDefaultTypeEnum.BOOL);
+
+        TYPE_MAPPING.put(Float.class, PgsqlDefaultTypeEnum.FLOAT4);
+        TYPE_MAPPING.put(float.class, PgsqlDefaultTypeEnum.FLOAT4);
+        TYPE_MAPPING.put(Double.class, PgsqlDefaultTypeEnum.FLOAT8);
+        TYPE_MAPPING.put(double.class, PgsqlDefaultTypeEnum.FLOAT8);
+        TYPE_MAPPING.put(BigDecimal.class, PgsqlDefaultTypeEnum.NUMERIC);
+
+        TYPE_MAPPING.put(Date.class, PgsqlDefaultTypeEnum.TIMESTAMP);
+        TYPE_MAPPING.put(java.sql.Date.class, PgsqlDefaultTypeEnum.TIMESTAMP);
+        TYPE_MAPPING.put(java.sql.Timestamp.class, PgsqlDefaultTypeEnum.TIMESTAMP);
+        TYPE_MAPPING.put(LocalDateTime.class, PgsqlDefaultTypeEnum.TIMESTAMP);
+        TYPE_MAPPING.put(LocalDate.class, PgsqlDefaultTypeEnum.DATE);
+        TYPE_MAPPING.put(LocalTime.class, PgsqlDefaultTypeEnum.TIME);
+        TYPE_MAPPING.put(java.sql.Time.class, PgsqlDefaultTypeEnum.TIME);
+        TYPE_MAPPING.put(OffsetTime.class, PgsqlDefaultTypeEnum.TIMETZ);
+    }
+
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            put(String.class, PgsqlDefaultTypeEnum.VARCHAR);
-            put(Character.class, PgsqlDefaultTypeEnum.CHAR);
-            put(char.class, PgsqlDefaultTypeEnum.CHAR);
-
-            put(Short.class, PgsqlDefaultTypeEnum.INT2);
-            put(short.class, PgsqlDefaultTypeEnum.INT2);
-            put(int.class, PgsqlDefaultTypeEnum.INT4);
-            put(Integer.class, PgsqlDefaultTypeEnum.INT4);
-            put(Long.class, PgsqlDefaultTypeEnum.INT8);
-            put(long.class, PgsqlDefaultTypeEnum.INT8);
-            put(BigInteger.class, PgsqlDefaultTypeEnum.INT8);
-
-            put(Boolean.class, PgsqlDefaultTypeEnum.BOOL);
-            put(boolean.class, PgsqlDefaultTypeEnum.BOOL);
-
-            put(Float.class, PgsqlDefaultTypeEnum.FLOAT4);
-            put(float.class, PgsqlDefaultTypeEnum.FLOAT4);
-            put(Double.class, PgsqlDefaultTypeEnum.FLOAT8);
-            put(double.class, PgsqlDefaultTypeEnum.FLOAT8);
-            put(BigDecimal.class, PgsqlDefaultTypeEnum.NUMERIC);
-
-            put(Date.class, PgsqlDefaultTypeEnum.TIMESTAMP);
-            put(java.sql.Date.class, PgsqlDefaultTypeEnum.TIMESTAMP);
-            put(java.sql.Timestamp.class, PgsqlDefaultTypeEnum.TIMESTAMP);
-            put(LocalDateTime.class, PgsqlDefaultTypeEnum.TIMESTAMP);
-            put(LocalDate.class, PgsqlDefaultTypeEnum.DATE);
-            put(LocalTime.class, PgsqlDefaultTypeEnum.TIME);
-            put(java.sql.Time.class, PgsqlDefaultTypeEnum.TIME);
-            put(OffsetTime.class, PgsqlDefaultTypeEnum.TIMETZ);
-        }};
+        return Collections.unmodifiableMap(TYPE_MAPPING);
     }
 
     @Override
@@ -108,11 +114,12 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         DataSourceManager.useConnection(connection -> {
             try (PreparedStatement ps = connection.prepareStatement("SELECT schema_name FROM information_schema.schemata WHERE schema_name = ?")) {
                 ps.setString(1, schema);
-                ResultSet rs = ps.executeQuery();
-                if (!rs.next()) {
-                    try (Statement stmt = connection.createStatement()) {
-                        stmt.executeUpdate(String.format("CREATE SCHEMA \"%s\"", schema));
-                        log.info("成功创建 PostgreSQL schema [{}]", schema);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        try (Statement stmt = connection.createStatement()) {
+                            stmt.executeUpdate(String.format("CREATE SCHEMA \"%s\"", schema));
+                            log.info("成功创建 PostgreSQL schema [{}]", schema);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -257,7 +264,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
                 // 默认值不同
                 boolean isDefaultDiff = isDefaultDiff(columnMetadata, pgsqlDbColumn);
                 if (isTypeDiff || isNotnullDiff || isDefaultDiff) {
-                    pgsqlCompareTableInfo.addModifyColumn(columnMetadata);
+                    pgsqlCompareTableInfo.addModifyColumn(columnMetadata, isTypeDiff, isNotnullDiff, isDefaultDiff);
                 }
             }
         }
@@ -343,7 +350,7 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         String schema = tableMetadata.getSchema();
 
         String tableDescription = mapper.selectTableDescription(schema, tableName);
-        if (!Objects.equals(tableDescription, tableMetadata.getComment())) {
+        if (StringUtils.hasText(tableMetadata.getComment()) && !tableMetadata.getComment().equals(tableDescription)) {
             pgsqlCompareTableInfo.setComment(tableMetadata.getComment());
         }
     }

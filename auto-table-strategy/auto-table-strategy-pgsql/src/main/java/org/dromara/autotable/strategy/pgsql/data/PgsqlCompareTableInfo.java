@@ -4,6 +4,7 @@ import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.core.strategy.CompareTableInfo;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.StringUtils;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -60,7 +61,7 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
     /**
      * 需要修改的列
      */
-    private List<ColumnMetadata> modifyColumnMetadataList = new ArrayList<>();
+    private List<PgsqlModifyColumnMetadata> modifyColumnMetadataList = new ArrayList<>();
 
     /**
      * 需要新增的列
@@ -124,7 +125,7 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
             errorMsg.append("重命名列（逻辑删除）: ").append(renameColumns).append("\n");
         }
         if (!modifyColumnMetadataList.isEmpty()) {
-            errorMsg.append("修改列: ").append(modifyColumnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.joining(","))).append("\n");
+            errorMsg.append("修改列: ").append(modifyColumnMetadataList.stream().map(m -> m.getColumnMetadata().getName()).collect(Collectors.joining(","))).append("\n");
         }
         if (!newColumnMetadataList.isEmpty()) {
             errorMsg.append("新增列: ").append(newColumnMetadataList.stream().map(ColumnMetadata::getName).collect(Collectors.joining(","))).append("\n");
@@ -146,8 +147,8 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
         this.newColumnMetadataList.add(columnMetadata);
     }
 
-    public void addModifyColumn(ColumnMetadata columnMetadata) {
-        this.modifyColumnMetadataList.add(columnMetadata);
+    public void addModifyColumn(ColumnMetadata columnMetadata, boolean typeChanged, boolean notNullChanged, boolean defaultChanged) {
+        this.modifyColumnMetadataList.add(new PgsqlModifyColumnMetadata(columnMetadata, typeChanged, notNullChanged, defaultChanged));
     }
 
     public void addDropColumns(Set<String> dropColumnList) {
@@ -179,5 +180,17 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
 
     public void addNewPrimary(List<ColumnMetadata> columnMetadata) {
         this.newPrimaries.addAll(columnMetadata);
+    }
+
+    /**
+     * 修改列的元数据，记录具体哪些属性发生了变化
+     */
+    @Getter
+    @AllArgsConstructor
+    public static class PgsqlModifyColumnMetadata {
+        private ColumnMetadata columnMetadata;
+        private boolean typeChanged;
+        private boolean notNullChanged;
+        private boolean defaultChanged;
     }
 }

@@ -59,35 +59,42 @@ public class ModifyTableSqlBuilder {
                 .map(column -> String.format("  ADD COLUMN %s", ColumnSqlBuilder.buildSql(column)))
                 .forEach(alterTableSqlList::add);
         // 修改列
-        List<ColumnMetadata> modifyColumnList = pgsqlCompareTableInfo.getModifyColumnMetadataList();
-        for (ColumnMetadata columnMetadata : modifyColumnList) {
+        List<PgsqlCompareTableInfo.PgsqlModifyColumnMetadata> modifyColumnList = pgsqlCompareTableInfo.getModifyColumnMetadataList();
+        for (PgsqlCompareTableInfo.PgsqlModifyColumnMetadata modifyColumn : modifyColumnList) {
+            ColumnMetadata columnMetadata = modifyColumn.getColumnMetadata();
             // 修改字段
             String columnName = columnMetadata.getName();
             String wrapColumnName = IStrategy.wrapIdentifiers(columnName);
-            // 类型
-            String newFullType = columnMetadata.getType().getDefaultFullType();
-            alterTableSqlList.add(String.format("  ALTER COLUMN %s TYPE %s USING %s::%s", wrapColumnName, newFullType, wrapColumnName, newFullType));
-            // 非空
-            alterTableSqlList.add(String.format("  ALTER COLUMN %s %s NOT NULL", wrapColumnName, columnMetadata.isNotNull() ? "SET" : "DROP"));
-            // 默认值
-            String defaultVal = null;
-            DefaultValueEnum defaultValueType = columnMetadata.getDefaultValueType();
-            if (DefaultValueEnum.EMPTY_STRING == defaultValueType) {
-                defaultVal = "''";
-            } else if (DefaultValueEnum.NULL == defaultValueType) {
-                defaultVal = "NULL";
-            } else {
-                String defaultValue = columnMetadata.getDefaultValue();
-                if (StringUtils.hasText(defaultValue)) {
-                    defaultVal = defaultValue;
-                }
+            // 类型变更
+            if (modifyColumn.isTypeChanged()) {
+                String newFullType = columnMetadata.getType().getDefaultFullType();
+                alterTableSqlList.add(String.format("  ALTER COLUMN %s TYPE %s USING %s::%s", wrapColumnName, newFullType, wrapColumnName, newFullType));
             }
-            if (StringUtils.hasText(defaultVal)) {
-                // 设置默认值
-                alterTableSqlList.add(String.format("  ALTER COLUMN %s SET DEFAULT %s", wrapColumnName, defaultVal));
-            } else {
-                // 删除默认值
-                alterTableSqlList.add(String.format("  ALTER COLUMN %s DROP DEFAULT", wrapColumnName));
+            // 非空变更
+            if (modifyColumn.isNotNullChanged()) {
+                alterTableSqlList.add(String.format("  ALTER COLUMN %s %s NOT NULL", wrapColumnName, columnMetadata.isNotNull() ? "SET" : "DROP"));
+            }
+            // 默认值变更
+            if (modifyColumn.isDefaultChanged()) {
+                String defaultVal = null;
+                DefaultValueEnum defaultValueType = columnMetadata.getDefaultValueType();
+                if (DefaultValueEnum.EMPTY_STRING == defaultValueType) {
+                    defaultVal = "''";
+                } else if (DefaultValueEnum.NULL == defaultValueType) {
+                    defaultVal = "NULL";
+                } else {
+                    String defaultValue = columnMetadata.getDefaultValue();
+                    if (StringUtils.hasText(defaultValue)) {
+                        defaultVal = defaultValue;
+                    }
+                }
+                if (StringUtils.hasText(defaultVal)) {
+                    // 设置默认值
+                    alterTableSqlList.add(String.format("  ALTER COLUMN %s SET DEFAULT %s", wrapColumnName, defaultVal));
+                } else {
+                    // 删除默认值
+                    alterTableSqlList.add(String.format("  ALTER COLUMN %s DROP DEFAULT", wrapColumnName));
+                }
             }
         }
         // 添加主键

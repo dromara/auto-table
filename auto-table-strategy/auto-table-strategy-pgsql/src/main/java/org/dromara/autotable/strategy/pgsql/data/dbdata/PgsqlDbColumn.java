@@ -152,6 +152,9 @@ public class PgsqlDbColumn {
     private String isUpdatable;
 
     public String getDataTypeFormat() {
+        if (this.udtName == null) {
+            return this.dataType;
+        }
         switch (this.udtName) {
             // 数字
             case "int2":
