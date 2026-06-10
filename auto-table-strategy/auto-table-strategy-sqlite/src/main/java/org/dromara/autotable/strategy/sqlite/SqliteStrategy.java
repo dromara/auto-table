@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  */
 public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCompareTableInfo> {
 
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final SqliteTablesMapper mapper = new SqliteTablesMapper();
 
@@ -48,45 +49,52 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         return DatabaseDialect.SQLite;
     }
 
+    private static final Map<Class<?>, DefaultTypeEnumInterface> TYPE_MAPPING = new HashMap<>(32);
+
+    static {
+        TYPE_MAPPING.put(String.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(Character.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(char.class, SqliteDefaultTypeEnum.TEXT);
+
+        TYPE_MAPPING.put(BigInteger.class, SqliteDefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(Long.class, SqliteDefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(long.class, SqliteDefaultTypeEnum.INTEGER);
+
+        TYPE_MAPPING.put(Integer.class, SqliteDefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(int.class, SqliteDefaultTypeEnum.INTEGER);
+
+        TYPE_MAPPING.put(Short.class, SqliteDefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(short.class, SqliteDefaultTypeEnum.INTEGER);
+
+        TYPE_MAPPING.put(Byte.class, SqliteDefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(byte.class, SqliteDefaultTypeEnum.INTEGER);
+
+        TYPE_MAPPING.put(Boolean.class, SqliteDefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(boolean.class, SqliteDefaultTypeEnum.INTEGER);
+
+        TYPE_MAPPING.put(Float.class, SqliteDefaultTypeEnum.REAL);
+        TYPE_MAPPING.put(float.class, SqliteDefaultTypeEnum.REAL);
+        TYPE_MAPPING.put(Double.class, SqliteDefaultTypeEnum.REAL);
+        TYPE_MAPPING.put(double.class, SqliteDefaultTypeEnum.REAL);
+        TYPE_MAPPING.put(BigDecimal.class, SqliteDefaultTypeEnum.REAL);
+
+        TYPE_MAPPING.put(Date.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(java.sql.Date.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(java.sql.Timestamp.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(java.sql.Time.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(LocalDateTime.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(LocalDate.class, SqliteDefaultTypeEnum.TEXT);
+        TYPE_MAPPING.put(LocalTime.class, SqliteDefaultTypeEnum.TEXT);
+    }
+
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            put(String.class, SqliteDefaultTypeEnum.TEXT);
-            put(Character.class, SqliteDefaultTypeEnum.TEXT);
-            put(char.class, SqliteDefaultTypeEnum.TEXT);
-
-            put(BigInteger.class, SqliteDefaultTypeEnum.INTEGER);
-            put(Long.class, SqliteDefaultTypeEnum.INTEGER);
-            put(long.class, SqliteDefaultTypeEnum.INTEGER);
-
-            put(Integer.class, SqliteDefaultTypeEnum.INTEGER);
-            put(int.class, SqliteDefaultTypeEnum.INTEGER);
-
-            put(Boolean.class, SqliteDefaultTypeEnum.INTEGER);
-            put(boolean.class, SqliteDefaultTypeEnum.INTEGER);
-
-            put(Float.class, SqliteDefaultTypeEnum.REAL);
-            put(float.class, SqliteDefaultTypeEnum.REAL);
-            put(Double.class, SqliteDefaultTypeEnum.REAL);
-            put(double.class, SqliteDefaultTypeEnum.REAL);
-            put(BigDecimal.class, SqliteDefaultTypeEnum.REAL);
-
-            put(Date.class, SqliteDefaultTypeEnum.TEXT);
-            put(java.sql.Date.class, SqliteDefaultTypeEnum.TEXT);
-            put(java.sql.Timestamp.class, SqliteDefaultTypeEnum.TEXT);
-            put(java.sql.Time.class, SqliteDefaultTypeEnum.TEXT);
-            put(LocalDateTime.class, SqliteDefaultTypeEnum.TEXT);
-            put(LocalDate.class, SqliteDefaultTypeEnum.TEXT);
-            put(LocalTime.class, SqliteDefaultTypeEnum.TEXT);
-
-            put(Short.class, SqliteDefaultTypeEnum.INTEGER);
-            put(short.class, SqliteDefaultTypeEnum.INTEGER);
-        }};
+        return Collections.unmodifiableMap(TYPE_MAPPING);
     }
 
     @Override
     public String dropTable(String schema, String tableName) {
-        return String.format("drop table if exists %s;", tableName);
+        return "DROP TABLE IF EXISTS " + IStrategy.wrapIdentifiers(tableName) + ";";
     }
 
     @Override
@@ -189,13 +197,19 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
                     ));
             // 遍历所有数据库存在的索引，判断有没有变化
             List<SqliteMaster> orgBuildIndexSqlList = mapper.queryBuildIndexSql(tableName);
+            PropertyConfig autoTableProperties = AutoTableGlobalConfig.instance().getAutoTableProperties();
             for (SqliteMaster sqliteMaster : orgBuildIndexSqlList) {
                 String indexName = sqliteMaster.getName();
                 String newBuildIndexSql = rebuildIndexMap.remove(indexName);
                 boolean exit = newBuildIndexSql != null;
                 // 如果最新构建标记上没有该注解的标记了，则说明该注解需要删除了
                 if (!exit) {
-                    sqliteCompareTableInfo.getDeleteIndexList().add(indexName);
+                    // 根据配置决定是否删除多余的索引
+                    if (autoTableProperties.getAutoDropIndex() && indexName.startsWith(autoTableProperties.getIndexPrefix())) {
+                        sqliteCompareTableInfo.getDeleteIndexList().add(indexName);
+                    } else if (autoTableProperties.getAutoDropCustomIndex() && !indexName.startsWith(autoTableProperties.getIndexPrefix())) {
+                        sqliteCompareTableInfo.getDeleteIndexList().add(indexName);
+                    }
                 }
                 // 新的索引构建语句中存在相同名称的索引，且内容不一致，需要重新构建
                 String createIndexSqlRecord = sqliteMaster.getSql() + ";";
@@ -223,7 +237,7 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         List<String> deleteIndexList = sqliteCompareTableInfo.getDeleteIndexList();
         if (!deleteIndexList.isEmpty()) {
             for (String deleteIndexName : deleteIndexList) {
-                sqlList.add(String.format("drop index if exists %s;", deleteIndexName));
+                sqlList.add("DROP INDEX IF EXISTS " + IStrategy.wrapIdentifiers(deleteIndexName) + ";");
             }
         }
 
@@ -234,7 +248,9 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
             for (Map.Entry<String, String> entry : renameColumnMap.entrySet()) {
                 String oldName = entry.getKey();
                 String newName = entry.getValue();
-                sqlList.add(String.format("ALTER TABLE %s RENAME COLUMN %s TO %s;", tableName, oldName, newName));
+                sqlList.add("ALTER TABLE " + IStrategy.wrapIdentifiers(tableName)
+                        + " RENAME COLUMN " + IStrategy.wrapIdentifiers(oldName)
+                        + " TO " + IStrategy.wrapIdentifiers(newName) + ";");
             }
         }
 
@@ -243,15 +259,17 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         if (StringUtils.hasText(rebuildTableSql)) {
             String orgTableName = sqliteCompareTableInfo.getName();
             String backupTableName = getBackupTableName(orgTableName);
+            String wrapOrgTableName = IStrategy.wrapIdentifiers(orgTableName);
+            String wrapBackupTableName = IStrategy.wrapIdentifiers(backupTableName);
             // 备份表
-            sqlList.add(String.format("ALTER TABLE %s RENAME TO %s;", orgTableName, backupTableName));
+            sqlList.add("ALTER TABLE " + wrapOrgTableName + " RENAME TO " + wrapBackupTableName + ";");
             // 重新建表
             sqlList.add(rebuildTableSql);
             List<String> dataMigrationColumnList = sqliteCompareTableInfo.getDataMigrationColumnList();
-            if(!dataMigrationColumnList.isEmpty()) {
+            if (!dataMigrationColumnList.isEmpty()) {
                 // 迁移数据
-                String columns = String.join(",", dataMigrationColumnList);
-                sqlList.add(String.format("INSERT INTO %s (%s) SELECT %s FROM %s;", orgTableName, columns, columns, backupTableName));
+                String columns = IStrategy.customConcatWrapIdentifiers(",", dataMigrationColumnList);
+                sqlList.add("INSERT INTO " + wrapOrgTableName + " (" + columns + ") SELECT " + columns + " FROM " + wrapBackupTableName + ";");
             }
         }
 
@@ -267,7 +285,7 @@ public class SqliteStrategy implements IStrategy<DefaultTableMetadata, SqliteCom
         int offset = 0;
         String name = "_{orgTableName}_old_{datetime}"
                 .replace("{orgTableName}", orgTableName)
-                .replace("{datetime}", LocalDateTime.now().format(dateTimeFormatter));
+                .replace("{datetime}", LocalDateTime.now().format(DATE_TIME_FORMATTER));
         StringBuilder backupName = new StringBuilder(name);
         while (true) {
             if (offset > 0) {

@@ -2,6 +2,7 @@ package org.dromara.autotable.strategy.sqlite.builder;
 
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.strategy.sqlite.data.SqliteTypeHelper;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -26,7 +27,7 @@ public class ColumnSqlBuilder {
         // sqlite 只能主键自动递增
         boolean isAutoIncrement = isSinglePrimaryKey && columnMetadata.isPrimary() && columnMetadata.isAutoIncrement();
         return StringConnectHelper.newInstance("{columnName} {typeAndLength} {null} {default} {primaryKey}{comma}{columnComment}")
-                .replace("{columnName}", columnMetadata.getName())
+                .replace("{columnName}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                 .replace("{typeAndLength}", SqliteTypeHelper.getFullType(columnMetadata.getType(), isAutoIncrement))
                 .replace("{null}", columnMetadata.isNotNull() ? "NOT NULL" : "NULL")
                 .replace("{default}", () -> {

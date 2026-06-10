@@ -9,7 +9,10 @@ import org.dromara.autotable.core.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 用于存放创建表的字段信息
@@ -19,13 +22,9 @@ import java.util.HashSet;
 @Slf4j
 public class SqliteColumnMetadataBuilder extends ColumnMetadataBuilder {
 
-    private final HashSet<String> defaultValueFuncs = new HashSet<>();
-
-    {
-        defaultValueFuncs.add("CURRENT_DATE");
-        defaultValueFuncs.add("CURRENT_TIME");
-        defaultValueFuncs.add("CURRENT_TIMESTAMP");
-    }
+    private static final Set<String> DEFAULT_VALUE_FUNCS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList("CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP"))
+    );
 
     public SqliteColumnMetadataBuilder() {
         super(DatabaseDialect.SQLite);
@@ -56,7 +55,7 @@ public class SqliteColumnMetadataBuilder extends ColumnMetadataBuilder {
             }
 
             // 特殊函数，直接跳过
-            if (defaultValueFuncs.contains(defaultValue)) {
+            if (DEFAULT_VALUE_FUNCS.contains(defaultValue)) {
                 return defaultValue;
             }
 

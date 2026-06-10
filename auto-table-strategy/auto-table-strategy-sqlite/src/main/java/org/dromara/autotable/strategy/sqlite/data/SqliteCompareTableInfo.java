@@ -1,8 +1,6 @@
 package org.dromara.autotable.strategy.sqlite.data;
 
 import org.dromara.autotable.core.strategy.CompareTableInfo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -76,13 +74,5 @@ public class SqliteCompareTableInfo extends CompareTableInfo {
             errorMsg.append("新增的索引: ").append(String.join(",", buildIndexSqlList)).append("\n");
         }
         return errorMsg.toString();
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class RebuildIndex {
-
-        private String name;
-        private String sql;
     }
 }

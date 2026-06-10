@@ -2,6 +2,7 @@ package org.dromara.autotable.strategy.sqlite.builder;
 
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
@@ -72,7 +73,7 @@ public class CreateTableSqlBuilder {
 
         return ("CREATE TABLE {tableName}{comment} \n" +
                 "(\n{addItems}\n);")
-                .replace("{tableName}", name)
+                .replace("{tableName}", IStrategy.wrapIdentifiers(name))
                 .replace("{comment}", StringUtils.hasText(comment) ? " -- "  + comment : "")
                 .replace("{addItems}", addSql);
     }
@@ -103,14 +104,14 @@ public class CreateTableSqlBuilder {
     public static String getIndexSql(String tableName, IndexMetadata indexMetadata) {
         return StringConnectHelper.newInstance("CREATE{indexType} INDEX {indexName} ON {tableName} ({columns}) {indexComment};")
                 .replace("{indexType}", indexMetadata.getType() == IndexTypeEnum.NORMAL ? "" : " " + indexMetadata.getType().name())
-                .replace("{indexName}", indexMetadata.getName())
-                .replace("{tableName}", tableName)
+                .replace("{indexName}", IStrategy.wrapIdentifiers(indexMetadata.getName()))
+                .replace("{tableName}", IStrategy.wrapIdentifiers(tableName))
                 .replace("{columns}", () -> {
                     List<IndexMetadata.IndexColumnParam> columnParams = indexMetadata.getColumns();
                     return columnParams.stream().map(column ->
                             // 例："name" ASC
                             "{column} {sortMode}"
-                                    .replace("{column}", column.getColumn())
+                                    .replace("{column}", IStrategy.wrapIdentifiers(column.getColumn()))
                                     .replace("{sortMode}", column.getSort() != null ? column.getSort().name() : "")
                     ).collect(Collectors.joining(","));
                 })
@@ -122,7 +123,7 @@ public class CreateTableSqlBuilder {
         return "PRIMARY KEY ({primaries})"
                 .replace(
                         "{primaries}",
-                        String.join(",", primaries)
+                        IStrategy.customConcatWrapIdentifiers(",", primaries)
                 );
     }
 }
