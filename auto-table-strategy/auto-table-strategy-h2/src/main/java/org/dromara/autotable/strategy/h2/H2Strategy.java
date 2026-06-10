@@ -31,6 +31,7 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,38 @@ import java.util.stream.Collectors;
 
 public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTableInfo> {
 
+    private static final Map<Class<?>, DefaultTypeEnumInterface> TYPE_MAPPING = new HashMap<>(32);
+
+    static {
+        TYPE_MAPPING.put(String.class, H2DefaultTypeEnum.CHARACTER_VARYING);
+        TYPE_MAPPING.put(Character.class, H2DefaultTypeEnum.CHARACTER);
+        TYPE_MAPPING.put(char.class, H2DefaultTypeEnum.CHARACTER);
+
+        TYPE_MAPPING.put(byte.class, H2DefaultTypeEnum.TINYINT);
+        TYPE_MAPPING.put(Byte.class, H2DefaultTypeEnum.TINYINT);
+        TYPE_MAPPING.put(short.class, H2DefaultTypeEnum.SMALLINT);
+        TYPE_MAPPING.put(Short.class, H2DefaultTypeEnum.SMALLINT);
+        TYPE_MAPPING.put(int.class, H2DefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(Integer.class, H2DefaultTypeEnum.INTEGER);
+        TYPE_MAPPING.put(long.class, H2DefaultTypeEnum.BIGINT);
+        TYPE_MAPPING.put(Long.class, H2DefaultTypeEnum.BIGINT);
+
+        TYPE_MAPPING.put(float.class, H2DefaultTypeEnum.REAL);
+        TYPE_MAPPING.put(Float.class, H2DefaultTypeEnum.REAL);
+        TYPE_MAPPING.put(double.class, H2DefaultTypeEnum.NUMERIC);
+        TYPE_MAPPING.put(Double.class, H2DefaultTypeEnum.NUMERIC);
+        TYPE_MAPPING.put(BigDecimal.class, H2DefaultTypeEnum.NUMERIC);
+
+        TYPE_MAPPING.put(Boolean.class, H2DefaultTypeEnum.BOOLEAN);
+
+        TYPE_MAPPING.put(Time.class, H2DefaultTypeEnum.TIME);
+        TYPE_MAPPING.put(LocalTime.class, H2DefaultTypeEnum.TIME);
+        TYPE_MAPPING.put(Date.class, H2DefaultTypeEnum.DATE);
+        TYPE_MAPPING.put(LocalDate.class, H2DefaultTypeEnum.DATE);
+        TYPE_MAPPING.put(java.util.Date.class, H2DefaultTypeEnum.TIMESTAMP);
+        TYPE_MAPPING.put(LocalDateTime.class, H2DefaultTypeEnum.TIMESTAMP);
+    }
+
     private final H2TablesMapper mapper = new H2TablesMapper();
 
     @Override
@@ -50,35 +83,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
 
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            put(String.class, H2DefaultTypeEnum.CHARACTER_VARYING);
-            put(Character.class, H2DefaultTypeEnum.CHARACTER);
-            put(char.class, H2DefaultTypeEnum.CHARACTER);
-
-            put(byte.class, H2DefaultTypeEnum.TINYINT);
-            put(Byte.class, H2DefaultTypeEnum.TINYINT);
-            put(short.class, H2DefaultTypeEnum.SMALLINT);
-            put(Short.class, H2DefaultTypeEnum.SMALLINT);
-            put(int.class, H2DefaultTypeEnum.INTEGER);
-            put(Integer.class, H2DefaultTypeEnum.INTEGER);
-            put(long.class, H2DefaultTypeEnum.BIGINT);
-            put(Long.class, H2DefaultTypeEnum.BIGINT);
-
-            put(float.class, H2DefaultTypeEnum.REAL);
-            put(Float.class, H2DefaultTypeEnum.REAL);
-            put(double.class, H2DefaultTypeEnum.NUMERIC);
-            put(Double.class, H2DefaultTypeEnum.NUMERIC);
-            put(BigDecimal.class, H2DefaultTypeEnum.NUMERIC);
-
-            put(Boolean.class, H2DefaultTypeEnum.BOOLEAN);
-
-            put(Time.class, H2DefaultTypeEnum.TIME);
-            put(LocalTime.class, H2DefaultTypeEnum.TIME);
-            put(Date.class, H2DefaultTypeEnum.DATE);
-            put(LocalDate.class, H2DefaultTypeEnum.DATE);
-            put(java.util.Date.class, H2DefaultTypeEnum.TIMESTAMP);
-            put(LocalDateTime.class, H2DefaultTypeEnum.TIMESTAMP);
-        }};
+        return Collections.unmodifiableMap(TYPE_MAPPING);
     }
 
     @Override
@@ -94,7 +99,7 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
 
     @Override
     public List<String> createTable(DefaultTableMetadata tableMetadata) {
-        return CreateTableSqlBuilder.buildColumnSql(tableMetadata);
+        return CreateTableSqlBuilder.buildTableSql(tableMetadata);
     }
 
     @Override
@@ -341,7 +346,17 @@ public class H2Strategy implements IStrategy<DefaultTableMetadata, H2CompareTabl
     }
 
     /**
-     * 编码中文字符
+     * 编码中文字符为 Unicode 转义序列
+     * <p>
+     * H2 数据库在处理包含中文字符的 SQL 时，需要使用 Unicode 转义序列（\\uXXXX）来避免编码问题。
+     * 该方法将中文字符转换为 \\uXXXX 格式，并在必要时添加单引号包裹。
+     * </p>
+     * <p>
+     * 例如：'用户' -&gt; U&amp;'用户'
+     * </p>
+     *
+     * @param input 输入字符串
+     * @return 编码后的字符串，如果没有中文字符则返回原字符串
      */
     public static String encodeChinese(String input) {
 

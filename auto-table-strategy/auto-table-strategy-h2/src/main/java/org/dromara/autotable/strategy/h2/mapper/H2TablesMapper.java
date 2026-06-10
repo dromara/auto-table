@@ -8,6 +8,7 @@ import org.dromara.autotable.core.utils.DBHelper;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -16,6 +17,16 @@ import java.util.List;
  * @author don
  */
 public class H2TablesMapper {
+
+    /**
+     * 构建查询参数 Map
+     */
+    private static Map<String, Object> params(String tableSchema, String tableName) {
+        Map<String, Object> params = new HashMap<>(4);
+        params.put("tableName", tableName);
+        params.put("tableSchema", tableSchema);
+        return params;
+    }
 
     /**
      * 根据表名查询表在库中是否存在
@@ -30,10 +41,7 @@ public class H2TablesMapper {
         String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = (':tableSchema') and TABLE_NAME = (':tableName');";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryObject(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("tableSchema", tableSchema);
-            }}, InformationSchemaTables.class);
+            return DBHelper.queryObject(connection, sql, params(tableSchema, tableName), InformationSchemaTables.class);
         });
     }
 
@@ -50,10 +58,7 @@ public class H2TablesMapper {
         String sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = (':tableSchema') and TABLE_NAME = (':tableName');";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryObjectList(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("tableSchema", tableSchema);
-            }}, InformationSchemaColumns.class);
+            return DBHelper.queryObjectList(connection, sql, params(tableSchema, tableName), InformationSchemaColumns.class);
         });
     }
 
@@ -74,10 +79,7 @@ public class H2TablesMapper {
                 "WHERE IC.TABLE_SCHEMA = (':tableSchema') AND IC.TABLE_NAME = (':tableName') AND I.INDEX_TYPE_NAME != 'PRIMARY KEY';";
 
         return DataSourceManager.useConnection(connection -> {
-            return DBHelper.queryObjectList(connection, sql, new HashMap<String, Object>() {{
-                put("tableName", tableName);
-                put("tableSchema", tableSchema);
-            }}, InformationSchemaIndexes.class);
+            return DBHelper.queryObjectList(connection, sql, params(tableSchema, tableName), InformationSchemaIndexes.class);
         });
     }
 }

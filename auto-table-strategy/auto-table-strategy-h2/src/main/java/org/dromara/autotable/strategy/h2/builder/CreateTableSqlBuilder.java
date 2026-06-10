@@ -29,7 +29,7 @@ public class CreateTableSqlBuilder {
      * @param tableMetadata 参数
      * @return sql
      */
-    public static List<String> buildColumnSql(DefaultTableMetadata tableMetadata) {
+    public static List<String> buildTableSql(DefaultTableMetadata tableMetadata) {
 
         String schema = tableMetadata.getSchema();
         String tableName = tableMetadata.getTableName();
@@ -103,33 +103,37 @@ public class CreateTableSqlBuilder {
 
         // 表备注
         if (tableComment != null) {
+            String escapedTableComment = tableComment.isEmpty() ? null : tableComment.replace("'", "''");
             String addTableComment = StringConnectHelper.newInstance("COMMENT ON TABLE {tableName} IS {comment};")
                     .replace("{tableName}", IStrategy.concatWrapIdentifiers(schema, tableName))
-                    .replace("{comment}", tableComment.isEmpty() ? "null" : "'" + tableComment + "'")
+                    .replace("{comment}", escapedTableComment == null ? "null" : "'" + escapedTableComment + "'")
                     .toString();
             commentSqlList.add(addTableComment);
         }
 
         // 字段备注
         columnCommentMap.entrySet().stream()
-                .map(columnComment -> StringConnectHelper.newInstance("COMMENT ON COLUMN {name} IS {comment};")
-                        // ⚠️列名称转大写，不然找不到
-                        .replace("{name}", IStrategy.concatWrapIdentifiers(schema, tableName, columnComment.getKey()))
-                        .replace("{comment}", () -> {
-                            String value = columnComment.getValue();
-                            return value == null || value.isEmpty() ? "null" : "'" + value + "'";
-                        })
-                        .toString())
+                .map(columnComment -> {
+                    String value = columnComment.getValue();
+                    String escapedValue = value == null || value.isEmpty() ? null : value.replace("'", "''");
+                    return StringConnectHelper.newInstance("COMMENT ON COLUMN {name} IS {comment};")
+                            // ⚠️列名称转大写，不然找不到
+                            .replace("{name}", IStrategy.concatWrapIdentifiers(schema, tableName, columnComment.getKey()))
+                            .replace("{comment}", escapedValue == null ? "null" : "'" + escapedValue + "'")
+                            .toString();
+                })
                 .forEach(commentSqlList::add);
 
         // 索引备注
         indexCommentMap.entrySet().stream()
-                .map(indexComment -> StringConnectHelper.newInstance("COMMENT ON INDEX {name} IS {comment};")
-                        .replace("{name}", IStrategy.concatWrapIdentifiers(schema, indexComment.getKey()))
-                        .replace("{comment}", () -> {
-                            String value = indexComment.getValue();
-                            return value == null || value.isEmpty() ? "null" : "'" + value + "'";
-                        }).toString())
+                .map(indexComment -> {
+                    String value = indexComment.getValue();
+                    String escapedValue = value == null || value.isEmpty() ? null : value.replace("'", "''");
+                    return StringConnectHelper.newInstance("COMMENT ON INDEX {name} IS {comment};")
+                            .replace("{name}", IStrategy.concatWrapIdentifiers(schema, indexComment.getKey()))
+                            .replace("{comment}", escapedValue == null ? "null" : "'" + escapedValue + "'")
+                            .toString();
+                })
                 .forEach(commentSqlList::add);
 
         return commentSqlList;
