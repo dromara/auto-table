@@ -92,45 +92,57 @@ public class CreateTableSqlBuilder {
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
         List<IndexMetadata> indexMetadataList = tableMetadata.getIndexMetadataList();
 
-        return getAllCommentSql(schema, tableName, comment,
-                columnMetadataList.stream().collect(Collectors.toMap(ColumnMetadata::getName, ColumnMetadata::getComment)),
-                indexMetadataList.stream().collect(Collectors.toMap(IndexMetadata::getName, IndexMetadata::getComment)));
+        // 构建列注释 Map，过滤掉 comment 为 null 的列
+        Map<String, String> columnCommentMap = columnMetadataList.stream()
+                .filter(col -> col.getName() != null && col.getComment() != null)
+                .collect(Collectors.toMap(ColumnMetadata::getName, ColumnMetadata::getComment));
+
+        // 构建索引注释 Map，过滤掉 comment 为 null 的索引
+        Map<String, String> indexCommentMap = indexMetadataList.stream()
+                .filter(idx -> idx.getName() != null && idx.getComment() != null)
+                .collect(Collectors.toMap(IndexMetadata::getName, IndexMetadata::getComment));
+
+        return getAllCommentSql(schema, tableName, comment, columnCommentMap, indexCommentMap);
     }
 
     public static List<String> getAllCommentSql(String schema, String tableName, String tableComment, Map<String, String> columnCommentMap, Map<String, String> indexCommentMap) {
 
         List<String> commentSqlList = new ArrayList<>();
 
-        // 表备注
-        if (tableComment != null) {
-            String escapedTableComment = tableComment.isEmpty() ? null : tableComment.replace("'", "''");
+        // 表备注 - 只有当 tableComment 不为 null 且不为空时才生成
+        if (tableComment != null && !tableComment.isEmpty()) {
+            String escapedTableComment = tableComment.replace("'", "''");
             String addTableComment = StringConnectHelper.newInstance("COMMENT ON TABLE {tableName} IS {comment};")
                     .replace("{tableName}", IStrategy.concatWrapIdentifiers(schema, tableName))
-                    .replace("{comment}", escapedTableComment == null ? "null" : "'" + escapedTableComment + "'")
+                    .replace("{comment}", "'" + escapedTableComment + "'")
                     .toString();
             commentSqlList.add(addTableComment);
         }
 
-        // 字段备注
+        // 字段备注 - 过滤掉 comment 为 null 的列
         columnCommentMap.entrySet().stream()
-                .map(columnComment -> {
-                    String value = columnComment.getValue();
-                    String escapedValue = value == null || value.isEmpty() ? null : value.replace("'", "''");
+                .filter(entry -> entry.getKey() != null)
+                .map(entry -> {
+                    String columnName = entry.getKey();
+                    String comment = entry.getValue();
+                    String escapedValue = comment == null || comment.isEmpty() ? null : comment.replace("'", "''");
                     return StringConnectHelper.newInstance("COMMENT ON COLUMN {name} IS {comment};")
                             // ⚠️列名称转大写，不然找不到
-                            .replace("{name}", IStrategy.concatWrapIdentifiers(schema, tableName, columnComment.getKey()))
+                            .replace("{name}", IStrategy.concatWrapIdentifiers(schema, tableName, columnName))
                             .replace("{comment}", escapedValue == null ? "null" : "'" + escapedValue + "'")
                             .toString();
                 })
                 .forEach(commentSqlList::add);
 
-        // 索引备注
+        // 索引备注 - 过滤掉 comment 为 null 的索引
         indexCommentMap.entrySet().stream()
-                .map(indexComment -> {
-                    String value = indexComment.getValue();
-                    String escapedValue = value == null || value.isEmpty() ? null : value.replace("'", "''");
+                .filter(entry -> entry.getKey() != null)
+                .map(entry -> {
+                    String indexName = entry.getKey();
+                    String comment = entry.getValue();
+                    String escapedValue = comment == null || comment.isEmpty() ? null : comment.replace("'", "''");
                     return StringConnectHelper.newInstance("COMMENT ON INDEX {name} IS {comment};")
-                            .replace("{name}", IStrategy.concatWrapIdentifiers(schema, indexComment.getKey()))
+                            .replace("{name}", IStrategy.concatWrapIdentifiers(schema, indexName))
                             .replace("{comment}", escapedValue == null ? "null" : "'" + escapedValue + "'")
                             .toString();
                 })
