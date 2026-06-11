@@ -86,6 +86,7 @@ public class OracleCompareTableInfo extends CompareTableInfo {
                 || createPrimaryKey != null
                 || !createColumnList.isEmpty()
                 || !deleteColumnList.isEmpty()
+                || !renameColumnMap.isEmpty()
                 || !updateColumnList.isEmpty()
                 || !updateColumnCommentList.isEmpty()
                 || !createIndexList.isEmpty()

@@ -9,6 +9,7 @@ import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.dynamicds.DataSourceManager;
 import org.dromara.autotable.core.strategy.ColumnMetadata;
+import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.DBHelper;
 import org.dromara.autotable.core.utils.StringConnectHelper;
@@ -107,8 +108,8 @@ public class OracleHelper {
         public static String toColumnSql(String tableName, ColumnMetadata columnMetadata) {
             // 使用StringConnectHelper构建列定义SQL语句，初始模板为"{column_name} {column_type}{default_value}{null}"
             return StringConnectHelper.newInstance("{column_name} {column_type}{default_value}{null}")
-                    // 替换模板中的{column_name}为列的实际名称
-                    .replace("{column_name}", columnMetadata.getName())
+                    // 替换模板中的{column_name}为列的实际名称（使用双引号包裹）
+                    .replace("{column_name}", IStrategy.wrapIdentifiers(columnMetadata.getName()))
                     // 替换模板中的{column_type}为列的实际类型
                     .replace("{column_type}", columnMetadata.getType().getDefaultFullType())
 
@@ -141,19 +142,22 @@ public class OracleHelper {
         public static String toIndexSql(String tableName, IndexMetadata indexMetadata) {
             // 获取索引类型，用于判断是否是唯一索引
             IndexTypeEnum type = indexMetadata.getType();
-            // 获取索引名称，用于SQL语句中的索引命名
-            String indexName = indexMetadata.getName();
+            // 获取索引名称，用于SQL语句中的索引命名（使用双引号包裹）
+            String indexName = IStrategy.wrapIdentifiers(indexMetadata.getName());
+            // 表名也使用双引号包裹
+            String wrappedTableName = IStrategy.wrapIdentifiers(tableName);
 
-            // 根据索引列信息生成列定义部分，如果列有排序规则，则附加排序规则
+            // 根据索引列信息生成列定义部分，如果列有排序规则，则附加排序规则（列名使用双引号包裹）
             List<String> columnDefines = indexMetadata.getColumns()
                     .stream()
                     .map(it -> {
+                        String columnName = IStrategy.wrapIdentifiers(it.getColumn());
                         // 如果列没有排序规则，则仅返回列名
                         if (it.getSort() == null) {
-                            return it.getColumn();
+                            return columnName;
                         }
                         // 如果列有排序规则，则返回列名加排序规则
-                        return it.getColumn() + " " + it.getSort().name();
+                        return columnName + " " + it.getSort().name();
                     })
                     .collect(Collectors.toList());
 
@@ -164,7 +168,7 @@ public class OracleHelper {
                     // 替换SQL模板中的索引名称占位符
                     .replace("{index_name}", indexName)
                     // 替换SQL模板中的表名占位符
-                    .replace("{table_name}", tableName)
+                    .replace("{table_name}", wrappedTableName)
                     // 替换SQL模板中的列定义占位符
                     .replace("{columns}", String.join(", ", columnDefines))
                     .toString();
@@ -224,9 +228,10 @@ public class OracleHelper {
                 return value;
             }
 
-            // 对于字符和CLOB类型，添加单引号
+            // 对于字符和CLOB类型，添加单引号并转义内部的单引号
             if (typeDefine.contains("char") || typeDefine.contains("clob")) {
-                return "'" + value + "'";
+                String escapedValue = value.replace("'", "''");
+                return "'" + escapedValue + "'";
             }
 
             // 其他情况直接返回默认值

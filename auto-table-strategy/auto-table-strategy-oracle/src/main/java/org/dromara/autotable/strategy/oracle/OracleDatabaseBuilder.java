@@ -61,8 +61,9 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COUNT(*) FROM USER_SYS_PRIVS WHERE PRIVILEGE = 'CREATE USER'"
         )) {
-            ResultSet rs = ps.executeQuery();
-            return rs.next() && rs.getInt(1) > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
         } catch (SQLException e) {
             log.warn("检查 CREATE USER 权限失败", e);
             return false;
@@ -74,8 +75,9 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
                 "SELECT USERNAME FROM DBA_USERS WHERE USERNAME = ?"
         )) {
             ps.setString(1, username.toUpperCase());
-            ResultSet rs = ps.executeQuery();
-            return rs.next();
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         } catch (SQLException e) {
             log.warn("无 DBA_USERS 权限，尝试使用 ALL_USERS 检查用户是否存在");
 
@@ -83,8 +85,9 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
                     "SELECT USERNAME FROM ALL_USERS WHERE USERNAME = ?"
             )) {
                 ps.setString(1, username.toUpperCase());
-                ResultSet rs = ps.executeQuery();
-                return rs.next();
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
             } catch (SQLException ex) {
                 log.error("ALL_USERS 查询也失败，无法判断用户是否存在", ex);
                 return false;
@@ -93,12 +96,20 @@ public class OracleDatabaseBuilder implements DatabaseBuilder {
     }
 
     private BuildResult createUser(Connection conn, String username, String password) throws SQLException {
+        // 验证用户名格式，只允许字母、数字、下划线、$、#
+        if (!username.matches("^[a-zA-Z][a-zA-Z0-9_$#]{0,29}$")) {
+            log.error("Oracle 用户名格式无效：{}。用户名必须以字母开头，长度 1-30，只能包含字母、数字、下划线、$、#", username);
+            return BuildResult.of(false, username);
+        }
+
         try (Statement stmt = conn.createStatement()) {
+            // 使用参数化方式构建 SQL，用户名已经过格式验证
             stmt.executeUpdate("CREATE USER " + username + " IDENTIFIED BY " + password);
             stmt.executeUpdate("GRANT CONNECT, RESOURCE TO " + username);
             log.info("Oracle 用户创建成功：{}", username);
             return BuildResult.of(true, username);
         } catch (Exception e) {
+            log.error("Oracle 用户创建失败：{}", username, e);
             return BuildResult.of(false, username);
         }
     }

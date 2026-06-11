@@ -31,6 +31,81 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     private static final DefaultTableMetadataBuilder tableMetadataBuilder =
             new DefaultTableMetadataBuilder(new ColumnMetadataBuilder(DatabaseDialect.Oracle), new IndexMetadataBuilder());
 
+    private static final Map<Class<?>, DefaultTypeEnumInterface> TYPE_MAPPING;
+
+    static {
+        // 定义字符串类型映射，使用Oracle的VARCHAR2类型，长度为255
+        DatabaseTypeDefine strType = DatabaseTypeDefine.of(OracleTypeConstant.VARCHAR2, 255);
+        // 定义布尔类型映射，使用Oracle的NUMBER类型，长度为1，精度为0
+        DatabaseTypeDefine boolType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 1, 0);
+        // 定义短整型类型映射，使用Oracle的NUMBER类型，长度为5，精度为0
+        DatabaseTypeDefine shortType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 5, 0);
+        // 定义整型类型映射，使用Oracle的NUMBER类型，长度为10，精度为0
+        DatabaseTypeDefine intType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 10, 0);
+        // 定义长整型类型映射，使用Oracle的NUMBER类型，长度为19，精度为0
+        DatabaseTypeDefine longType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 19, 0);
+        // 定义字节类型映射，使用Oracle的NUMBER类型，长度为3，精度为0
+        DatabaseTypeDefine byteType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 3, 0);
+        // 定义浮点类型映射，使用Oracle的BINARY_FLOAT类型
+        DatabaseTypeDefine floatType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_FLOAT);
+        // 定义双精度浮点类型映射，使用Oracle的BINARY_DOUBLE类型
+        DatabaseTypeDefine doubleType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_DOUBLE);
+        // 定义大十进制数类型映射，使用Oracle的NUMBER类型，长度为38，精度为18
+        DatabaseTypeDefine bigDecimalType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 38, 18);
+        // 定义时间戳类型映射，使用Oracle的TIMESTAMP类型，精度为6
+        DatabaseTypeDefine timestampType = DatabaseTypeDefine.of(OracleTypeConstant.TIMESTAMP, 6);
+        // 定义日期类型映射，使用Oracle的DATE类型
+        DatabaseTypeDefine dateType = DatabaseTypeDefine.of(OracleTypeConstant.DATE);
+
+        // 创建并初始化类型映射
+        Map<Class<?>, DefaultTypeEnumInterface> typeMap = new HashMap<>(32);
+        // 映射Java字符串和字符类型到数据库的字符串类型
+        typeMap.put(String.class, strType);
+        typeMap.put(Character.class, strType);
+        typeMap.put(char.class, strType);
+
+        // 映射Java布尔类型到数据库的布尔类型
+        typeMap.put(Boolean.class, boolType);
+        typeMap.put(boolean.class, boolType);
+
+        // 映射Java字节类型到数据库的字节类型
+        typeMap.put(Byte.class, byteType);
+        typeMap.put(byte.class, byteType);
+
+        // 映射Java短整型到数据库的短整型
+        typeMap.put(Short.class, shortType);
+        typeMap.put(short.class, shortType);
+
+        // 映射Java整型到数据库的整型
+        typeMap.put(Integer.class, intType);
+        typeMap.put(int.class, intType);
+
+        // 映射Java大整数和长整型到数据库的长整型
+        typeMap.put(BigInteger.class, longType);
+        typeMap.put(Long.class, longType);
+        typeMap.put(long.class, longType);
+
+        // 映射Java浮点型到数据库的浮点型
+        typeMap.put(Float.class, floatType);
+        typeMap.put(float.class, floatType);
+        // 映射Java双精度浮点型到数据库的双精度浮点型
+        typeMap.put(Double.class, doubleType);
+        typeMap.put(double.class, doubleType);
+        // 映射Java大十进制数到数据库的大十进制数
+        typeMap.put(BigDecimal.class, bigDecimalType);
+
+        // 映射Java的各种日期和时间类型到数据库的日期和时间类型
+        typeMap.put(java.util.Date.class, timestampType);
+        typeMap.put(java.sql.Time.class, timestampType);
+        typeMap.put(java.sql.Date.class, dateType);
+        typeMap.put(java.sql.Timestamp.class, timestampType);
+        typeMap.put(java.time.LocalTime.class, timestampType);
+        typeMap.put(java.time.LocalDate.class, dateType);
+        typeMap.put(java.time.LocalDateTime.class, timestampType);
+
+        TYPE_MAPPING = Collections.unmodifiableMap(typeMap);
+    }
+
     @Override
     public String databaseDialect() {
         return DatabaseDialect.Oracle;
@@ -65,70 +140,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
      */
     @Override
     public Map<Class<?>, DefaultTypeEnumInterface> typeMapping() {
-        // 定义字符串类型映射，使用Oracle的VARCHAR2类型，长度为255
-        DatabaseTypeDefine strType = DatabaseTypeDefine.of(OracleTypeConstant.VARCHAR2, 255);
-        // 定义布尔类型映射，使用Oracle的NUMBER类型，长度为1，精度为0
-        DatabaseTypeDefine boolType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 1, 0);
-        // 定义短整型类型映射，使用Oracle的NUMBER类型，长度为5，精度为0
-        DatabaseTypeDefine shortType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 5, 0);
-        // 定义整型类型映射，使用Oracle的NUMBER类型，长度为10，精度为0
-        DatabaseTypeDefine intType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 10, 0);
-        // 定义长整型类型映射，使用Oracle的NUMBER类型，长度为19，精度为0
-        DatabaseTypeDefine longType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 19, 0);
-        // 定义浮点类型映射，使用Oracle的BINARY_FLOAT类型
-        DatabaseTypeDefine floatType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_FLOAT);
-        // 定义双精度浮点类型映射，使用Oracle的BINARY_DOUBLE类型
-        DatabaseTypeDefine doubleType = DatabaseTypeDefine.of(OracleTypeConstant.BINARY_DOUBLE);
-        // 定义大十进制数类型映射，使用Oracle的NUMBER类型，长度为38，精度为18
-        DatabaseTypeDefine bigDecimalType = DatabaseTypeDefine.of(OracleTypeConstant.NUMBER, 38, 18);
-        // 定义时间戳类型映射，使用Oracle的TIMESTAMP类型，精度为6
-        DatabaseTypeDefine timestampType = DatabaseTypeDefine.of(OracleTypeConstant.TIMESTAMP, 6);
-        // 定义日期类型映射，使用Oracle的DATE类型
-        DatabaseTypeDefine dateType = DatabaseTypeDefine.of(OracleTypeConstant.DATE);
-
-        // 创建并初始化一个HashMap，存储Java类型到数据库类型定义的映射
-        // 初始容量设为32，根据经验估计的映射数量来减少哈希表的扩容操作
-        return new HashMap<Class<?>, DefaultTypeEnumInterface>(32) {{
-            // 映射Java字符串和字符类型到数据库的字符串类型
-            put(String.class, strType);
-            put(Character.class, strType);
-            put(char.class, strType);
-
-            // 映射Java布尔类型到数据库的布尔类型
-            put(Boolean.class, boolType);
-            put(boolean.class, boolType);
-
-            // 映射Java短整型到数据库的短整型
-            put(Short.class, shortType);
-            put(short.class, shortType);
-
-            // 映射Java整型到数据库的整型
-            put(Integer.class, intType);
-            put(int.class, intType);
-
-            // 映射Java大整数和长整型到数据库的长整型
-            put(BigInteger.class, longType);
-            put(Long.class, longType);
-            put(long.class, longType);
-
-            // 映射Java浮点型到数据库的浮点型
-            put(Float.class, floatType);
-            put(float.class, floatType);
-            // 映射Java双精度浮点型到数据库的双精度浮点型
-            put(Double.class, doubleType);
-            put(double.class, doubleType);
-            // 映射Java大十进制数到数据库的大十进制数
-            put(BigDecimal.class, bigDecimalType);
-
-            // 映射Java的各种日期和时间类型到数据库的日期和时间类型
-            put(java.util.Date.class, timestampType);
-            put(java.sql.Time.class, timestampType);
-            put(java.sql.Date.class, dateType);
-            put(java.sql.Timestamp.class, timestampType);
-            put(java.time.LocalTime.class, timestampType);
-            put(java.time.LocalDate.class, dateType);
-            put(java.time.LocalDateTime.class, timestampType);
-        }};
+        return TYPE_MAPPING;
     }
 
 
@@ -143,6 +155,8 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
      */
     @Override
     public String dropTable(String schema, String tableName) {
+        String wrappedTableName = IStrategy.wrapIdentifiers(tableName);
+        String wrappedSeqName = IStrategy.wrapIdentifiers("auto_seq_" + tableName);
         // 生成一段PL/SQL代码，用于检查并删除指定的表和序列
         // 首先声明两个变量，用于存储表和序列的数量
         return String.format("DECLARE " +
@@ -155,9 +169,9 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                         "    END IF; " +
                         "    SELECT COUNT(*) INTO auto_seq_count FROM user_sequences WHERE upper(sequence_name) = upper('auto_seq_%s'); " +
                         "    IF auto_seq_count > 0 THEN " +
-                        "        EXECUTE IMMEDIATE 'DROP SEQUENCE auto_seq_%s'; " +
+                        "        EXECUTE IMMEDIATE 'DROP SEQUENCE %s'; " +
                         "    END IF;" +
-                        "END;", tableName, tableName, tableName, tableName)
+                        "END;", tableName, wrappedTableName, tableName, wrappedSeqName)
                 .replaceAll("\\s+", " ");
     }
 
@@ -187,6 +201,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     public List<String> createTable(DefaultTableMetadata tableMetadata) {
         List<String> result = new ArrayList<>();
         String tableName = tableMetadata.getTableName();
+        String wrappedTableName = IStrategy.wrapIdentifiers(tableName);
         String tableComment = Optional.ofNullable(tableMetadata.getComment()).orElse("");
         List<ColumnMetadata> columnMetadataList = tableMetadata.getColumnMetadataList();
         List<IndexMetadata> indexMetadataList = tableMetadata.getIndexMetadataList();
@@ -198,25 +213,30 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 构建主键自增序列
         if (primaryKey != null && primaryKey.isAutoIncrement()) {
-            result.add(String.format("CREATE SEQUENCE auto_seq_%s", tableName));
+            result.add(String.format("CREATE SEQUENCE %s", IStrategy.wrapIdentifiers("auto_seq_" + tableName)));
         }
         // 建表语句
         List<String> columnSqlList = columnMetadataList.stream()
                 .map(it -> OracleHelper.SQL.toColumnSql(tableName, it))
                 .collect(Collectors.toList());
-        result.add(String.format("CREATE TABLE %s (%s)", tableName, String.join(", ", columnSqlList)));
+        result.add(String.format("CREATE TABLE %s (%s)", wrappedTableName, String.join(", ", columnSqlList)));
 
         // 构建主键约束
         if (primaryKey != null) {
-            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT auto_pk_%s PRIMARY KEY(%s)", tableName, tableName, primaryKey.getName()));
+            String constraintName = IStrategy.wrapIdentifiers("auto_pk_" + tableName);
+            String wrappedColumnName = IStrategy.wrapIdentifiers(primaryKey.getName());
+            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT %s PRIMARY KEY(%s)", wrappedTableName, constraintName, wrappedColumnName));
         }
 
         // 表和字段注释
-        result.add(String.format("COMMENT ON TABLE %s IS '%s'", tableName, tableComment));
+        String escapedTableComment = tableComment.replace("'", "''");
+        result.add(String.format("COMMENT ON TABLE %s IS '%s'", wrappedTableName, escapedTableComment));
         for (ColumnMetadata columnMetadata : columnMetadataList) {
             String columnName = columnMetadata.getName();
+            String wrappedColumnName = IStrategy.wrapIdentifiers(columnName);
             String columnComment = Optional.ofNullable(columnMetadata.getComment()).orElse("");
-            result.add(String.format("COMMENT ON COLUMN %s.%s IS '%s'", tableName, columnName, columnComment));
+            String escapedColumnComment = columnComment.replace("'", "''");
+            result.add(String.format("COMMENT ON COLUMN %s.%s IS '%s'", wrappedTableName, wrappedColumnName, escapedColumnComment));
         }
         // 索引信息
         for (IndexMetadata indexMetadata : indexMetadataList) {
@@ -478,6 +498,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         List<String> result = new ArrayList<>();
         PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         String tableName = compareTableInfo.getName();
+        String wrappedTableName = IStrategy.wrapIdentifiers(tableName);
         // 先删除需要删除的索引,方便后续修改字段
         if (properties.getAutoDropIndex()) {
             String indexPrefix = properties.getIndexPrefix().toLowerCase();
@@ -485,54 +506,56 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
             for (String indexName : compareTableInfo.getDeleteIndexList()) {
                 boolean isAutoIndex = indexName.startsWith(indexPrefix);
                 if (isAutoIndex || dropCustomIndex) {
-                    result.add(String.format("DROP INDEX %s", indexName));
+                    result.add(String.format("DROP INDEX %s", IStrategy.wrapIdentifiers(indexName)));
                 }
             }
         }
         // 先新增序列,方便后续修改主键默认值
         if (compareTableInfo.isNeedSequence() && !compareTableInfo.isHasSequence()) {
-            result.add(String.format("CREATE SEQUENCE auto_seq_%s", tableName));
+            result.add(String.format("CREATE SEQUENCE %s", IStrategy.wrapIdentifiers("auto_seq_" + tableName)));
         }
 
         // 删除字段
         if (properties.getAutoDropColumn()) {
             for (String column : compareTableInfo.getDeleteColumnList()) {
-                result.add(String.format("ALTER TABLE %s DROP COLUMN %s", tableName, column));
+                result.add(String.format("ALTER TABLE %s DROP COLUMN %s", wrappedTableName, IStrategy.wrapIdentifiers(column)));
             }
         }
 
         // 重命名字段（逻辑删除）
         for (Map.Entry<String, String> entry : compareTableInfo.getRenameColumnMap().entrySet()) {
-            result.add(String.format("ALTER TABLE %s RENAME COLUMN %s TO %s", tableName, entry.getKey(), entry.getValue()));
+            result.add(String.format("ALTER TABLE %s RENAME COLUMN %s TO %s", wrappedTableName, IStrategy.wrapIdentifiers(entry.getKey()), IStrategy.wrapIdentifiers(entry.getValue())));
         }
 
         // 新增字段
         for (ColumnMetadata columnMetadata : compareTableInfo.getCreateColumnList()) {
             String columnSql = OracleHelper.SQL.toColumnSql(tableName, columnMetadata);
-            result.add(String.format("ALTER TABLE %s ADD (%s)", tableName, columnSql));
+            result.add(String.format("ALTER TABLE %s ADD (%s)", wrappedTableName, columnSql));
         }
 
         // 修改字段
         for (String columnSql : compareTableInfo.getUpdateColumnList()) {
-            result.add(String.format("ALTER TABLE %s MODIFY (%s)", tableName, columnSql));
+            result.add(String.format("ALTER TABLE %s MODIFY (%s)", wrappedTableName, columnSql));
         }
 
         // 删除序列
         if (!compareTableInfo.isNeedSequence() && compareTableInfo.isHasSequence()) {
-            result.add(String.format("DROP SEQUENCE auto_seq_%s", tableName));
+            result.add(String.format("DROP SEQUENCE %s", IStrategy.wrapIdentifiers("auto_seq_" + tableName)));
         }
 
 
         // 删除主键
         TabColumn deletePrimaryKey = compareTableInfo.getDeletePrimaryKey();
         if (deletePrimaryKey != null) {
-            result.add(String.format("ALTER TABLE %s DROP CONSTRAINT %s", tableName, deletePrimaryKey.getConstraint_name()));
+            result.add(String.format("ALTER TABLE %s DROP CONSTRAINT %s", wrappedTableName, IStrategy.wrapIdentifiers(deletePrimaryKey.getConstraint_name())));
         }
 
         // 新增主键
         ColumnMetadata createPrimaryKey = compareTableInfo.getCreatePrimaryKey();
         if (createPrimaryKey != null) {
-            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT auto_pk_%s PRIMARY KEY(%s)", tableName, tableName, createPrimaryKey.getName()));
+            String constraintName = IStrategy.wrapIdentifiers("auto_pk_" + tableName);
+            String wrappedColumnName = IStrategy.wrapIdentifiers(createPrimaryKey.getName());
+            result.add(String.format("ALTER TABLE %s ADD CONSTRAINT %s PRIMARY KEY(%s)", wrappedTableName, constraintName, wrappedColumnName));
         }
 
 
@@ -544,12 +567,15 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 修改表注释
         if (compareTableInfo.getTableComment() != null) {
-            result.add(String.format("COMMENT ON TABLE %s IS '%s'", tableName, compareTableInfo.getTableComment()));
+            String escapedTableComment = compareTableInfo.getTableComment().replace("'", "''");
+            result.add(String.format("COMMENT ON TABLE %s IS '%s'", wrappedTableName, escapedTableComment));
         }
 
         // 修改字段注释
         for (ColumnMetadata columnMetadata : compareTableInfo.getUpdateColumnCommentList()) {
-            result.add(String.format("COMMENT ON COLUMN %s.%s IS '%s'", tableName, columnMetadata.getName(), columnMetadata.getComment()));
+            String wrappedColumnName = IStrategy.wrapIdentifiers(columnMetadata.getName());
+            String escapedColumnComment = Optional.ofNullable(columnMetadata.getComment()).orElse("").replace("'", "''");
+            result.add(String.format("COMMENT ON COLUMN %s.%s IS '%s'", wrappedTableName, wrappedColumnName, escapedColumnComment));
         }
         return result;
     }

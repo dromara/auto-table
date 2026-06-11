@@ -1,7 +1,7 @@
 package org.dromara.autotable.strategy.oracle;
 
 import lombok.Data;
-import java.util.HashMap;
+import java.util.Collections;
 
 /**
  * 数据库版本信息
@@ -14,18 +14,30 @@ public class TabVersion {
 
     public static TabVersion search() {
         String sql = "select banner from v$version";
-        return OracleHelper.DB.queryList(sql, new HashMap<>(), TabVersion.class)
+        return OracleHelper.DB.queryList(sql, Collections.emptyMap(), TabVersion.class)
                 .stream()
-                .filter(it -> it.getBanner().toLowerCase().contains("release "))
+                .filter(it -> it.getBanner() != null && it.getBanner().toLowerCase().contains("release "))
                 .findFirst()
                 .map(it -> {
-                    String banner = it.getBanner().toLowerCase();
-                    String version = banner.substring(banner.indexOf("release ") + 8);
-                    version = version.substring(0, version.indexOf(" "));
-                    String mainVersion = version.substring(0, version.indexOf("."));
-                    it.setBanner(banner);
-                    it.setVersion(version);
-                    it.setMainVersion(Integer.parseInt(mainVersion));
+                    try {
+                        String banner = it.getBanner().toLowerCase();
+                        int releaseIdx = banner.indexOf("release ");
+                        if (releaseIdx < 0) {
+                            return it;
+                        }
+                        String version = banner.substring(releaseIdx + 8);
+                        int spaceIdx = version.indexOf(" ");
+                        if (spaceIdx > 0) {
+                            version = version.substring(0, spaceIdx);
+                        }
+                        int dotIdx = version.indexOf(".");
+                        String mainVersion = dotIdx > 0 ? version.substring(0, dotIdx) : version;
+                        it.setBanner(banner);
+                        it.setVersion(version);
+                        it.setMainVersion(Integer.parseInt(mainVersion));
+                    } catch (Exception e) {
+                        // 解析失败时保持默认值
+                    }
                     return it;
                 })
                 .orElseGet(TabVersion::new);
