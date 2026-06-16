@@ -8,7 +8,7 @@ import org.dromara.autotable.strategy.mysql.data.MysqlTypeHelper;
 import org.dromara.autotable.core.utils.StringConnectHelper;
 import org.dromara.autotable.core.utils.StringUtils;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -29,7 +29,7 @@ public class ColumnSqlBuilder {
                 // 添加二进制、无符号、补零 等修饰符
                 // MySQL 中 ZEROFILL 隐含 UNSIGNED，因此 zerofill=true 时无条件添加 UNSIGNED
                 .replace("{qualifier}", () -> {
-                    Set<String> qualifiers = new HashSet<>();
+                    Set<String> qualifiers = new LinkedHashSet<>();
                     if (columnMetadata.isUnsigned()) {
                         qualifiers.add("UNSIGNED");
                     }

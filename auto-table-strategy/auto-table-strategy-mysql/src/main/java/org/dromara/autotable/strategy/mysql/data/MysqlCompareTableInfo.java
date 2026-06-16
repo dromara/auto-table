@@ -55,9 +55,9 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
      */
     private final Map<String, String> renameColumnMap = new LinkedHashMap<>();
     /**
-     * 重命名列时需要的列类型信息（用于 CHANGE COLUMN 语法）
+     * 重命名列时需要的列完整定义（用于 CHANGE COLUMN 语法）
      */
-    private final Map<String, String> renameColumnTypeMap = new HashMap<>();
+    private final Map<String, String> renameColumnFullDefMap = new HashMap<>();
     /**
      * 修改的列，包含新增、修改
      */
@@ -161,9 +161,9 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
     /**
      * 添加需要重命名的列（逻辑删除）
      */
-    public void addRenameColumn(String oldName, String newName, String columnType) {
+    public void addRenameColumn(String oldName, String newName, String fullColumnDefinition) {
         this.renameColumnMap.put(oldName, newName);
-        this.renameColumnTypeMap.put(oldName, columnType);
+        this.renameColumnFullDefMap.put(oldName, fullColumnDefinition);
     }
 
     /**

@@ -4,14 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.mysql.MysqlCharset;
 import org.dromara.autotable.annotation.mysql.MysqlEngine;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
-import org.dromara.autotable.core.builder.IndexMetadataBuilder;
+import org.dromara.autotable.core.builder.DefaultTableMetadataBuilder;
 import org.dromara.autotable.core.config.PropertyConfig;
-import org.dromara.autotable.core.strategy.IndexMetadata;
-import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
-import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.core.utils.BeanClassUtil;
 import org.dromara.autotable.core.utils.StringUtils;
-import org.dromara.autotable.core.utils.TableMetadataHandler;
+import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -20,13 +17,31 @@ import java.util.List;
  * @author don
  */
 @Slf4j
-public class MysqlTableMetadataBuilder {
+public class MysqlTableMetadataBuilder extends DefaultTableMetadataBuilder {
 
-    public static MysqlTableMetadata build(Class<?> clazz) {
+    public MysqlTableMetadataBuilder() {
+        super(new MysqlColumnMetadataBuilder(), new MysqlIndexMetadataBuilder());
+    }
 
-        String tableName = TableMetadataHandler.getTableName(clazz);
-        String tableComment = TableMetadataHandler.getTableComment(clazz);
-        MysqlTableMetadata mysqlTableMetadata = new MysqlTableMetadata(clazz, tableName, tableComment);
+    @Override
+    public MysqlTableMetadata build(Class<?> clazz) {
+
+        String tableName = getTableName(clazz);
+        String tableSchema = getTableSchema(clazz);
+        String tableComment = getTableComment(clazz);
+        MysqlTableMetadata mysqlTableMetadata = new MysqlTableMetadata(clazz, tableName, tableSchema, tableComment);
+
+        List<Field> fields = BeanClassUtil.sortAllFieldForColumn(clazz);
+
+        fillColumnMetadataList(clazz, mysqlTableMetadata, fields);
+        fillIndexMetadataList(clazz, mysqlTableMetadata, fields);
+
+        fillMysqlTableProperties(clazz, mysqlTableMetadata);
+
+        return mysqlTableMetadata;
+    }
+
+    private static void fillMysqlTableProperties(Class<?> clazz, MysqlTableMetadata mysqlTableMetadata) {
 
         // 设置表字符集
         String charset;
@@ -52,14 +67,5 @@ public class MysqlTableMetadataBuilder {
         if (mysqlEngine != null) {
             mysqlTableMetadata.setEngine(mysqlEngine.value());
         }
-
-        List<Field> fields = BeanClassUtil.sortAllFieldForColumn(clazz);
-
-        List<MysqlColumnMetadata> columnMetadataList = new MysqlColumnMetadataBuilder().buildList(clazz, fields);
-        mysqlTableMetadata.setColumnMetadataList(columnMetadataList);
-        List<IndexMetadata> indexMetadataList = new MysqlIndexMetadataBuilder().buildList(clazz, fields);
-        mysqlTableMetadata.setIndexMetadataList(indexMetadataList);
-
-        return mysqlTableMetadata;
     }
 }

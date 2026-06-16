@@ -17,6 +17,7 @@ import org.dromara.autotable.strategy.mysql.builder.MysqlTableMetadataBuilder;
 import org.dromara.autotable.strategy.mysql.data.MySqlDefaultTypeEnum;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlCompareTableInfo;
+import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTypeHelper;
 import org.dromara.autotable.strategy.mysql.data.dbdata.InformationSchemaColumn;
@@ -116,7 +117,7 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
     @Override
     public @NonNull MysqlTableMetadata analyseClass(Class<?> beanClass) {
 
-        return MysqlTableMetadataBuilder.build(beanClass);
+        return new MysqlTableMetadataBuilder().build(beanClass);
     }
 
     @Override
@@ -191,8 +192,8 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                     // 牵扯的字段数目一致，再按顺序逐个比较每个位置的列名及其排序方式是否相同
                     // 先判断索引类型（全文索引 vs 普通索引）是否一致
                     boolean indexTypeDiff = false;
-                    if (indexMetadata instanceof org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) {
-                        org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata mysqlIndexMetadata = (org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata) indexMetadata;
+                    if (indexMetadata instanceof MysqlIndexMetadata) {
+                        MysqlIndexMetadata mysqlIndexMetadata = (MysqlIndexMetadata) indexMetadata;
                         boolean isFullText = mysqlIndexMetadata.isFullText();
                         boolean dbIsFullText = "FULLTEXT".equalsIgnoreCase(theIndexColumns.get(0).getIndexType());
                         indexTypeDiff = isFullText != dbIsFullText;
@@ -236,8 +237,11 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
 
     private static void comparePrimary(MysqlTableMetadata mysqlTableMetadata, MysqlCompareTableInfo mysqlCompareTableInfo, List<InformationSchemaStatistics> tablePrimaries) {
 
+        @SuppressWarnings("unchecked")
+        List<MysqlColumnMetadata> mysqlColumnMetadataList = (List<MysqlColumnMetadata>) (List<?>) mysqlTableMetadata.getColumnMetadataList();
+
         // 获取当前Bean上指定的主键列表，顺序按照列的自然顺序排列
-        List<MysqlColumnMetadata> primaries = mysqlTableMetadata.getColumnMetadataList().stream()
+        List<MysqlColumnMetadata> primaries = mysqlColumnMetadataList.stream()
                 .filter(MysqlColumnMetadata::isPrimary)
                 .collect(Collectors.toList());
 
@@ -287,7 +291,8 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
      */
     private void compareColumns(MysqlTableMetadata mysqlTableMetadata, String tableName, MysqlCompareTableInfo mysqlCompareTableInfo) {
         // 实体全部字段描述
-        List<MysqlColumnMetadata> mysqlColumnMetadataList = mysqlTableMetadata.getColumnMetadataList();
+        @SuppressWarnings("unchecked")
+        List<MysqlColumnMetadata> mysqlColumnMetadataList = (List<MysqlColumnMetadata>) (List<?>) mysqlTableMetadata.getColumnMetadataList();
         // 变形：《列名，实体字段描述》
         Map<String, MysqlColumnMetadata> columnParamMap = mysqlColumnMetadataList.stream().collect(Collectors.toMap(MysqlColumnMetadata::getName, Function.identity()));
         // 查询数据库所有列数据
@@ -327,7 +332,8 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
                 } else if (StringUtils.hasText(logicDropColumnPrefix)) {
                     // 逻辑删除：重命名字段
                     String newColumnName = logicDropColumnPrefix + columnName;
-                    mysqlCompareTableInfo.addRenameColumn(columnName, newColumnName, informationSchemaColumn.getColumnType());
+                    String fullColumnDefinition = buildColumnFullDefinition(informationSchemaColumn);
+                    mysqlCompareTableInfo.addRenameColumn(columnName, newColumnName, fullColumnDefinition);
                 }
             }
         }
@@ -447,6 +453,32 @@ public class MysqlStrategy implements IStrategy<MysqlTableMetadata, MysqlCompare
         String fieldComment = mysqlColumnMetadata.getComment();
         String dbColumnComment = informationSchemaColumn.getColumnComment();
         return (StringUtils.hasText(fieldComment) || StringUtils.hasText(dbColumnComment)) && !fieldComment.equals(dbColumnComment);
+    }
+
+    private static String buildColumnFullDefinition(InformationSchemaColumn informationSchemaColumn) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(informationSchemaColumn.getColumnType());
+        if (StringUtils.hasText(informationSchemaColumn.getCharacterSetName())) {
+            sb.append(" CHARACTER SET ").append(informationSchemaColumn.getCharacterSetName());
+        }
+        if (StringUtils.hasText(informationSchemaColumn.getCollationName())) {
+            sb.append(" COLLATE ").append(informationSchemaColumn.getCollationName());
+        }
+        sb.append(informationSchemaColumn.isNotNull() ? " NOT NULL" : " NULL");
+        if (informationSchemaColumn.getColumnDefault() != null) {
+            sb.append(" DEFAULT ").append(informationSchemaColumn.getColumnDefault());
+        }
+        if (informationSchemaColumn.isAutoIncrement()) {
+            sb.append(" AUTO_INCREMENT");
+        }
+        String extra = informationSchemaColumn.getExtra();
+        if (StringUtils.hasText(extra) && !extra.toLowerCase().contains("auto_increment")) {
+            sb.append(" ").append(extra);
+        }
+        if (StringUtils.hasText(informationSchemaColumn.getColumnComment())) {
+            sb.append(" COMMENT '").append(informationSchemaColumn.getColumnComment().replace("'", "''")).append("'");
+        }
+        return sb.toString();
     }
 
     private static void compareTableProperties(MysqlTableMetadata mysqlTableMetadata, InformationSchemaTable tableInformation, MysqlCompareTableInfo mysqlCompareTableInfo) {

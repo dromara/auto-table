@@ -30,7 +30,8 @@ public class CreateTableSqlBuilder {
     public static String buildSql(MysqlTableMetadata mysqlTableMetadata) {
 
         String name = mysqlTableMetadata.getTableName();
-        List<MysqlColumnMetadata> mysqlColumnMetadataList = mysqlTableMetadata.getColumnMetadataList();
+        @SuppressWarnings("unchecked")
+        List<MysqlColumnMetadata> mysqlColumnMetadataList = (List<MysqlColumnMetadata>) (List<?>) mysqlTableMetadata.getColumnMetadataList();
         List<IndexMetadata> indexMetadataList = mysqlTableMetadata.getIndexMetadataList();
         String collate = mysqlTableMetadata.getCollate();
         String engine = mysqlTableMetadata.getEngine();

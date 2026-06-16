@@ -59,8 +59,8 @@ public class ModifyTableSqlBuilder {
 
         // 重命名表字段处理（逻辑删除）
         Map<String, String> renameColumnMap = mysqlCompareTableInfo.getRenameColumnMap();
-        Map<String, String> renameColumnTypeMap = mysqlCompareTableInfo.getRenameColumnTypeMap();
-        String renameColumnSql = getRenameColumnSql(renameColumnMap, renameColumnTypeMap);
+        Map<String, String> renameColumnFullDefMap = mysqlCompareTableInfo.getRenameColumnFullDefMap();
+        String renameColumnSql = getRenameColumnSql(renameColumnMap, renameColumnFullDefMap);
         if (alterTableSeparateDrop) {
             dropItems.add(renameColumnSql);
         } else {
@@ -156,16 +156,16 @@ public class ModifyTableSqlBuilder {
                 ).collect(Collectors.joining(","));
     }
 
-    private static String getRenameColumnSql(Map<String, String> renameColumnMap, Map<String, String> renameColumnTypeMap) {
+    private static String getRenameColumnSql(Map<String, String> renameColumnMap, Map<String, String> renameColumnFullDefMap) {
         return renameColumnMap.entrySet().stream()
                 .map(entry -> {
                     String oldName = entry.getKey();
                     String newName = entry.getValue();
-                    String columnType = renameColumnTypeMap.get(oldName);
+                    String fullColumnDefinition = renameColumnFullDefMap.get(oldName);
                     // 使用 CHANGE COLUMN 语法兼容 MySQL 5.7+
                     return "CHANGE COLUMN " + IStrategy.wrapIdentifiers(oldName)
                             + " " + IStrategy.wrapIdentifiers(newName)
-                            + " " + columnType;
+                            + " " + fullColumnDefinition;
                 })
                 .collect(Collectors.joining(","));
     }

@@ -3,11 +3,7 @@ package org.dromara.autotable.strategy.mysql.data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.dromara.autotable.core.strategy.IndexMetadata;
-import org.dromara.autotable.core.strategy.TableMetadata;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.dromara.autotable.core.strategy.DefaultTableMetadata;
 
 /**
  * @author don
@@ -15,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class MysqlTableMetadata extends TableMetadata {
+public class MysqlTableMetadata extends DefaultTableMetadata {
 
     /**
      * 引擎
@@ -29,16 +25,8 @@ public class MysqlTableMetadata extends TableMetadata {
      * 默认排序规则
      */
     private String collate;
-    /**
-     * 所有列
-     */
-    private List<MysqlColumnMetadata> columnMetadataList = new ArrayList<>();
-    /**
-     * 索引
-     */
-    private List<IndexMetadata> indexMetadataList = new ArrayList<>();
 
-    public MysqlTableMetadata(Class<?> entityClass, String tableName, String comment) {
-        super(entityClass, tableName, "", comment);
+    public MysqlTableMetadata(Class<?> entityClass, String tableName, String schema, String comment) {
+        super(entityClass, tableName, schema, comment);
     }
 }

@@ -83,22 +83,7 @@ public class MysqlIndexMetadataBuilder extends IndexMetadataBuilder {
             return null;
         }
 
-        MysqlIndexMetadata indexMetadata = (MysqlIndexMetadata) newIndexMetadata();
-        String indexName = fullTextIndex.name();
-        if (StringUtils.hasText(indexName)) {
-            indexName = getIndexNameWithPrefix(indexName);
-        } else {
-            String fieldNamesStr = String.join("_", fieldNames);
-            String tableName = TableMetadataHandler.getTableName(clazz);
-            indexName = getEncryptIndexName(tableName, fieldNamesStr);
-        }
-        indexMetadata.setName(indexName);
-        indexMetadata.setType(org.dromara.autotable.annotation.enums.IndexTypeEnum.NORMAL);
-        indexMetadata.setFullText(true);
-        indexMetadata.setParser(fullTextIndex.parser());
-        indexMetadata.setComment(fullTextIndex.comment());
-        indexMetadata.setColumns(columnParams);
-        return indexMetadata;
+        return buildFullTextIndexMetadata(clazz, fullTextIndex.name(), fullTextIndex.parser(), fullTextIndex.comment(), columnParams);
     }
 
     @Override
@@ -107,25 +92,30 @@ public class MysqlIndexMetadataBuilder extends IndexMetadataBuilder {
         if (fullTextIndex != null) {
             // 存在 @MysqlFullTextIndex，创建全文索引
             String realColumnName = TableMetadataHandler.getColumnName(clazz, field);
-            MysqlIndexMetadata indexMetadata = (MysqlIndexMetadata) newIndexMetadata();
-            String indexName = fullTextIndex.name();
-            if (StringUtils.hasText(indexName)) {
-                indexName = getIndexNameWithPrefix(indexName);
-            } else {
-                String tableName = TableMetadataHandler.getTableName(clazz);
-                indexName = getEncryptIndexName(tableName, realColumnName);
-            }
-            indexMetadata.setName(indexName);
-            indexMetadata.setType(IndexTypeEnum.NORMAL);
-            indexMetadata.setFullText(true);
-            indexMetadata.setParser(fullTextIndex.parser());
-            indexMetadata.setComment(fullTextIndex.comment());
-            indexMetadata.getColumns().add(IndexMetadata.IndexColumnParam.newInstance(realColumnName, null));
-            return indexMetadata;
+            List<IndexMetadata.IndexColumnParam> columnParams = Collections.singletonList(IndexMetadata.IndexColumnParam.newInstance(realColumnName, null));
+            return buildFullTextIndexMetadata(clazz, fullTextIndex.name(), fullTextIndex.parser(), fullTextIndex.comment(), columnParams);
         }
 
         // 不存在 @MysqlFullTextIndex，走默认逻辑
         return super.buildIndexMetadata(clazz, field);
+    }
+
+    private MysqlIndexMetadata buildFullTextIndexMetadata(Class<?> clazz, String indexName, String parser, String comment, List<IndexMetadata.IndexColumnParam> columnParams) {
+        MysqlIndexMetadata indexMetadata = (MysqlIndexMetadata) newIndexMetadata();
+        if (StringUtils.hasText(indexName)) {
+            indexName = getIndexNameWithPrefix(indexName);
+        } else {
+            String fieldNamesStr = columnParams.stream().map(IndexMetadata.IndexColumnParam::getColumn).collect(Collectors.joining("_"));
+            String tableName = TableMetadataHandler.getTableName(clazz);
+            indexName = getEncryptIndexName(tableName, fieldNamesStr);
+        }
+        indexMetadata.setName(indexName);
+        indexMetadata.setType(IndexTypeEnum.NORMAL);
+        indexMetadata.setFullText(true);
+        indexMetadata.setParser(parser);
+        indexMetadata.setComment(comment);
+        indexMetadata.setColumns(columnParams);
+        return indexMetadata;
     }
 
     @Override
