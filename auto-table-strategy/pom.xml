@@ -23,6 +23,7 @@
         <module>auto-table-strategy-oracle</module>
         <module>auto-table-strategy-dm</module>
         <module>auto-table-strategy-kingbase</module>
+        <module>auto-table-strategy-sqlserver</module>
     </modules>
 
 </project>
