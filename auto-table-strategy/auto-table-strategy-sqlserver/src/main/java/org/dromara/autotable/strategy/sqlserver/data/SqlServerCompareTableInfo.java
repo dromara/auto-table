@@ -51,6 +51,21 @@ public class SqlServerCompareTableInfo extends CompareTableInfo {
     private Map<String, String> indexComment = new HashMap<>();
 
     /**
+     * DB 当前是否存在表注释（决定 sp_addextendedproperty 还是 sp_updateextendedproperty）
+     */
+    private boolean tableCommentExists;
+
+    /**
+     * DB 当前各列是否存在注释（列名 -> 是否存在），与 {@link #columnComment} 同步填充
+     */
+    private Map<String, Boolean> columnCommentExists = new HashMap<>();
+
+    /**
+     * DB 当前各索引是否存在注释（索引名 -> 是否存在），与 {@link #indexComment} 同步填充
+     */
+    private Map<String, Boolean> indexCommentExists = new HashMap<>();
+
+    /**
      * 需要删除的列
      */
     private List<String> dropColumnList = new ArrayList<>();
@@ -141,8 +156,9 @@ public class SqlServerCompareTableInfo extends CompareTableInfo {
         return errorMsg.toString();
     }
 
-    public void addColumnComment(String columnName, String newComment) {
+    public void addColumnComment(String columnName, String newComment, boolean dbExists) {
         this.columnComment.put(columnName, newComment);
+        this.columnCommentExists.put(columnName, dbExists);
     }
 
     public void addNewColumn(ColumnMetadata columnMetadata) {
@@ -172,8 +188,9 @@ public class SqlServerCompareTableInfo extends CompareTableInfo {
         this.indexMetadataList.add(indexMetadata);
     }
 
-    public void addIndexComment(@NonNull String indexName, @NonNull String newComment) {
+    public void addIndexComment(@NonNull String indexName, @NonNull String newComment, boolean dbExists) {
         this.indexComment.put(indexName, newComment);
+        this.indexCommentExists.put(indexName, dbExists);
     }
 
     public void addDropIndexes(Set<String> indexNameList) {

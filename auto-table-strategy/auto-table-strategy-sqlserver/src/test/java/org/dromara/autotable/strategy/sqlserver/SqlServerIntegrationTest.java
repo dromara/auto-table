@@ -112,7 +112,7 @@ public class SqlServerIntegrationTest {
         newCol.setType(new DatabaseTypeAndLength("NVARCHAR", 100, null, Collections.emptyList()));
         newCol.setComment("邮箱");
         compareInfo.addNewColumn(newCol);
-        compareInfo.addColumnComment("email", "邮箱");
+        compareInfo.addColumnComment("email", "邮箱", false);
 
         executeAll(ModifyTableSqlBuilder.buildSql(compareInfo));
 

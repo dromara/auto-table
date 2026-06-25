@@ -7,14 +7,10 @@ import org.dromara.autotable.core.strategy.IStrategy;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.sqlserver.data.SqlServerCompareTableInfo;
-import org.dromara.autotable.strategy.sqlserver.data.dbdata.SqlServerDbColumn;
-import org.dromara.autotable.strategy.sqlserver.data.dbdata.SqlServerDbIndex;
-import org.dromara.autotable.strategy.sqlserver.mapper.SqlServerTablesMapper;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -89,26 +85,26 @@ public class ModifyTableSqlBuilder {
             String columnName = columnMetadata.getName();
             String wrappedColumn = IStrategy.wrapIdentifiers(columnName);
 
-            // 类型或非空变更：合并为一条 ALTER COLUMN（IDENTITY 列不能通过 ALTER COLUMN 改类型，跳过）
-            if ((modifyColumn.isTypeChanged() || modifyColumn.isNotNullChanged()) && !columnMetadata.isAutoIncrement()) {
-                if (modifyColumn.isTypeChanged()) {
-                    // 改类型时必须带上完整类型与 NULL/NOT NULL
-                    String fullType = columnMetadata.getType().getDefaultFullType();
-                    sqlList.add("ALTER TABLE " + wrappedTable + " ALTER COLUMN " + wrappedColumn + " " + fullType + (columnMetadata.isNotNull() ? " NOT NULL" : " NULL"));
-                } else {
-                    // 仅非空变更
-                    sqlList.add("ALTER TABLE " + wrappedTable + " ALTER COLUMN " + wrappedColumn + " " + columnMetadata.getType().getDefaultFullType() + (columnMetadata.isNotNull() ? " NOT NULL" : " NULL"));
-                }
-            } else if (modifyColumn.isTypeChanged() && columnMetadata.isAutoIncrement()) {
-                log.warn("SQLServer 不支持通过 ALTER COLUMN 修改自增列[{}]的类型，已跳过", columnName);
-            }
-
-            // 默认值变更：先 drop 旧默认约束，再 add 新默认值
+            // 6.1 默认值变更：先 drop 旧默认约束
+            //     SQLServer 中列存在默认约束时 ALTER COLUMN 改类型/非空可能失败，故先解除约束再改列
             if (modifyColumn.isDefaultChanged()) {
                 String oldDefaultConstraintName = modifyColumn.getDefaultConstraintName();
                 if (StringUtils.hasText(oldDefaultConstraintName)) {
                     sqlList.add("ALTER TABLE " + wrappedTable + " DROP CONSTRAINT " + IStrategy.wrapIdentifiers(oldDefaultConstraintName));
                 }
+            }
+
+            // 6.2 类型或非空变更：合并为一条 ALTER COLUMN（IDENTITY 列不能通过 ALTER COLUMN 改类型，跳过）
+            if ((modifyColumn.isTypeChanged() || modifyColumn.isNotNullChanged()) && !columnMetadata.isAutoIncrement()) {
+                // 改类型或非空均需带上完整类型与 NULL/NOT NULL
+                String fullType = columnMetadata.getType().getDefaultFullType();
+                sqlList.add("ALTER TABLE " + wrappedTable + " ALTER COLUMN " + wrappedColumn + " " + fullType + (columnMetadata.isNotNull() ? " NOT NULL" : " NULL"));
+            } else if (modifyColumn.isTypeChanged() && columnMetadata.isAutoIncrement()) {
+                log.warn("SQLServer 不支持通过 ALTER COLUMN 修改自增列[{}]的类型，已跳过", columnName);
+            }
+
+            // 6.3 默认值变更：add 新默认值
+            if (modifyColumn.isDefaultChanged()) {
                 String newDefaultVal = resolveDefaultValue(columnMetadata);
                 if (StringUtils.hasText(newDefaultVal)) {
                     // 匿名默认约束，SQLServer 自动生成名，便于后续 compare 查询
@@ -157,12 +153,12 @@ public class ModifyTableSqlBuilder {
 
     /**
      * 构建注释 SQL（区分 sp_addextendedproperty 与 sp_updateextendedproperty）。
-     * <p>通过查询数据库现有注释状态判断 add 还是 update。</p>
+     * <p>复用 compare 阶段记录的 DB 注释存在性（{@link SqlServerCompareTableInfo#isTableCommentExists()} 等），
+     * 不再重复查询系统目录。</p>
      */
     private static List<String> buildCommentSql(SqlServerCompareTableInfo compareTableInfo, String schema, String tableName) {
 
         List<String> sqlList = new ArrayList<>();
-        SqlServerTablesMapper mapper = new SqlServerTablesMapper();
 
         String tableComment = compareTableInfo.getComment();
         Map<String, String> columnComment = compareTableInfo.getColumnComment();
@@ -172,16 +168,14 @@ public class ModifyTableSqlBuilder {
             return sqlList;
         }
 
-        // 查询数据库现有注释
-        String dbTableComment = mapper.selectTableDescription(schema, tableName);
-        Map<String, String> dbColumnCommentMap = mapper.selectTableFieldDetail(schema, tableName).stream()
-                .collect(Collectors.toMap(SqlServerDbColumn::getColumnName, c -> c.getDescription() == null ? "" : c.getDescription(), (a, b) -> a));
-        Map<String, String> dbIndexCommentMap = mapper.selectTableIndexesDetail(schema, tableName).stream()
-                .collect(Collectors.toMap(SqlServerDbIndex::getIndexName, i -> i.getDescription() == null ? "" : i.getDescription(), (a, b) -> a));
+        // 复用 compare 阶段已查询的 DB 注释存在性，避免此处重复查询系统目录
+        boolean tableCommentExists = compareTableInfo.isTableCommentExists();
+        Map<String, Boolean> columnCommentExists = compareTableInfo.getColumnCommentExists();
+        Map<String, Boolean> indexCommentExists = compareTableInfo.getIndexCommentExists();
 
         // 表注释
         if (StringUtils.hasText(tableComment)) {
-            if (StringUtils.hasText(dbTableComment)) {
+            if (tableCommentExists) {
                 sqlList.add(CreateTableSqlBuilder.getUpdateExtendedPropertySql(tableComment, schema, tableName, null));
             } else {
                 sqlList.add(CreateTableSqlBuilder.getAddExtendedPropertySql(tableComment, schema, tableName, null));
@@ -190,8 +184,7 @@ public class ModifyTableSqlBuilder {
 
         // 列注释
         columnComment.forEach((columnName, newComment) -> {
-            String dbComment = dbColumnCommentMap.get(columnName);
-            if (StringUtils.hasText(dbComment)) {
+            if (columnCommentExists.getOrDefault(columnName, false)) {
                 sqlList.add(CreateTableSqlBuilder.getUpdateExtendedPropertySql(newComment, schema, tableName, columnName));
             } else {
                 sqlList.add(CreateTableSqlBuilder.getAddExtendedPropertySql(newComment, schema, tableName, columnName));
@@ -200,8 +193,7 @@ public class ModifyTableSqlBuilder {
 
         // 索引注释
         indexComment.forEach((indexName, newComment) -> {
-            String dbComment = dbIndexCommentMap.get(indexName);
-            if (StringUtils.hasText(dbComment)) {
+            if (indexCommentExists.getOrDefault(indexName, false)) {
                 sqlList.add(CreateTableSqlBuilder.getUpdateExtendedPropertySql(newComment, schema, tableName, indexName, true));
             } else {
                 sqlList.add(CreateTableSqlBuilder.getAddExtendedPropertySql(newComment, schema, tableName, indexName, true));

@@ -67,6 +67,7 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
 
     /**
      * SQLServer 标识符使用方括号包裹（前缀 [ 后缀 ]，与默认的单字符 identifier 不同，故重写 wrapIdentifier）。
+     * <p>名称内含 {@code ]} 时转义为 {@code ]]}，与 {@code SqlServerDatabaseBuilder} 建库的转义规则保持一致。</p>
      */
     @Override
     public String wrapIdentifier(String name) {
@@ -76,7 +77,7 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
         if (name.startsWith("[") && name.endsWith("]")) {
             return name;
         }
-        return "[" + name + "]";
+        return "[" + name.replace("]", "]]") + "]";
     }
 
     @Override
@@ -194,6 +195,8 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
         String tableDescription = mapper.selectTableDescription(schema, tableName);
         if (StringUtils.hasText(tableMetadata.getComment()) && !tableMetadata.getComment().equals(tableDescription)) {
             compareTableInfo.setComment(tableMetadata.getComment());
+            // 记录 DB 当前是否存在表注释，供后续生成 sp_add/sp_updateextendedproperty 复用，避免重复查询
+            compareTableInfo.setTableCommentExists(StringUtils.hasText(tableDescription));
         }
     }
 
@@ -217,19 +220,25 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
             // 新增字段
             String fieldComment = columnMetadata.getComment();
             if (dbColumn == null) {
-                // 标记注释
+                // 标记注释（新增列，DB 必然无注释）
                 if (StringUtils.hasText(fieldComment)) {
-                    compareTableInfo.addColumnComment(columnMetadata.getName(), fieldComment);
+                    compareTableInfo.addColumnComment(columnMetadata.getName(), fieldComment, false);
                 }
                 // 标记字段信息
                 compareTableInfo.addNewColumn(columnMetadata);
                 continue;
             }
             /* 修改的字段 */
+            // 自增属性不一致：SQLServer 不支持通过 ALTER COLUMN 将普通列改为/去掉 IDENTITY，仅 warn 提示，需手动处理
+            boolean dbIdentity = "YES".equals(dbColumn.getIsIdentity());
+            if (columnMetadata.isAutoIncrement() != dbIdentity) {
+                log.warn("列[{}]自增属性不一致（实体={}, 数据库={}），SQLServer 不支持 ALTER 修改 IDENTITY，请手动调整",
+                        columnName, columnMetadata.isAutoIncrement(), dbIdentity);
+            }
             // 修改了字段注释
             String dbColumnComment = dbColumn.getDescription();
             if ((StringUtils.hasText(dbColumnComment) || StringUtils.hasText(fieldComment)) && !Objects.equals(dbColumnComment, fieldComment)) {
-                compareTableInfo.addColumnComment(columnName, fieldComment);
+                compareTableInfo.addColumnComment(columnName, fieldComment, StringUtils.hasText(dbColumnComment));
             }
             // 主键忽略判断，单独处理
             if (!columnMetadata.isPrimary()) {
@@ -285,10 +294,39 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
     }
 
     private boolean isTypeDiff(ColumnMetadata columnMetadata, SqlServerDbColumn dbColumn) {
-        String dataTypeFormat = dbColumn.getDataTypeFormat();
         String fullType = columnMetadata.getType().getDefaultFullType().toLowerCase();
-        // SQLServer 整数等无长度类型，getDataTypeFormat 与 getDefaultFullType 均无括号，直接比较
-        return !Objects.equals(fullType, dataTypeFormat);
+        String dataTypeFormat = dbColumn.getDataTypeFormat();
+        if (dataTypeFormat == null) {
+            return true;
+        }
+        // 提取类型名（去掉括号内的长度/精度部分）
+        int fParen = fullType.indexOf('(');
+        int dParen = dataTypeFormat.indexOf('(');
+        String fBase = fParen < 0 ? fullType : fullType.substring(0, fParen);
+        String dBase = dParen < 0 ? dataTypeFormat : dataTypeFormat.substring(0, dParen);
+        // 类型名不同 → 必然变更
+        if (!fBase.equals(dBase)) {
+            return true;
+        }
+        // 类型名相同：
+        //  - 实体未指定长度/精度（无括号）→ 视为"使用数据库默认"，忽略 DB 侧精度差异，
+        //    避免实体 datetime2 与 DB datetime2(7) 反复误判触发无意义 ALTER
+        //  - 实体指定了长度/精度 → 严格比较括号内参数
+        if (fParen < 0) {
+            return false;
+        }
+        if (dParen < 0) {
+            // 实体有长度/精度但 DB 无（如实体 nvarchar(255) vs DB nvarchar(MAX 裸类型）→ 变更
+            return true;
+        }
+        String fArgs = fullType.substring(fParen + 1, fullType.length() - 1);
+        String dArgs = dataTypeFormat.substring(dParen + 1, dataTypeFormat.length() - 1);
+        // decimal/numeric：实体只给 precision 不给 scale（无逗号）时，只比较 precision，
+        // 避免实体 decimal(10) 与 DB decimal(10,0) 误判
+        if (fArgs.indexOf(',') < 0 && dArgs.indexOf(',') >= 0) {
+            return !fArgs.equals(dArgs.substring(0, dArgs.indexOf(',')));
+        }
+        return !fArgs.equals(dArgs);
     }
 
     private boolean isDefaultDiff(ColumnMetadata columnMetadata, SqlServerDbColumn dbColumn) {
@@ -330,9 +368,9 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
             // 删除失败，表示是新增的索引
             boolean isNewIndex = dbIndex == null;
             if (isNewIndex) {
-                // 标记注释
+                // 标记注释（新索引，DB 必然无注释）
                 if (StringUtils.hasText(comment)) {
-                    compareTableInfo.addIndexComment(indexMetadata.getName(), comment);
+                    compareTableInfo.addIndexComment(indexMetadata.getName(), comment, false);
                 }
                 // 标记索引信息
                 compareTableInfo.addNewIndex(indexMetadata);
@@ -341,7 +379,7 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
             // 修改索引注释
             boolean anyOneIsValid = StringUtils.hasText(dbIndex.getDescription()) || StringUtils.hasText(comment);
             if (anyOneIsValid && !Objects.equals(dbIndex.getDescription(), comment)) {
-                compareTableInfo.addIndexComment(indexName, comment);
+                compareTableInfo.addIndexComment(indexName, comment, StringUtils.hasText(dbIndex.getDescription()));
             }
 
             // 索引定义比较：唯一性 + 列集合

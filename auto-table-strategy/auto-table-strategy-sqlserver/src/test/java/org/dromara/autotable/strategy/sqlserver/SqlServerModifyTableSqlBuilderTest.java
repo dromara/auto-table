@@ -20,8 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * SqlServer ModifyTableSqlBuilder 单元测试。
  *
- * <p>仅覆盖无注释场景（避免 buildCommentSql 触发 DataSourceManager 查询，那属于集成测试范畴）。
- * 覆盖各改表操作的 SQL 形态：删索引/删主键/删列/重命名/加列/改类型/改非空/改默认值(含约束名drop)/加主键/加索引。</p>
+ * <p>buildCommentSql 复用 compare 阶段的 dbExists 标志，不再触发 DataSourceManager 查询，故注释场景也可单元测试。
+ * 覆盖各改表操作的 SQL 形态：删索引/删主键/删列/重命名/加列/改类型/改非空/改默认值(含约束名drop)/加主键/加索引/注释add与update。</p>
  */
 public class SqlServerModifyTableSqlBuilderTest {
 
@@ -233,5 +233,44 @@ public class SqlServerModifyTableSqlBuilderTest {
             long semiCount = sql.chars().filter(c -> c == ';').count();
             assertTrue(semiCount <= 1, "每条 SQL 应为独立单语句: " + sql);
         }
+    }
+
+    @Test
+    void test改类型与默认值_先drop约束再ALTER再add默认() {
+        // 同时改类型与默认值且列有旧默认约束时，顺序应为：drop 旧约束 → ALTER COLUMN → add 新默认值
+        // （列存在默认约束时直接 ALTER COLUMN 可能失败，故先解除约束）
+        SqlServerCompareTableInfo ci = compareInfo();
+        ColumnMetadata col = column("status", "INT", null, null, false);
+        col.setDefaultValue("1");
+        ci.addModifyColumn(col, true, false, true, "DF__user__status__xyz");
+
+        List<String> sqls = ModifyTableSqlBuilder.buildSql(ci);
+        assertEquals("ALTER TABLE [dbo].[user] DROP CONSTRAINT [DF__user__status__xyz]", sqls.get(0));
+        assertEquals("ALTER TABLE [dbo].[user] ALTER COLUMN [status] INT NULL", sqls.get(1));
+        assertEquals("ALTER TABLE [dbo].[user] ADD DEFAULT 1 FOR [status]", sqls.get(2));
+    }
+
+    @Test
+    void test注释_按dbExists区分add与update() {
+        // buildCommentSql 复用 compare 阶段的 dbExists 标志，不触发 DataSourceManager 查询
+        SqlServerCompareTableInfo ci = compareInfo();
+        // 表注释：DB 已存在 → sp_updateextendedproperty（无 level2）
+        ci.setComment("用户表");
+        ci.setTableCommentExists(true);
+        // 列注释：DB 无 → sp_addextendedproperty
+        ci.addColumnComment("name", "姓名", false);
+        // 列注释：DB 已存在 → sp_updateextendedproperty
+        ci.addColumnComment("age", "年龄", true);
+
+        List<String> sqls = ModifyTableSqlBuilder.buildSql(ci);
+        // 表注释 update：含 sp_updateextendedproperty 且 level1name=user、无 level2type
+        assertTrue(sqls.stream().anyMatch(s -> s.contains("sp_updateextendedproperty")
+                && s.contains("@level1name=N'user'") && !s.contains("level2type")), "表注释应 update");
+        // name 列注释 add
+        assertTrue(sqls.stream().anyMatch(s -> s.contains("sp_addextendedproperty")
+                && s.contains("@level2name=N'name'")), "name 列注释应 add");
+        // age 列注释 update
+        assertTrue(sqls.stream().anyMatch(s -> s.contains("sp_updateextendedproperty")
+                && s.contains("@level2name=N'age'")), "age 列注释应 update");
     }
 }

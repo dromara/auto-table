@@ -130,13 +130,19 @@ public class SqlServerDbColumn {
                     return type + "(" + this.characterMaximumLength + ")";
                 }
                 return type;
-            // 日期时间：无长度
-            case "date":
+            // 带可选小数秒精度的类型：精度存于 sys.columns.scale（0-7），输出以与实体 @ColumnType(length=n) 对齐
+            // 例：datetime2(7)、time(0)、datetimeoffset(6)
             case "time":
-            case "datetime":
             case "datetime2":
-            case "smalldatetime":
             case "datetimeoffset":
+                if (this.numericScale != null) {
+                    return type + "(" + this.numericScale + ")";
+                }
+                return type;
+            // 日期时间：固定精度类型（date / 旧式 datetime / smalldatetime），实体不映射，保持裸类型
+            case "date":
+            case "datetime":
+            case "smalldatetime":
                 return type;
             // 大文本/大二进制
             case "text":

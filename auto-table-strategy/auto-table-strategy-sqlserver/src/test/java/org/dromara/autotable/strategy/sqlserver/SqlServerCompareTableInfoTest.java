@@ -53,12 +53,12 @@ public class SqlServerCompareTableInfoTest {
 
         // 列注释
         SqlServerCompareTableInfo ci3 = newInfo();
-        ci3.addColumnComment("name", "姓名");
+        ci3.addColumnComment("name", "姓名", false);
         assertTrue(ci3.needModify());
 
         // 索引注释
         SqlServerCompareTableInfo ci4 = newInfo();
-        ci4.addIndexComment("idx_name", "索引注释");
+        ci4.addIndexComment("idx_name", "索引注释", false);
         assertTrue(ci4.needModify());
 
         // 删除列

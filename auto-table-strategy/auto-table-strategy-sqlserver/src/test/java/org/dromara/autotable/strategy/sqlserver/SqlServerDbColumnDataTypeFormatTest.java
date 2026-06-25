@@ -51,10 +51,23 @@ public class SqlServerDbColumnDataTypeFormatTest {
     }
 
     @Test
-    void test时间类型_无长度() {
+    void test时间类型_无精度() {
+        // scale=null（未指定）→ 裸类型，对齐实体未指定 length 时的 getDefaultFullType
         assertEquals("datetime2", dbColumn("datetime2", null, null, null).getDataTypeFormat());
         assertEquals("date", dbColumn("date", null, null, null).getDataTypeFormat());
         assertEquals("time", dbColumn("time", null, null, null).getDataTypeFormat());
+    }
+
+    @Test
+    void test时间类型_带小数秒精度() {
+        // datetime2/time/datetimeoffset 的小数秒精度存于 sys.columns.scale（0-7），输出以对齐实体 @ColumnType(length=n)
+        assertEquals("datetime2(7)", dbColumn("datetime2", null, null, 7).getDataTypeFormat());
+        assertEquals("datetime2(0)", dbColumn("datetime2", null, null, 0).getDataTypeFormat());
+        assertEquals("time(3)", dbColumn("time", null, null, 3).getDataTypeFormat());
+        assertEquals("datetimeoffset(6)", dbColumn("datetimeoffset", null, null, 6).getDataTypeFormat());
+        // date / 旧式 datetime 为固定精度类型，不带括号
+        assertEquals("date", dbColumn("date", null, null, 0).getDataTypeFormat());
+        assertEquals("datetime", dbColumn("datetime", null, null, 3).getDataTypeFormat());
     }
 
     @Test
