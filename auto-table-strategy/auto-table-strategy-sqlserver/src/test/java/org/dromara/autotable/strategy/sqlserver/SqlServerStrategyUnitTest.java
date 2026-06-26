@@ -1,8 +1,14 @@
 package org.dromara.autotable.strategy.sqlserver;
 
+import org.dromara.autotable.annotation.enums.IndexTypeEnum;
+import org.dromara.autotable.annotation.enums.IndexSortTypeEnum;
 import org.dromara.autotable.core.constants.DatabaseDialect;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.IndexMetadata;
+import org.dromara.autotable.strategy.sqlserver.data.dbdata.SqlServerDbIndex;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -124,5 +130,93 @@ public class SqlServerStrategyUnitTest {
         SqlServerStrategy strategy = new SqlServerStrategy();
         assertEquals("REAL", strategy.typeMapping().get(Float.class).getTypeName());
         assertEquals("FLOAT", strategy.typeMapping().get(Double.class).getTypeName());
+    }
+
+    // ==================== isIndexSame（索引列顺序 + 排序方向）====================
+
+    @Test
+    void testIsIndexSame_列序排序一致_相同() throws Exception {
+        assertTrue(invokeIsIndexSame(
+                dbIndex("NO", "a,b", "ASC,DESC"),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("a", IndexSortTypeEnum.ASC),
+                        IndexMetadata.IndexColumnParam.newInstance("b", IndexSortTypeEnum.DESC))));
+    }
+
+    @Test
+    void testIsIndexSame_列顺序不同_不一致() throws Exception {
+        // DB 为 (a,b)，实体为 (b,a) → 顺序不同，判变更
+        assertFalse(invokeIsIndexSame(
+                dbIndex("NO", "a,b", "ASC,ASC"),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("b", null),
+                        IndexMetadata.IndexColumnParam.newInstance("a", null))));
+    }
+
+    @Test
+    void testIsIndexSame_列数不同_不一致() throws Exception {
+        assertFalse(invokeIsIndexSame(
+                dbIndex("NO", "a,b", "ASC,ASC"),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("a", null))));
+    }
+
+    @Test
+    void testIsIndexSame_实体指定排序且与DB不同_不一致() throws Exception {
+        // 实体指定 b 为 DESC，DB 为 ASC → 不一致
+        assertFalse(invokeIsIndexSame(
+                dbIndex("NO", "a,b", "ASC,ASC"),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("a", null),
+                        IndexMetadata.IndexColumnParam.newInstance("b", IndexSortTypeEnum.DESC))));
+    }
+
+    @Test
+    void testIsIndexSame_实体未指定排序_接受DB任意() throws Exception {
+        // 实体未指定 sort（null），DB 为 DESC → 视为一致（对齐 mysql）
+        assertTrue(invokeIsIndexSame(
+                dbIndex("NO", "a", "DESC"),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("a", null))));
+    }
+
+    @Test
+    void testIsIndexSame_DB无排序信息_实体未指定_一致() throws Exception {
+        // DB indexColumnSorts 为空，实体未指定 sort → 一致
+        assertTrue(invokeIsIndexSame(
+                dbIndex("NO", "a", null),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("a", null))));
+    }
+
+    @Test
+    void testIsIndexSame_唯一性不同_不一致() throws Exception {
+        assertFalse(invokeIsIndexSame(
+                dbIndex("YES", "a", "ASC"),
+                indexColumns(IndexTypeEnum.NORMAL,
+                        IndexMetadata.IndexColumnParam.newInstance("a", null))));
+    }
+
+    private boolean invokeIsIndexSame(SqlServerDbIndex dbIndex, IndexMetadata indexMetadata) throws Exception {
+        SqlServerStrategy strategy = new SqlServerStrategy();
+        java.lang.reflect.Method m = SqlServerStrategy.class
+                .getDeclaredMethod("isIndexSame", SqlServerDbIndex.class, IndexMetadata.class);
+        m.setAccessible(true);
+        return (boolean) m.invoke(strategy, dbIndex, indexMetadata);
+    }
+
+    private SqlServerDbIndex dbIndex(String isUnique, String indexColumns, String indexColumnSorts) {
+        SqlServerDbIndex dbIndex = new SqlServerDbIndex();
+        dbIndex.setIsUnique(isUnique);
+        dbIndex.setIndexColumns(indexColumns);
+        dbIndex.setIndexColumnSorts(indexColumnSorts);
+        return dbIndex;
+    }
+
+    private IndexMetadata indexColumns(IndexTypeEnum type, IndexMetadata.IndexColumnParam... cols) {
+        IndexMetadata idx = new IndexMetadata();
+        idx.setType(type);
+        idx.setColumns(Arrays.asList(cols));
+        return idx;
     }
 }

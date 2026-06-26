@@ -104,9 +104,13 @@ public class SqlServerDbColumn {
                     return type + "(" + this.numericPrecision + "," + scale + ")";
                 }
                 return type;
-            // 浮点
+            // 浮点：real 无精度参数；float 的精度存于 sys.columns.precision（1-53），输出以对齐实体 @ColumnType(length=n)
             case "real":
+                return type;
             case "float":
+                if (this.numericPrecision != null) {
+                    return type + "(" + this.numericPrecision + ")";
+                }
                 return type;
             // Unicode 字符串：max_length 是字节数，字符数 = max_length / 2
             case "nvarchar":

@@ -107,7 +107,12 @@ public class SqlServerTablesMapper {
                 "       JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id " +
                 "       WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0 " +
                 "       ORDER BY ic.key_ordinal " +
-                "       FOR XML PATH('')), 1, 1, '') AS indexColumns " +
+                "       FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS indexColumns, " +
+                "STUFF((SELECT ',' + CASE WHEN ic.is_descending_key = 1 THEN 'DESC' ELSE 'ASC' END " +
+                "       FROM sys.index_columns ic " +
+                "       WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0 " +
+                "       ORDER BY ic.key_ordinal " +
+                "       FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS indexColumnSorts " +
                 "FROM sys.indexes i " +
                 "JOIN sys.tables tb ON i.object_id = tb.object_id " +
                 "JOIN sys.schemas s ON tb.schema_id = s.schema_id " +
@@ -136,7 +141,7 @@ public class SqlServerTablesMapper {
                 "       JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id " +
                 "       WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id " +
                 "       ORDER BY ic.key_ordinal " +
-                "       FOR XML PATH('')), 1, 1, '') AS columns " +
+                "       FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS columns " +
                 "FROM sys.indexes i " +
                 "JOIN sys.tables tb ON i.object_id = tb.object_id " +
                 "JOIN sys.schemas s ON tb.schema_id = s.schema_id " +

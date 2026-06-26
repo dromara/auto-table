@@ -3,6 +3,7 @@ package org.dromara.autotable.strategy.sqlserver;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
+import org.dromara.autotable.annotation.enums.IndexSortTypeEnum;
 import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.Utils;
@@ -410,7 +411,9 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
     }
 
     /**
-     * 比较数据库索引与实体索引定义是否一致（唯一性 + 列集合）。
+     * 比较数据库索引与实体索引定义是否一致（唯一性 + 列顺序 + 排序方向）。
+     * <p>列按 {@code key_ordinal} 有序逐列比较（对齐 mysql/oracle）；排序方向仅在实体显式指定 sort 时比较，
+     * 未指定则接受 DB 任意排序（对齐 mysql 的 {@code indexColumnParamSort != null} 判断）。</p>
      */
     private boolean isIndexSame(SqlServerDbIndex dbIndex, IndexMetadata indexMetadata) {
         // 唯一性
@@ -419,14 +422,39 @@ public class SqlServerStrategy implements IStrategy<DefaultTableMetadata, SqlSer
         if (dbUnique != entityUnique) {
             return false;
         }
-        // 列集合（仅比较列名集合，忽略排序差异以简化；如需严格排序比较可扩展）
-        Set<String> dbColumns = StringUtils.hasText(dbIndex.getIndexColumns())
-                ? new HashSet<>(Arrays.asList(dbIndex.getIndexColumns().split(",")))
-                : new HashSet<>();
-        Set<String> entityColumns = indexMetadata.getColumns().stream()
-                .map(IndexMetadata.IndexColumnParam::getColumn)
-                .collect(Collectors.toSet());
-        return dbColumns.equals(entityColumns);
+        // 列：按 key_ordinal 顺序逐列比较列名（含顺序差异，对齐 mysql 的逐列对位比较）
+        List<IndexMetadata.IndexColumnParam> entityColumns = indexMetadata.getColumns();
+        List<String> dbColumnNames = splitCsv(dbIndex.getIndexColumns());
+        if (dbColumnNames.size() != entityColumns.size()) {
+            return false;
+        }
+        List<String> dbColumnSorts = splitCsv(dbIndex.getIndexColumnSorts());
+        for (int i = 0; i < dbColumnNames.size(); i++) {
+            if (!dbColumnNames.get(i).equals(entityColumns.get(i).getColumn())) {
+                return false;
+            }
+            // 排序方向：仅实体显式指定 sort 时比较，未指定则接受 DB 任意排序
+            IndexSortTypeEnum entitySort = entityColumns.get(i).getSort();
+            if (entitySort != null) {
+                String dbSort = i < dbColumnSorts.size() ? dbColumnSorts.get(i) : "ASC";
+                boolean dbDesc = "DESC".equalsIgnoreCase(dbSort);
+                boolean entityDesc = entitySort == IndexSortTypeEnum.DESC;
+                if (dbDesc != entityDesc) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 逗号分隔字符串拆为有序列表（trim 每项），空/null 返回空列表。
+     */
+    private static List<String> splitCsv(String csv) {
+        if (!StringUtils.hasText(csv)) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(csv.split(",")).map(String::trim).collect(Collectors.toList());
     }
 
     @Override

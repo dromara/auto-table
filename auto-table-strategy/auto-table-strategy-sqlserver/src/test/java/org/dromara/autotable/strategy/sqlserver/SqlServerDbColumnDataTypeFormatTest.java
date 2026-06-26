@@ -71,6 +71,17 @@ public class SqlServerDbColumnDataTypeFormatTest {
     }
 
     @Test
+    void test浮点类型_float带精度real无精度() {
+        // float 的精度存于 sys.columns.precision（1-53），输出以对齐实体 @ColumnType(length=n)
+        assertEquals("float(53)", dbColumn("float", null, 53, null).getDataTypeFormat());
+        assertEquals("float(24)", dbColumn("float", null, 24, null).getDataTypeFormat());
+        // precision 缺省 → 裸类型（实体未指定 length 时由 isTypeDiff 忽略精度）
+        assertEquals("float", dbColumn("float", null, null, null).getDataTypeFormat());
+        // real 无精度参数，始终裸类型
+        assertEquals("real", dbColumn("real", null, 24, null).getDataTypeFormat());
+    }
+
+    @Test
     void testMAX长度_返回无长度() {
         assertEquals("nvarchar", dbColumn("nvarchar", -1, null, null).getDataTypeFormat());
         assertEquals("varchar", dbColumn("varchar", -1, null, null).getDataTypeFormat());

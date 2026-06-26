@@ -27,8 +27,13 @@ public class SqlServerDbIndex {
     @DBHelper.ColumnName("isUnique")
     private String isUnique;
     /**
-     * 索引列名拼接，逗号分隔，形如 col1,col2
+     * 索引列名拼接，逗号分隔，按 key_ordinal 有序，形如 col1,col2
      */
     @DBHelper.ColumnName("indexColumns")
     private String indexColumns;
+    /**
+     * 索引列排序方向拼接，逗号分隔，与 indexColumns 同序，形如 ASC,DESC（来自 sys.index_columns.is_descending_key）
+     */
+    @DBHelper.ColumnName("indexColumnSorts")
+    private String indexColumnSorts;
 }
