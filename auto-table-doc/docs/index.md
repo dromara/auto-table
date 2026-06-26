@@ -23,7 +23,7 @@ hero:
 features:
   - icon: { src: '/全面.png', width: '100px', height: '100px' }
     title: 数据库全面支持
-    details: 支持数据库MySQL、MariaDB、PostgreSQL、SQLite、H2 (其他还在积极适配ing~)
+    details: 支持 MySQL、MariaDB、PostgreSQL、SQL Server、Oracle、SQLite、H2、达梦、人大金仓、Doris 等数据库
   - icon: { src: '/兼容适配.png', width: '100px', height: '100px' }
     title: 三方框架兼容适配
     details: 抽象了能力接口，可以对接多种ORM框架，例如MybatisPlus、MybatisFlex等

@@ -41,7 +41,7 @@ AutoTable 通过接口抽象，可以优雅地与各种 ORM 框架集成。
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-adapter-mybatis-plus</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 

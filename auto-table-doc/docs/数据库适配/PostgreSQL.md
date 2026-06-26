@@ -11,7 +11,7 @@ description: PostgreSQL 数据库适配说明
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-pgsql</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 

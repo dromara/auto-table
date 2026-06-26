@@ -1,6 +1,9 @@
 import {defineConfig} from 'vitepress'
 import {withMermaid} from 'vitepress-plugin-mermaid'
 
+// 当前发布版本号，发版时由 upgrade.sh 替换；文档中以 {{version}} 引用，构建时自动替换为该版本
+const LATEST_VERSION = '2.6.0'; // @auto-table-version
+
 // 教程侧边栏（快速开始、核心概念、使用指南、高级功能共享）
 function guideSidebar() {
     return [
@@ -108,7 +111,7 @@ export default withMermaid(defineConfig({
                 ]
             },
             {
-                text: '2.6.0', // @auto-table-version
+                text: LATEST_VERSION,
                 items: [
                     {text: '更新日志', link: '/更新日志'},
                     {text: 'Gitee', link: 'https://gitee.com/tangzc/auto-table'},
@@ -134,6 +137,7 @@ export default withMermaid(defineConfig({
                         {text: 'MySQL', link: '/数据库适配/MySQL'},
                         {text: 'PostgreSQL', link: '/数据库适配/PostgreSQL'},
                         {text: 'Oracle', link: '/数据库适配/Oracle'},
+                        {text: 'SQL Server', link: '/数据库适配/SQLServer'},
                         {text: '达梦', link: '/数据库适配/达梦'},
                         {text: '人大金仓', link: '/数据库适配/人大金仓'},
                         {text: 'H2', link: '/数据库适配/H2'},
@@ -268,6 +272,13 @@ export default withMermaid(defineConfig({
             dangerLabel: '危险',
             infoLabel: '信息',
             detailsLabel: '详细信息'
+        },
+        config: (md) => {
+            // 构建时将 {{version}} 占位符替换为当前发布版本（LATEST_VERSION）
+            md.core.ruler.before('normalize', 'autotable-version', (state) => {
+                state.src = state.src.replace(/\{\{version\}\}/g, LATEST_VERSION);
+                return true;
+            });
         }
     },
     mermaid: {

@@ -16,7 +16,7 @@ description: Doris方言使用说明
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-doris</artifactId>
-    <version>[maven仓库最新版本]</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 

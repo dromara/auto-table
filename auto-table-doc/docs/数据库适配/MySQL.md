@@ -13,7 +13,7 @@ MySQL 是 AutoTable 支持最完善的数据库。
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-mysql</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 

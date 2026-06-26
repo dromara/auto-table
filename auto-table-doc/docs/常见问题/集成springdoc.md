@@ -18,6 +18,6 @@ maven中额外引入依赖包即可省去写swagger注解的步骤
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-support-springdoc</artifactId>
-    <version>{最新版本}</version>
+    <version>{{version}}</version>
 </dependency>
 ```

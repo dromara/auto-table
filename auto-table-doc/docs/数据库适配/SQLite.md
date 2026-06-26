@@ -13,7 +13,7 @@ SQLite 是一个轻量级的嵌入式数据库。
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-sqlite</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 

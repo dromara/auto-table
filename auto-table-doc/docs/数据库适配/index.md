@@ -15,6 +15,7 @@ AutoTable 通过 **策略模式 + SPI 机制** 支持多种数据库，每种数
 | MariaDB | `auto-table-strategy-mysql`（复用 MySQL 策略） | 对应 MySQL | ✅ 稳定 ||
 | [PostgreSQL](/数据库适配/PostgreSQL) | `auto-table-strategy-pgsql` | 15.5 | ✅ 稳定 ||
 | [Oracle](/数据库适配/Oracle) | `auto-table-strategy-oracle` | 11g / 23ai | ✅ 稳定 | [@lizhian](https://gitee.com/lizhian) |
+| [SQL Server](/数据库适配/SQLServer) | `auto-table-strategy-sqlserver` | 2016+ | ✅ 稳定 | [@tangzc](https://gitee.com/tangzc) |
 | [达梦](/数据库适配/达梦) | `auto-table-strategy-dm` | dm8 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
 | [人大金仓](/数据库适配/人大金仓) | `auto-table-strategy-kingbase` | V009R001C002B0014 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
 | [H2](/数据库适配/H2) | `auto-table-strategy-h2` | 2.2.220 | ✅ 稳定 ||
@@ -30,14 +31,14 @@ AutoTable 通过 **策略模式 + SPI 机制** 支持多种数据库，每种数
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-all</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 
 <!-- 或单独引入 -->
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-strategy-mysql</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 

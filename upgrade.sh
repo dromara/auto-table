@@ -31,9 +31,9 @@ mvn versions:set -DnewVersion=${version}
 echo "开始替换文档版本号：${version}"
 config_file="./auto-table-doc/docs/.vitepress/config.mts"
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' "s/text: '[0-9.]*', \/\/ @auto-table-version/text: '$version', \/\/ @auto-table-version/" "$config_file"
+    sed -i '' "s/const LATEST_VERSION = '[0-9.]*'; \/\/ @auto-table-version/const LATEST_VERSION = '$version'; \/\/ @auto-table-version/" "$config_file"
 else
-    sed -i "s/text: '[0-9.]*', \/\/ @auto-table-version/text: '$version', \/\/ @auto-table-version/" "$config_file"
+    sed -i "s/const LATEST_VERSION = '[0-9.]*'; \/\/ @auto-table-version/const LATEST_VERSION = '$version'; \/\/ @auto-table-version/" "$config_file"
 fi
 
 echo "开始commit到本地仓库：${version}"

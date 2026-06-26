@@ -13,7 +13,7 @@ AutoTable 提供 SpringDoc 支持模块，可以在不写 Swagger 注解的情�
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-support-springdoc</artifactId>
-    <version>2.5.10</version>
+    <version>{{version}}</version>
 </dependency>
 ```
 
