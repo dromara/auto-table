@@ -40,6 +40,7 @@ function guideSidebar() {
                 {text: 'SQL记录', link: '/高级功能/SQL记录'},
                 {text: '自动建库', link: '/高级功能/自动建库'},
                 {text: '数据初始化', link: '/高级功能/数据初始化'},
+                {text: '多数据库方言适配', link: '/高级功能/多数据库方言适配'},
                 {text: '自定义策略', link: '/高级功能/自定义策略'},
             ]
         }
