@@ -45,20 +45,20 @@
     </modules>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <mybatis.version>3.5.14</mybatis.version>
-        <spring.version>5.3.31</spring.version>
+        <mybatis.version>3.5.19</mybatis.version>
+        <spring.version>7.0.1</spring.version>
         <solon.version>3.7.3</solon.version>
-        <spring-boot.version>2.7.18</spring-boot.version>
-        <mybatis-spring.version>2.1.2</mybatis-spring.version>
-        <lombok.version>1.18.34</lombok.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <spring-boot.version>4.1.0</spring-boot.version>
+        <mybatis-spring.version>3.0.4</mybatis-spring.version>
+        <lombok.version>1.18.46</lombok.version>
+        <slf4j.version>2.0.17</slf4j.version>
         <commons-dbutils.version>1.8.1</commons-dbutils.version>
-        <jsqlparser.version>4.9</jsqlparser.version>
+        <jsqlparser.version>5.2</jsqlparser.version>
 
         <!--插件-->
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
