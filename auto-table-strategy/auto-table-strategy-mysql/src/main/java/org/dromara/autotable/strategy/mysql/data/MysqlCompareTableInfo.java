@@ -71,7 +71,7 @@ public class MysqlCompareTableInfo extends CompareTableInfo {
      */
     private final List<IndexMetadata> indexMetadataList = new ArrayList<>();
 
-    public MysqlCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public MysqlCompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

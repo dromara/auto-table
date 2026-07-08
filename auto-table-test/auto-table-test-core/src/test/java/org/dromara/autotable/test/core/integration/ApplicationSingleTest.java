@@ -9,6 +9,7 @@ import org.dromara.autotable.core.converter.JavaTypeToDatabaseTypeConverter;
 import org.dromara.autotable.core.interceptor.CreateTableInterceptor;
 import org.dromara.autotable.strategy.h2.data.H2DefaultTypeEnum;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
+import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlIndexMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlTableMetadata;
 import org.dromara.autotable.test.core.base.AbstractIntegrationTest;
@@ -41,7 +42,7 @@ public class ApplicationSingleTest extends AbstractIntegrationTest {
             assertEquals(DatabaseDialect.MySQL, databaseDialect);
             assertTrue(tableMetadata instanceof MysqlTableMetadata);
             MysqlTableMetadata mysqlTableMetadata = (MysqlTableMetadata) tableMetadata;
-            List<MysqlColumnMetadata> columnMetadataList = mysqlTableMetadata.getColumnMetadataList();
+            List<ColumnMetadata> columnMetadataList = mysqlTableMetadata.getColumnMetadataList();
             assertEquals("id", columnMetadataList.get(0).getName());
             assertEquals("update_time", columnMetadataList.get(columnMetadataList.size() - 1).getName());
         };

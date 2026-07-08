@@ -4,6 +4,7 @@ import org.dromara.autotable.annotation.enums.IndexTypeEnum;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.IndexMetadata;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.strategy.mysql.builder.CreateTableSqlBuilder;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
@@ -37,12 +38,12 @@ public class CreateTableSqlBuilderTest {
 
     @Test
     void testBuildSql_withSimpleTable() {
-        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_user", "用户表");
+        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_user", "", "用户表");
         tableMetadata.setEngine("InnoDB");
         tableMetadata.setCharacterSet("utf8mb4");
         tableMetadata.setCollate("utf8mb4_unicode_ci");
 
-        List<MysqlColumnMetadata> columns = new ArrayList<>();
+        List<ColumnMetadata> columns = new ArrayList<>();
         MysqlColumnMetadata idColumn = new MysqlColumnMetadata();
         idColumn.setName("id");
         idColumn.setType(new DatabaseTypeAndLength("bigint", 20, null, Collections.emptyList()));
@@ -80,10 +81,10 @@ public class CreateTableSqlBuilderTest {
 
     @Test
     void testBuildSql_withIndex() {
-        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_index", "");
+        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_index", "", "");
         tableMetadata.setEngine("InnoDB");
 
-        List<MysqlColumnMetadata> columns = new ArrayList<>();
+        List<ColumnMetadata> columns = new ArrayList<>();
         MysqlColumnMetadata idColumn = new MysqlColumnMetadata();
         idColumn.setName("id");
         idColumn.setType(new DatabaseTypeAndLength("bigint", 20, null, Collections.emptyList()));
@@ -114,10 +115,10 @@ public class CreateTableSqlBuilderTest {
 
     @Test
     void testBuildSql_withUniqueIndex() {
-        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_unique", "");
+        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_unique", "", "");
         tableMetadata.setEngine("InnoDB");
 
-        List<MysqlColumnMetadata> columns = new ArrayList<>();
+        List<ColumnMetadata> columns = new ArrayList<>();
         MysqlColumnMetadata idColumn = new MysqlColumnMetadata();
         idColumn.setName("id");
         idColumn.setType(new DatabaseTypeAndLength("bigint", 20, null, Collections.emptyList()));
@@ -167,10 +168,10 @@ public class CreateTableSqlBuilderTest {
 
     @Test
     void testBuildSql_withFullTextIndex() {
-        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_fulltext", "");
+        MysqlTableMetadata tableMetadata = new MysqlTableMetadata(null, "test_fulltext", "", "");
         tableMetadata.setEngine("InnoDB");
 
-        List<MysqlColumnMetadata> columns = new ArrayList<>();
+        List<ColumnMetadata> columns = new ArrayList<>();
         MysqlColumnMetadata idColumn = new MysqlColumnMetadata();
         idColumn.setName("id");
         idColumn.setType(new DatabaseTypeAndLength("bigint", 20, null, Collections.emptyList()));

@@ -78,6 +78,7 @@ public class PrimaryKeyLengthBugTest {
         MysqlTableMetadata tableMetadata = new MysqlTableMetadata(
                 org.dromara.autotable.test.core.entity.common_update.TestPrimaryKeyLength.class,
                 "test_primary_key_length",
+                "",
                 "测试主键长度变化"
         );
 

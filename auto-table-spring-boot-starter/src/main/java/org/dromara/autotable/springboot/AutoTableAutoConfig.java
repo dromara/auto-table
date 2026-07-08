@@ -46,6 +46,10 @@ public class AutoTableAutoConfig {
 
     public AutoTableAutoConfig(
             PropertyConfig propertiesConfig,
+            // ⚠️ 第一个参数：强制提前初始化所有实现 InitializeBeans 的 Bean。
+            // 这些 Bean（如 adapter 的 MetadataAdapter）必须在后续 ObjectProvider 解析前创建完毕，
+            // 否则 ifAvailable() 会因为 Bean 未注册而返回空，导致使用默认实现。
+            // 详见 InitializeBeans 接口的 javadoc。
             ObjectProvider<InitializeBeans> initializeBeans,
             ObjectProvider<DataSource> dataSource,
             ObjectProvider<IStrategy<? extends TableMetadata, ? extends CompareTableInfo>> strategies,
@@ -74,6 +78,8 @@ public class AutoTableAutoConfig {
 
             ObjectProvider<JavaTypeToDatabaseTypeConverter> javaTypeToDatabaseTypeConverter) {
 
+        // 强制触发所有 InitializeBeans 实现类的实例化（及其依赖链），
+        // 确保 adapter/scanner 等 Bean 在后续 ObjectProvider 解析时已经就绪
         initializeBeans.orderedStream().forEachOrdered(initializeBean -> {
             log.info("初始化{}", initializeBean.getClass().getName());
         });

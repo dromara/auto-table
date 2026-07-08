@@ -6,6 +6,7 @@ import lombok.experimental.FieldNameConstants;
 import org.dromara.autotable.annotation.AutoColumn;
 import org.dromara.autotable.annotation.AutoColumns;
 import org.dromara.autotable.annotation.Ignore;
+import org.dromara.autotable.annotation.PrimaryKey;
 import org.dromara.autotable.annotation.doris.DorisTable;
 import org.dromara.autotable.annotation.doris.DorisTypeConstant;
 import org.dromara.autotable.annotation.oracle.OracleTypeConstant;
@@ -25,6 +26,9 @@ import org.dromara.autotable.core.constants.DatabaseDialect;
 )
 @FieldNameConstants
 public class AutoTableExecuteSqlLog {
+
+    @PrimaryKey(autoIncrement = true)
+    private Long id;
 
     @Ignore
     private Class<?> entityClass;

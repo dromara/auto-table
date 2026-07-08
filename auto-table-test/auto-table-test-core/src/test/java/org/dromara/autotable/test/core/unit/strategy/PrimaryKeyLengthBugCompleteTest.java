@@ -4,6 +4,7 @@ import org.dromara.autotable.core.AutoTableGlobalConfig;
 import org.dromara.autotable.core.RunMode;
 import org.dromara.autotable.core.converter.DatabaseTypeAndLength;
 import org.dromara.autotable.core.strategy.IStrategy;
+import org.dromara.autotable.core.strategy.ColumnMetadata;
 import org.dromara.autotable.strategy.mysql.MysqlStrategy;
 import org.dromara.autotable.strategy.mysql.data.MysqlColumnMetadata;
 import org.dromara.autotable.strategy.mysql.data.MysqlCompareTableInfo;
@@ -120,6 +121,7 @@ public class PrimaryKeyLengthBugCompleteTest {
         MysqlTableMetadata tableMetadata = new MysqlTableMetadata(
                 org.dromara.autotable.test.core.entity.common_update.TestPrimaryKeyLength.class,
                 "test_primary_key_length",
+                "",
                 "测试主键长度变化"
         );
 

@@ -95,7 +95,7 @@ public class SqlServerCompareTableInfo extends CompareTableInfo {
      */
     private List<IndexMetadata> indexMetadataList = new ArrayList<>();
 
-    public SqlServerCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public SqlServerCompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

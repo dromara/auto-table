@@ -69,6 +69,16 @@
                     <skipSource>true</skipSource>
                 </configuration>
             </plugin>
+            <!--跳过中央仓库发布：central-publishing 以 extensions=true 接管 deploy，不读 maven.deploy.skip，
+                需单独配 skipPublishing，否则 test 模块仍会被发布到 Maven Central -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>${central-publishing-maven-plugin.version}</version>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

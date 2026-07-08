@@ -78,7 +78,7 @@ public class PgsqlCompareTableInfo extends CompareTableInfo {
      */
     private List<IndexMetadata> indexMetadataList = new ArrayList<>();
 
-    public PgsqlCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public PgsqlCompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

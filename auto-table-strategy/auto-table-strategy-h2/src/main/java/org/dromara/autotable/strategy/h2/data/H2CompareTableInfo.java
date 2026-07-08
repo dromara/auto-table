@@ -73,7 +73,7 @@ public class H2CompareTableInfo extends CompareTableInfo {
      */
     private Map<String, String> renameColumnMap = new LinkedHashMap<>();
 
-    public H2CompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public H2CompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

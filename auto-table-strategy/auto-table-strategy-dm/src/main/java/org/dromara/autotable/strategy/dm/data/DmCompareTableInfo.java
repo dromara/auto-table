@@ -87,7 +87,7 @@ public class DmCompareTableInfo extends CompareTableInfo {
      */
     private Map<String, String> storageParams = new HashMap<>();
 
-    public DmCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public DmCompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

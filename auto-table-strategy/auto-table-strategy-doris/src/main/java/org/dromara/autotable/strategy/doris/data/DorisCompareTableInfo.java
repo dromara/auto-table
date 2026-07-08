@@ -41,7 +41,7 @@ public class DorisCompareTableInfo extends CompareTableInfo {
     private Map<String, String> renameColumnMap = new LinkedHashMap<>();
 
 
-    public DorisCompareTableInfo(@NonNull String name, @NonNull String schema) {
+    public DorisCompareTableInfo(@NonNull String name, String schema) {
         super(name, schema);
     }
 

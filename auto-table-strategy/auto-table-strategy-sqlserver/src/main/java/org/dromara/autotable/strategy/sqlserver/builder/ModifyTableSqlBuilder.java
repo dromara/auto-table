@@ -68,9 +68,11 @@ public class ModifyTableSqlBuilder {
         // 4. 重命名列（逻辑删除）
         Map<String, String> renameColumnMap = compareTableInfo.getRenameColumnMap();
         renameColumnMap.forEach((oldName, newName) -> {
-            // EXEC sp_rename N'schema.table.old', N'new', N'COLUMN'
-            // sp_rename 第一个参数为对象名字符串（不带方括号包裹），格式 schema.table.column
-            String qualifiedName = schema + "." + tableName + "." + oldName;
+            // EXEC sp_rename N'[schema].[table].[old]', N'new', N'COLUMN'
+            // sp_rename @objname 支持方括号标识符形式（每段单独包裹），复用框架统一出口 concatWrapIdentifiers：
+            //   - 自动过滤 null/空 schema，生成 [table].[old] 两段式
+            //   - wrapIdentifier 转义 ] 为 ]]，兼容列名含保留字/特殊字符
+            String qualifiedName = IStrategy.concatWrapIdentifiers(schema, tableName, oldName);
             sqlList.add("EXEC sp_rename N'" + escapeSingleQuote(qualifiedName) + "', N'" + escapeSingleQuote(newName) + "', N'COLUMN'");
         });
 

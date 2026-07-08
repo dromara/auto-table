@@ -84,9 +84,27 @@ public class SqlServerModifyTableSqlBuilderTest {
         // addRenameColumns 第二参数为前缀，新列名 = 前缀 + 原列名
         ci.addRenameColumns(Collections.singleton("old_col"), "del_");
         List<String> sqls = ModifyTableSqlBuilder.buildSql(ci);
-        // EXEC sp_rename N'schema.table.old', N'new', N'COLUMN'
-        // 对象名用 schema.table.column 形式，单引号转义
-        assertEquals("EXEC sp_rename N'dbo.user.old_col', N'del_old_col', N'COLUMN'", sqls.get(0));
+        // EXEC sp_rename N'[schema].[table].[old]', N'new', N'COLUMN'
+        // 对象名用 [schema].[table].[column] 方括号形式，单引号转义
+        assertEquals("EXEC sp_rename N'[dbo].[user].[old_col]', N'del_old_col', N'COLUMN'", sqls.get(0));
+    }
+
+    @Test
+    void test重命名列_schema为null时省略schema前缀() {
+        // schema 未配置时为 null（getTableSchema 默认实现返回 null），sp_rename 省略 schema 前缀走默认 schema
+        SqlServerCompareTableInfo ci = new SqlServerCompareTableInfo("user", null);
+        ci.addRenameColumns(Collections.singleton("old_col"), "del_");
+        List<String> sqls = ModifyTableSqlBuilder.buildSql(ci);
+        assertEquals("EXEC sp_rename N'[user].[old_col]', N'del_old_col', N'COLUMN'", sqls.get(0));
+    }
+
+    @Test
+    void test重命名列_schema为空串时省略schema前缀() {
+        // schema 为空串时同样省略 schema 前缀（与 null 行为一致，均由 hasText 过滤）
+        SqlServerCompareTableInfo ci = new SqlServerCompareTableInfo("user", "");
+        ci.addRenameColumns(Collections.singleton("old_col"), "del_");
+        List<String> sqls = ModifyTableSqlBuilder.buildSql(ci);
+        assertEquals("EXEC sp_rename N'[user].[old_col]', N'del_old_col', N'COLUMN'", sqls.get(0));
     }
 
     @Test
@@ -215,7 +233,7 @@ public class SqlServerModifyTableSqlBuilderTest {
         assertEquals("DROP INDEX [old_idx] ON [dbo].[user]", sqls.get(0));
         assertEquals("ALTER TABLE [dbo].[user] DROP CONSTRAINT [PK_old]", sqls.get(1));
         assertEquals("ALTER TABLE [dbo].[user] DROP COLUMN [old_col]", sqls.get(2));
-        assertEquals("EXEC sp_rename N'dbo.user.rename_col', N'del_rename_col', N'COLUMN'", sqls.get(3));
+        assertEquals("EXEC sp_rename N'[dbo].[user].[rename_col]', N'del_rename_col', N'COLUMN'", sqls.get(3));
         assertEquals("ALTER TABLE [dbo].[user] ADD [new_col] NVARCHAR(50) NULL", sqls.get(4));
         assertEquals("ALTER TABLE [dbo].[user] ADD PRIMARY KEY ([id])", sqls.get(5));
     }
