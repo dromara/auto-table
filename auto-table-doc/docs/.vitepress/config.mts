@@ -2,7 +2,7 @@ import {defineConfig} from 'vitepress'
 import {withMermaid} from 'vitepress-plugin-mermaid'
 
 // 当前发布版本号，发版时由 upgrade.sh 替换；文档中以 {{version}} 引用，构建时自动替换为该版本
-const LATEST_VERSION = '2.6.0'; // @auto-table-version
+const LATEST_VERSION = '2.6.1'; // @auto-table-version
 
 // 教程侧边栏（快速开始、核心概念、使用指南、高级功能共享）
 function guideSidebar() {
