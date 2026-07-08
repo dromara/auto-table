@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.autotable</groupId>
+        <artifactId>auto-table-adapter</artifactId>
+        <version>2.6.0</version>
+    </parent>
+
+    <name>auto-table-adapter-mybatis-plus-spring-boot-starter</name>
+    <artifactId>auto-table-adapter-mybatis-plus-spring-boot-starter</artifactId>
+    <description>MyBatis-Plus 适配器 Spring Boot 集成（自定义注解 + Spring 装配 + 动态数据源）</description>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <!-- adapter 基础层（零 Spring） -->
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-adapter-mybatis-plus</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- AutoTable Spring Boot 基础 -->
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-spring-boot-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring Boot AutoConfiguration（含 spring-core: AnnotatedElementUtils / StringUtils） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+
+        <!-- MP 注解（adapter 中 optional 不传递，starter 需要直接依赖） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-annotation</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <!-- MP 核心（提供 GlobalConfig.DbConfig，桥接配置时需要） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-core</artifactId>
+            <version>${mybatis-plus.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- MP autoconfigure：提供 MybatisPlusProperties Bean -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot-autoconfigure</artifactId>
+            <version>${mybatis-plus.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 动态数据源：@DS / DynamicDataSourceContextHolder / DynamicRoutingDataSource -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring</artifactId>
+            <version>${dynamic-datasource.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 动态数据源 autoconfigure：DynamicDataSourceProperties -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-common</artifactId>
+            <version>${dynamic-datasource.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>${spring-boot.version}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
+    </dependencies>
+</project>

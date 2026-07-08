@@ -8,41 +8,23 @@
         <artifactId>auto-table</artifactId>
         <version>2.6.0</version>
     </parent>
-
-    <name>auto-table-test</name>
-    <artifactId>auto-table-test</artifactId>
     <packaging>pom</packaging>
+
+    <name>auto-table-adapter</name>
+    <artifactId>auto-table-adapter</artifactId>
+
     <modules>
-        <module>auto-table-test-core</module>
-        <module>auto-table-test-spring-boot</module>
-        <module>auto-table-test-dynamicdatasource</module>
-        <module>auto-table-test-solon-plugin</module>
-        <module>auto-table-test-spring-boot-dynamicdatasource</module>
-        <module>auto-table-test-doris</module>
-        <module>auto-table-test-adapter-mybatis-plus</module>
+        <module>auto-table-adapter-mybatis-plus</module>
+        <module>auto-table-adapter-mybatis-flex</module>
+        <module>auto-table-adapter-xbatis</module>
+        <module>auto-table-adapter-mybatis-plus-spring-boot-starter</module>
+        <module>auto-table-adapter-mybatis-flex-spring-boot-starter</module>
+        <module>auto-table-adapter-xbatis-spring-boot-starter</module>
     </modules>
-
-    <properties>
-        <mysql.version>8.2.0</mysql.version>
-        <mariadb.version>3.3.3</mariadb.version>
-        <postgresql.version>42.3.8</postgresql.version>
-        <h2.version>2.2.224</h2.version>
-        <HikariCP.version>4.0.3</HikariCP.version>
-        <junit.version>4.13.2</junit.version>
-        <maven.deploy.skip>true</maven.deploy.skip>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
+            <!-- adapter 模块仍在开发中，暂不发布到 Maven Central。成熟后删除此 <build> 块即可恢复发布 -->
             <!-- java doc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -70,8 +52,7 @@
                     <skipSource>true</skipSource>
                 </configuration>
             </plugin>
-            <!--跳过中央仓库发布：central-publishing 以 extensions=true 接管 deploy，不读 maven.deploy.skip，
-                需单独配 skipPublishing，否则 test 模块仍会被发布到 Maven Central -->
+            <!--跳过中央仓库发布：central-publishing 以 extensions=true 接管 deploy，不读 maven.deploy.skip，须配 skipPublishing-->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
@@ -82,4 +63,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

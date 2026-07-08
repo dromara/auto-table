@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.autotable</groupId>
+        <artifactId>auto-table-adapter</artifactId>
+        <version>2.6.0</version>
+    </parent>
+
+    <name>auto-table-adapter-mybatis-flex</name>
+    <artifactId>auto-table-adapter-mybatis-flex</artifactId>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-annotation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- TODO: 后续实现时添加 mybatis-flex 依赖 -->
+        <!-- <dependency>
+            <groupId>com.mybatis-flex</groupId>
+            <artifactId>mybatis-flex-spring-boot-starter</artifactId>
+            <version>${mybatis-flex.version}</version>
+            <optional>true</optional>
+        </dependency> -->
+
+    </dependencies>
+</project>

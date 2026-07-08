@@ -41,6 +41,7 @@
         <module>auto-table-solon-plugin</module>
         <module>auto-table-test</module>
         <module>auto-table-strategy</module>
+        <module>auto-table-adapter</module>
         <module>auto-table-support</module>
     </modules>
 
@@ -59,6 +60,8 @@
         <slf4j.version>1.7.36</slf4j.version>
         <commons-dbutils.version>1.8.1</commons-dbutils.version>
         <jsqlparser.version>4.9</jsqlparser.version>
+        <mybatis-plus.version>3.5.16</mybatis-plus.version>
+        <dynamic-datasource.version>4.3.1</dynamic-datasource.version>
 
         <!--插件-->
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
@@ -68,7 +71,7 @@
         <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
         <versions-maven-plugin.version>2.16.2</versions-maven-plugin.version>
-        <central-publishing-maven-plugin.version>0.7.0</central-publishing-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
 
         <projectUrl>https://gitee.com/tangzc/auto-table</projectUrl>
     </properties>

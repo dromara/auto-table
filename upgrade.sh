@@ -57,4 +57,24 @@ echo "开始提交到远程git仓库：${version}"
 git push origin main --tags
 
 echo "开始发布新的版本到maven仓库：${version}"
-mvn clean deploy -pl auto-table-annotation,auto-table-core,auto-table-spring-boot-starter,auto-table-solon-plugin -am
+# 发布范围：根 modules 下除 auto-table-test（skipPublishing）、auto-table-adapter（开发中，skipPublishing）之外的所有模块
+# 注意：聚合 pom（auto-table-strategy、auto-table-support）必须和子模块一起发布，否则 Maven 解析 parent 时会 404（历史 issue #6）
+mvn clean deploy -pl \
+auto-table-annotation,\
+auto-table-core,\
+auto-table-spring-boot-starter,\
+auto-table-solon-plugin,\
+auto-table-strategy,\
+auto-table-strategy/auto-table-strategy-all,\
+auto-table-strategy/auto-table-strategy-h2,\
+auto-table-strategy/auto-table-strategy-mysql,\
+auto-table-strategy/auto-table-strategy-pgsql,\
+auto-table-strategy/auto-table-strategy-sqlite,\
+auto-table-strategy/auto-table-strategy-doris,\
+auto-table-strategy/auto-table-strategy-oracle,\
+auto-table-strategy/auto-table-strategy-dm,\
+auto-table-strategy/auto-table-strategy-kingbase,\
+auto-table-strategy/auto-table-strategy-sqlserver,\
+auto-table-support,\
+auto-table-support/auto-table-support-springdoc \
+-am
