@@ -28,7 +28,7 @@
 | | 特性 | 说明 |
 |:---:|------|------|
 | 🚀 | **开箱即用** | 一个 `@AutoTable` 注解激活，零配置启动 |
-| 🔌 | **9 种数据库** | MySQL、PostgreSQL、Oracle、达梦、人大金仓、H2、SQLite、Doris、MariaDB |
+| 🔌 | **10 种数据库** | MySQL、PostgreSQL、Oracle、SQL Server、达梦、人大金仓、H2、SQLite、Doris、MariaDB |
 | 🌐 | **多库适配** | 同一实体适配多种数据库，通过 `dialect` 属性自动切换字段配置 |
 | 🏗️ | **自动建库** | 连数据库都帮你建好，真正的开箱即用 |
 | 📦 | **数据初始化** | 建表后自动灌入初始数据，支持 SQL 文件和 Java 方法 |
@@ -246,7 +246,7 @@ public class MyCallback implements CreateTableFinishCallback {
 | 索引管理 | ⚠️ 基础 | ✅ 完整 |
 | 字段顺序保持 | ❌ | ✅ MySQL |
 | Mybatis 生态 | ❌ | ✅ |
-| 多数据库支持 | ✅ | ✅ 9种 |
+| 多数据库支持 | ✅ | ✅ 10种 |
 | 多数据库适配 | ❌ | ✅ dialect |
 | 数据初始化 | ❌ | ✅ 3种方式 |
 | 生产模式（仅校验） | ❌ | ✅ |
@@ -264,6 +264,7 @@ public class MyCallback implements CreateTableFinishCallback {
 | H2 | 2.2.220 | ✅ | |
 | Oracle | 11g / 23ai | ✅ | [@lizhian](https://gitee.com/lizhian) |
 | Doris | 2.0 | ✅ | [@lizhian](https://gitee.com/lizhian) |
+| SQL Server | 2016+ | ✅ | |
 | 达梦 | dm8 | ✅ | [@minfc](https://gitee.com/minfc) |
 | 人大金仓 | V009R001C002B0014 | ✅ | [@minfc](https://gitee.com/minfc) |
 
@@ -271,12 +272,30 @@ public class MyCallback implements CreateTableFinishCallback {
 
 ## 🔗 生态
 
+### ORM 框架适配
+
+AutoTable 提供开箱即用的 ORM 框架适配模块，引入依赖即可让已有实体获得自动建表能力，**无需修改任何代码**：
+
+| 框架 | 适配包 | 说明 |
+|------|--------|------|
+| Mybatis-Plus | `auto-table-adapter-mybatis-plus-spring-boot-starter` | 零侵入兼容 `@TableName`/`@TableField`/`@TableId` 等 MP 原生注解 |
+
+```xml
+<dependency>
+    <groupId>org.dromara.autotable</groupId>
+    <artifactId>auto-table-adapter-mybatis-plus-spring-boot-starter</artifactId>
+    <version>最新版本</version>
+</dependency>
+```
+
 ### ORM 框架扩展
 
 | 框架 | 扩展包 | 说明 |
 |------|--------|------|
-| Mybatis-Plus | [mybatis-plus-ext](https://gitee.com/dromara/mybatis-plus-ext) | 免手写 Mapper、数据填充、关联查询等 |
+| Mybatis-Plus | [mybatis-plus-ext](https://gitee.com/dromara/mybatis-plus-ext) | 自定义注解（`@Table`/`@Column`）、免手写 Mapper、数据填充、关联查询等 |
 | Mybatis-Flex | [mybatis-flex-ext](https://gitee.com/tangzc/mybatis-flex-ext) | 数据填充（类似 JPA 审计） |
+
+> mybatis-plus-ext 在 adapter 基础上扩展，定义一套自有注解同时被 AutoTable 和 MP 识别，详见 [迁移文档](MIGRATION-FROM-MYBATIS-PLUS-EXT.md)
 
 ## 📖 文档
 

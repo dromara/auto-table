@@ -61,6 +61,7 @@
         <commons-dbutils.version>1.8.1</commons-dbutils.version>
         <jsqlparser.version>4.9</jsqlparser.version>
         <mybatis-plus.version>3.5.16</mybatis-plus.version>
+        <mybatis-flex.version>1.11.3</mybatis-flex.version>
         <dynamic-datasource.version>4.3.1</dynamic-datasource.version>
 
         <!--插件-->
@@ -186,13 +187,6 @@
                     <additionalJOptions>
                         -Xdoclint:none
                     </additionalJOptions><!-- 禁用 doclint 检查 -->
-                    <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </annotationProcessorPath>
-                    </annotationProcessorPaths>
                 </configuration>
                 <executions>
                     <execution>

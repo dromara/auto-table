@@ -105,9 +105,10 @@ public class RecordSqlDbHandler implements RecordSqlHandler {
     private static void insertLog(String tableName, AutoTableExecuteSqlLog autoTableExecuteSqlLog, Connection connection) throws SQLException {
         /* 插入数据 */
         Class<AutoTableExecuteSqlLog> sqlLogClass = AutoTableExecuteSqlLog.class;
-        // 筛选列
+        // 筛选列（排除 autoIncrement 字段，由数据库自动生成）
         List<Field> columnFields = Arrays.stream(sqlLogClass.getDeclaredFields())
                 .filter(field -> TableMetadataHandler.isIncludeField(field, sqlLogClass))
+                .filter(field -> !TableMetadataHandler.isAutoIncrement(field, sqlLogClass))
                 .collect(Collectors.toList());
         // 根据统一的风格定义列名
         List<String> columns = columnFields.stream()
