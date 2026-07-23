@@ -74,7 +74,6 @@ public class SolonDataSourceHandler implements IDataSourceHandler {
 
     @Override
     public void clearDataSource(String dataSourceName) {
-        DynamicDsKey.remove();
         DataSourceManager.cleanDataSource();
     }
 
