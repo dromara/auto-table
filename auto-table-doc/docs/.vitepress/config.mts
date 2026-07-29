@@ -100,11 +100,12 @@ export default withMermaid(defineConfig({
         nav: [
             {text: '指南', link: '/快速开始/简介'},
             {text: 'API', link: '/API参考/注解速查'},
+            {text: 'ORM 适配', link: '/ORM 适配/Mybatis-Plus'},
             {text: '数据库', link: '/数据库适配/'},
             {text: '最佳实践', link: '/最佳实践/生产环境部署'},
             {text: 'FAQ', link: '/常见问题/'},
             {
-                text: '更多',
+                text: '其他',
                 items: [
                     {text: '框架集成', link: '/框架集成/'},
                     {text: '更新日志', link: '/更新日志'},
@@ -147,13 +148,21 @@ export default withMermaid(defineConfig({
                     ]
                 }
             ],
+            '/ORM 适配/': [
+                {
+                    text: 'ORM 适配',
+                    items: [
+                        {text: '总览', link: '/ORM 适配/'},
+                        {text: 'MyBatis-Plus', link: '/ORM 适配/Mybatis-Plus'},
+                        {text: 'MyBatis-Flex', link: '/ORM 适配/Mybatis-Flex'},
+                    ]
+                }
+            ],
             '/框架集成/': [
                 {
-                    text: '框架集成',
+                    text: '其他集成',
                     items: [
                         {text: '总览', link: '/框架集成/'},
-                        {text: 'Mybatis-Plus', link: '/框架集成/Mybatis-Plus'},
-                        {text: 'Mybatis-Flex', link: '/框架集成/Mybatis-Flex'},
                         {text: 'SpringDoc', link: '/框架集成/SpringDoc'},
                     ]
                 }

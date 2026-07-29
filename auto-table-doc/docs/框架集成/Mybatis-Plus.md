@@ -1,6 +1,6 @@
 ---
-title: MyBatis-Plus
-description: 零配置集成 MyBatis-Plus，自动识别@Table注解完成建表
+title: MyBatis-Plus 适配器
+description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注解完成建表
 ---
 
 <div style="display: flex; justify-content: center;">
