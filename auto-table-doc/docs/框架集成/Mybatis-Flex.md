@@ -188,50 +188,17 @@ converter.customFieldTypeHandler((field, clazz) -> {
 });
 ```
 
-## 重要提示（2.6.2 起）
+## 注意事项
 
-> ⚠️ **变更说明**
+### AutoTable 2.6.2 重要变更
+
+> 💡 **关于 AutoTable 2.6.2 的重大变更**
 > 
-> AutoTable 2.6.2 版本新增了 MyBatis-Flex 适配器，同时移除了 MyBatis-Plus 适配器的扩展注解体系。
+> 在 2.6.2 版本中，AutoTable 对 MyBatis-Plus 适配器进行了重构，移除了扩展注解体系。**如果您使用的是 MyBatis-Plus，请务必阅读 [MyBatis-Plus 适配器升级说明](/框架集成/Mybatis-Plus) 和 [完整迁移指南](file:///Users/don/Code/个人/auto-table/MIGRATION-FROM-MYBATIS-PLUS-EXT.md)**
 > 
-> ### MyBatis-Plus 迁移指南
+> #### 🎯 MyBatis-Flex 用户
 > 
-> 如果您使用的是 MyBatis-Plus 并使用了扩展注解，需要迁移到标准注解：
-> 
-> #### ❌ 旧版扩展注解（已废弃）
-> ```java
-> import org.dromara.autotable.mybatis.plus.spring.annotation.*;
-> 
-> @Table(name = "user_table")
-> public class User {
->     @Column(name = "user_id", type = "bigint")
->     private Long id;
-> }
-> ```
-> 
-> #### ✅ 新版标准注解（推荐）
-> ```java
-> import org.dromara.autotable.annotation.*;
-> 
-> @AutoTable(comment = "用户表")
-> public class User {
->     @PrimaryKey(autoIncrement = true)
->     private Long id;
->     
->     @ColumnComment("用户名")
->     @ColumnNotNull
->     private String username;
-> }
-> ```
-> 
-> ### 移除的扩展注解
-> - `@Column` → 改用 `@AutoColumn`
-> - `@ColumnId` → 改用 `@PrimaryKey`
-> - `@Table` → 改用 `@AutoTable`
-> - `@UniqueIndex` → 改用 `@Index` + `@TableIndex`
-> - `@MysqlColumnUnsigned` / `@MysqlColumnZerofill` → 仍可使用，这些是 MySQL 专用注解
-> 
-> 详细迁移指南请查看：[MIGRATION-FROM-MYBATIS-PLUS-EXT.md](file:///Users/don/Code/个人/auto-table/MIGRATION-FROM-MYBATIS-PLUS-EXT.md)
+> 您无需担心！MyBatis-Flex 适配器从一开始就使用标准注解（如 `@AutoTable`、`@AutoColumn` 等），不存在兼容性问题。
 
 ## 多数据源场景
 
