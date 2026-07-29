@@ -1,26 +1,288 @@
 ---
 title: MybatisFlex
-description:
-aside: false
+description: 整合 Mybatis-Flex 实现自动建表能力
 ---
-
-
 
 <div style="display: flex; justify-content: center;">
     <img src="/mfe-logo.png" style="max-height: 150px"/>
 </div>
 
-## [MybatisFlexExt](https://gitee.com/tangzc/mybatis-flex-ext) 
-### 助力MybatisFlex，让MybatisFlex飞的更快
+## 概述
 
-尽管[MybatisFlex](https://gitee.com/tangzc/mybatis-flex)（后文简称MF）相比较Mybatis丝滑了很多，但是，日常使用中，是否偶尔仍会怀念JPA（Hibernate）的那种纵享丝滑的感受，更好的一心投入业务开发中，如果你也是如此，那么恭喜你发现了[MybatisFlexExt](https://gitee.com/tangzc/mybatis-flex-ext)（后文简称MFE）。
+AutoTable 提供了完善的 Mybatis-Flex 支持，让您可以在 Mybatis-Flex 项目中使用 AutoTable 的自动建表功能。
 
-MFE对MF做了进一步的拓展封装，即保留MF原功能，又添加更多有用便捷的功能。
+## 快速开始
 
-增强功能具体体现在几个方面：`自动建表`、`数据自动填充（类似JPA中的审计）`等功能做了补充完善。
+### 1. 引入依赖
 
-::: warning 特别强调
+#### Maven
 
-如果你使用的ORM框架是MybatisFlex，那么强烈建议去掉MybatisFlex的引入直接引入MybatisFlexExt。
+```xml
+<dependency>
+    <groupId>org.dromara.autotable</groupId>
+    <artifactId>auto-table-adapter-mybatis-flex</artifactId>
+    <version>{{version}}</version>
+</dependency>
 
-:::
+<dependency>
+    <groupId>org.dromara.autotable</groupId>
+    <artifactId>auto-table-adapter-mybatis-flex-spring-boot-starter</artifactId>
+    <version>{{version}}</version>
+</dependency>
+```
+
+#### Gradle
+
+```groovy
+implementation 'org.dromara.autotable:auto-table-adapter-mybatis-flex:{{version}}'
+implementation 'org.dromara.autotable:auto-table-adapter-mybatis-flex-spring-boot-starter:{{version}}'
+```
+
+### 2. 启用自动建表
+
+在启动类上添加 `@EnableAutoTable` 注解：
+
+```java
+import org.dromara.autotable.EnableAutoTable;
+
+@SpringBootApplication
+@EnableAutoTable
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
+
+### 3. 定义实体类
+
+```java
+import org.dromara.autotable.annotation.AutoTable;
+import org.dromara.autotable.annotation.PrimaryKey;
+import org.dromara.autotable.annotation.ColumnComment;
+import org.dromara.autotable.annotation.ColumnName;
+
+@Data
+@AutoTable(comment = "用户表")
+public class User {
+    
+    @PrimaryKey(autoIncrement = true)
+    private Long id;
+    
+    @ColumnComment("用户名")
+    @ColumnName("username")
+    private String username;
+    
+    @ColumnComment("邮箱")
+    @ColumnName("email")
+    private String email;
+}
+```
+
+### 4. 配置数据库连接
+
+确保正确配置了数据库连接：
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/auto-table?useSSL=false&serverTimezone=UTC
+    username: root
+    password: your_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+```
+
+## 运行模式
+
+| 模式 | 说明 | 应用场景 |
+|------|------|---------|
+| `validate`（默认） | 只校验不修改 | 生产环境安全运行 |
+| `update` | 自动更新差异字段 | 开发测试环境 |
+| `create` | 创建缺失的表 | 初始化环境或测试 |
+
+配置方式：
+
+```yaml
+auto-table:
+  mode: update  # validate / update / create
+```
+
+或者使用全局配置：
+
+```java
+AutoTableGlobalConfig globalConfig = AutoTableGlobalConfig.instance();
+globalConfig.setMode(RunMode.UPDATE);
+```
+
+## 高级特性
+
+### SQL 执行记录
+
+AutoTable 会自动记录执行的 SQL，支持多种持久化方式：
+
+- **数据库记录**：存储在 auto_table_sql_record 表中
+- **文件记录**：保存到指定路径的文件中
+- **自定义**：通过实现接口自定义存储逻辑
+
+```java
+@Override
+public void executeSqlRecord(ExecuteSqlContext context) {
+    // 保存 SQL 到数据库或文件
+}
+```
+
+### 拦截器机制
+
+通过实现 `AutoTableInterceptor` 接口，在表生命周期各阶段插入自定义逻辑：
+
+```java
+public class CustomInterceptor implements AutoTableInterceptor {
+    
+    @Override
+    public boolean supports(AutoTableMetadata metadata) {
+        return true;
+    }
+    
+    @Override
+    public void beforeCreateTable(CreateContext context) {
+        // 创建前的处理
+    }
+    
+    @Override
+    public void afterUpdateTable(UpdateContext context) {
+        // 更新后的处理
+    }
+}
+```
+
+### 事件回调
+
+实现 `AutoTableFinishCallback` 接口监听任务完成：
+
+```java
+public class MyCallback implements AutoTableFinishCallback {
+    @Override
+    public void onComplete(FinishContext context) {
+        System.out.println("AutoTable 执行完成");
+    }
+}
+```
+
+注册回调：
+
+```java
+AutoTableGlobalConfig config = AutoTableGlobalConfig.instance();
+config.registerFinishCallback(new MyCallback());
+```
+
+## 自定义类型映射
+
+扩展 Java 类型与数据库类型的映射关系：
+
+```java
+converter.customFieldTypeHandler((field, clazz) -> {
+    if (field.getType() == Date.class) {
+        return DatabaseType.VARCHAR + "(20)";
+    }
+    return null;
+});
+```
+
+## 重要提示（2.6.2 起）
+
+> ⚠️ **变更说明**
+> 
+> AutoTable 2.6.2 版本新增了 MyBatis-Flex 适配器，同时移除了 MyBatis-Plus 适配器的扩展注解体系。
+> 
+> ### MyBatis-Plus 迁移指南
+> 
+> 如果您使用的是 MyBatis-Plus 并使用了扩展注解，需要迁移到标准注解：
+> 
+> #### ❌ 旧版扩展注解（已废弃）
+> ```java
+> import org.dromara.autotable.mybatis.plus.spring.annotation.*;
+> 
+> @Table(name = "user_table")
+> public class User {
+>     @Column(name = "user_id", type = "bigint")
+>     private Long id;
+> }
+> ```
+> 
+> #### ✅ 新版标准注解（推荐）
+> ```java
+> import org.dromara.autotable.annotation.*;
+> 
+> @AutoTable(comment = "用户表")
+> public class User {
+>     @PrimaryKey(autoIncrement = true)
+>     private Long id;
+>     
+>     @ColumnComment("用户名")
+>     @ColumnNotNull
+>     private String username;
+> }
+> ```
+> 
+> ### 移除的扩展注解
+> - `@Column` → 改用 `@AutoColumn`
+> - `@ColumnId` → 改用 `@PrimaryKey`
+> - `@Table` → 改用 `@AutoTable`
+> - `@UniqueIndex` → 改用 `@Index` + `@TableIndex`
+> - `@MysqlColumnUnsigned` / `@MysqlColumnZerofill` → 仍可使用，这些是 MySQL 专用注解
+> 
+> 详细迁移指南请查看：[MIGRATION-FROM-MYBATIS-PLUS-EXT.md](file:///Users/don/Code/个人/auto-table/MIGRATION-FROM-MYBATIS-PLUS-EXT.md)
+
+## 多数据源场景
+
+在多数据源环境下，每个数据源的 SQL 脚本路径为：
+```
+classpath:sql/[dsName]/_init_.sql
+```
+
+## Schema 支持
+
+对于 PostgreSQL、Oracle、Doris 等多 Schema 数据库，可通过 `@AutoTable(schema = "myschema")` 指定 Schema：
+
+```java
+@AutoTable(schema = "public", comment = "用户表")
+public class User {
+    // ...
+}
+```
+
+## 问题排查
+
+### 表未创建？
+
+1. 检查是否添加了 `@EnableAutoTable`
+2. 确认包扫描路径包含实体类
+3. 查看日志是否有错误信息
+4. 验证数据库连接是否正常
+
+### 字段未更新？
+
+1. 确认运行模式是否为 `update`
+2. 检查字段是否被 `@Ignore` 标记
+3. 确认字段修饰符不是 `static` 或 `final`
+
+### Invalid value type 错误？
+
+通常是类型映射问题：
+1. 检查是否使用了不支持的 Java 类型
+2. 可使用 `@ColumnType` 指定数据库类型
+
+## 相关资源
+
+- [GitHub 仓库](https://github.com/dromara/auto-table)
+- [Gitee 仓库](https://gitee.com/tangzc/auto-table)
+- [更新日志](/更新日志)
+- [最佳实践](/最佳实践/生产环境部署)
+
+## 社区支持
+
+如有问题或建议，欢迎：
+- 提交 Issue：[Gitee Issues](https://gitee.com/tangzc/auto-table/issues)
+- 参与讨论：[贡献指南](/社区/贡献指南)
+
+感谢每一位贡献者！🌟
