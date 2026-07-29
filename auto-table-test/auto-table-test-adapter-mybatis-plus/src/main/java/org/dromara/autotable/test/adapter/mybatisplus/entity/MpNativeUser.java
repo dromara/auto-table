@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import org.dromara.autotable.annotation.AutoTable;
+import org.dromara.autotable.annotation.Ignore;
 
 /**
  * MP 原生注解实体，验证 adapter 基础层（不依赖自定义注解）
@@ -27,6 +28,9 @@ public class MpNativeUser {
 
     @TableField(exist = false)
     private String transientField;
+
+    @Ignore
+    private String ignoredField;
 
     private Integer deleted;
 }

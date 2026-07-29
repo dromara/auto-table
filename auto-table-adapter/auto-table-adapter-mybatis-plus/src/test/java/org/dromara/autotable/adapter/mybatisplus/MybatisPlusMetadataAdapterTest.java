@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import org.dromara.autotable.annotation.Ignore;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -92,6 +93,26 @@ public class MybatisPlusMetadataAdapterTest {
         // OrderEntity 有 keepGlobalPrefix=false
         String orderTable = adapterWithPrefix.getTableName(OrderEntity.class);
         assertEquals("keepGlobalPrefix=false 时不加前缀", "t_order", orderTable);
+    }
+
+    @Test
+    public void testGetTableName_withTablePrefix_keepGlobalPrefixTrue() {
+        config.setTablePrefix("app_");
+        MybatisPlusMetadataAdapter adapterWithPrefix = new MybatisPlusMetadataAdapter(config);
+
+        // KeepPrefixEntity 设置了 keepGlobalPrefix=true，应添加前缀
+        String tableName = adapterWithPrefix.getTableName(KeepPrefixEntity.class);
+        assertEquals("keepGlobalPrefix=true 时应添加前缀", "app_t_keep", tableName);
+    }
+
+    @Test
+    public void testGetTableName_withTablePrefix_noAnnotation() {
+        config.setTablePrefix("app_");
+        MybatisPlusMetadataAdapter adapterWithPrefix = new MybatisPlusMetadataAdapter(config);
+
+        // 无 @TableName 注解的类，应自动加前缀
+        String tableName = adapterWithPrefix.getTableName(NoAnnotationEntity.class);
+        assertEquals("无注解时也应添加前缀", "app_no_annotation_entity", tableName);
     }
 
     @Test
@@ -195,6 +216,41 @@ public class MybatisPlusMetadataAdapterTest {
         assertFalse("正常字段不应被忽略", adapter.isIgnoreField(field, UserEntity.class));
     }
 
+    @Test
+    public void testIsIgnoreField_excludeProperty() throws Exception {
+        // ExcludePropertyEntity 的 @TableName.excludeProperty 包含 "ignored"
+        Field field = ExcludePropertyEntity.class.getDeclaredField("ignored");
+        assertTrue("@TableName.excludeProperty 中的字段应被忽略",
+                adapter.isIgnoreField(field, ExcludePropertyEntity.class));
+
+        Field normalField = ExcludePropertyEntity.class.getDeclaredField("name");
+        assertFalse("不在 excludeProperty 中的字段不应被忽略",
+                adapter.isIgnoreField(normalField, ExcludePropertyEntity.class));
+    }
+
+    @Test
+    public void testIsIgnoreField_ignoreAnnotation() throws Exception {
+        // IgnoreAnnotationEntity 的 ignoredField 标注了 @Ignore
+        Field field = IgnoreAnnotationEntity.class.getDeclaredField("ignoredField");
+        assertTrue("@Ignore 注解应被 isIgnoreField 识别为忽略",
+                adapter.isIgnoreField(field, IgnoreAnnotationEntity.class));
+
+        Field normalField = IgnoreAnnotationEntity.class.getDeclaredField("name");
+        assertFalse("未标注 @Ignore 的字段不应被忽略",
+                adapter.isIgnoreField(normalField, IgnoreAnnotationEntity.class));
+    }
+
+    @Test
+    public void testGetColumnDefaultValue_nonLogicDeleteField() throws Exception {
+        config.setLogicDeleteField("deleted");
+        config.setLogicNotDeleteValue("0");
+        MybatisPlusMetadataAdapter adapterLogic = new MybatisPlusMetadataAdapter(config);
+
+        // 非逻辑删除字段应回退到 super（返回 null）
+        Field field = LogicDeleteEntity.class.getDeclaredField("id");
+        assertNull("非逻辑删除字段不应有默认值", adapterLogic.getColumnDefaultValue(field, LogicDeleteEntity.class));
+    }
+
     // ===== getColumnEnumValues 测试 =====
 
     @Test
@@ -223,8 +279,31 @@ public class MybatisPlusMetadataAdapterTest {
         assertNotNull("逻辑删除字段应有默认值", adapterLogic.getColumnDefaultValue(field, LogicDeleteEntity.class));
     }
 
+    @TableName(value = "t_keep", keepGlobalPrefix = true)
+    static class KeepPrefixEntity {
+        @TableId
+        private Long id;
+    }
+
+    @TableName(value = "t_exclude", excludeProperty = {"ignored"})
+    static class ExcludePropertyEntity {
+        @TableId
+        private Long id;
+        private String name;
+        private String ignored;
+    }
+
     static class LogicDeleteEntity {
         private Long id;
         private Integer deleted;
+    }
+
+    @TableName("t_ignore_test")
+    static class IgnoreAnnotationEntity {
+        @TableId
+        private Long id;
+        private String name;
+        @Ignore
+        private String ignoredField;
     }
 }

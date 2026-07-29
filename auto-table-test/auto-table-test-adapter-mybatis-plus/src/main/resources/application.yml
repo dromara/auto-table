@@ -12,5 +12,5 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-  configuration:
-    map-underscore-to-camel-case: true
+  # 注意：不显式配置 map-underscore-to-camel-case，
+  # 以验证 adapter 能从 SqlSessionFactory 获取 MP 内部默认值 true

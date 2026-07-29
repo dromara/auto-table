@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import lombok.Getter;
 import org.dromara.autotable.annotation.ColumnDefault;
+import org.dromara.autotable.annotation.Ignore;
 import org.dromara.autotable.annotation.enums.DefaultValueEnum;
 import org.dromara.autotable.core.AutoTableMetadataAdapter;
 
@@ -24,8 +25,7 @@ import java.util.stream.Collectors;
  * 只读取 MP 原生注解（@TableName / @TableField / @TableId / @EnumValue），
  * 使用 Java 原生反射（{@link Class#getAnnotation}）而非 Spring 的 AnnotatedElementUtils。
  * <p>
- * 自定义注解（@Table / @Column / @ColumnId 等使用 @AliasFor 的注解）
- * 由 starter 模块的 {@code MybatisPlusExtendedMetadataAdapter} 扩展支持。
+ * 自定义注解（@Table / @Column / @ColumnId 等）的双向识别由 mybatis-plus-ext 项目提供。
  *
  * @author auto-table
  */
@@ -40,12 +40,17 @@ public class MybatisPlusMetadataAdapter implements AutoTableMetadataAdapter {
 
     @Override
     public Boolean isIgnoreField(Field field, Class<?> clazz) {
-        // 1. 检查 @TableField.exist() = false
+        // 1. 检查 @Ignore（auto-table 注解），@Ignore 与 @TableField(exist=false) 等价
+        Ignore ignore = field.getAnnotation(Ignore.class);
+        if (ignore != null) {
+            return true;
+        }
+        // 2. 检查 @TableField.exist() = false
         TableField tableField = field.getAnnotation(TableField.class);
         if (tableField != null && !tableField.exist()) {
             return true;
         }
-        // 2. 检查 @TableName.excludeProperty()
+        // 3. 检查 @TableName.excludeProperty()
         TableName tableName = clazz.getAnnotation(TableName.class);
         if (tableName != null) {
             boolean excluded = Arrays.stream(tableName.excludeProperty())
@@ -98,9 +103,9 @@ public class MybatisPlusMetadataAdapter implements AutoTableMetadataAdapter {
                     .map(Objects::toString)
                     .collect(Collectors.toList());
         }
-        // 没有 @EnumValue，使用枚举 name()
+        // 没有 @EnumValue，使用枚举 name()（与 MP 默认行为一致）
         return Arrays.stream(enumClassType.getEnumConstants())
-                .map(Object::toString)
+                .map(e -> ((Enum<?>) e).name())
                 .collect(Collectors.toList());
     }
 

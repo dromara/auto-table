@@ -11,6 +11,7 @@
 
     <name>auto-table-adapter-mybatis-flex-spring-boot-starter</name>
     <artifactId>auto-table-adapter-mybatis-flex-spring-boot-starter</artifactId>
+    <description>MyBatis-Flex 适配器 Spring Boot 集成（MF 原生注解兼容 + 动态数据源）</description>
 
     <dependencies>
 
@@ -38,6 +39,22 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
             <version>${spring-boot.version}</version>
+        </dependency>
+
+        <!-- MyBatis-Flex Spring Boot Starter -->
+        <dependency>
+            <groupId>com.mybatis-flex</groupId>
+            <artifactId>mybatis-flex-spring-boot-starter</artifactId>
+            <version>${mybatis-flex.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- SLF4J API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <!-- Spring Boot Configuration Processor -->

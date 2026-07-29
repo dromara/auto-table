@@ -11,6 +11,7 @@
 
     <name>auto-table-adapter-mybatis-flex</name>
     <artifactId>auto-table-adapter-mybatis-flex</artifactId>
+    <description>MyBatis-Flex 适配器（零 Spring 依赖，仅依赖 MF 原生注解和核心 API）</description>
 
     <dependencies>
 
@@ -38,13 +39,12 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- TODO: 后续实现时添加 mybatis-flex 依赖 -->
-        <!-- <dependency>
+        <dependency>
             <groupId>com.mybatis-flex</groupId>
-            <artifactId>mybatis-flex-spring-boot-starter</artifactId>
+            <artifactId>mybatis-flex-core</artifactId>
             <version>${mybatis-flex.version}</version>
             <optional>true</optional>
-        </dependency> -->
+        </dependency>
 
     </dependencies>
 </project>

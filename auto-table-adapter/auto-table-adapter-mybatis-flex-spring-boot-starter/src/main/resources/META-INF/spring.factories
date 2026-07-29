@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  org.dromara.autotable.adapter.mybatisflex.spring.MybatisFlexAutoConfiguration
