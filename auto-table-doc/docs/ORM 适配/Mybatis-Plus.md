@@ -1,11 +1,43 @@
 ---
-title: MyBatis-Flex 适配器
-description: 零配置集成 MyBatis-Flex，自动识别@Table/@Column 注解完成建表
+title: MyBatis-Plus 适配器
+description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注解完成建表
 ---
 
 <div style="display: flex; justify-content: center;">
-    <img src="/mfe-logo.png" style="max-height: 150px"/>
+    <img src="/mpe-logo.png" style="max-height: 150px"/>
 </div>
+
+## ⚠️ 重要提示：2.6.2 版本重大变更
+
+> ### 🔴 **立即查看升级指南！**
+> 
+> AutoTable 2.6.2 版本移除了 MyBatis-Plus 适配器的扩展注解体系。
+> 
+> #### 🎯 您需要做什么？
+> 
+> - **如果您从未使用过扩展注解**：无需任何操作，继续使用 MP 原生注解即可正常工作。
+> - **如果您使用了扩展注解**（如 `@Column`、`@Table`）**：** **必须迁移到标准注解**，否则将无法工作。
+> 
+> #### 📖 迁移资源
+> 
+> - [完整迁移指南](file:///Users/don/Code/个人/auto-table/MIGRATION-FROM-MYBATIS-PLUS-EXT.md) ← **强烈推荐阅读**
+> - [常见问题说明](/常见问题/说明#262-升级注意事项)
+
+### ❌ 已移除的扩展注解
+
+| 旧版扩展注解 | ✅ 新版标准注解（使用 MP 原生） | 说明 |
+|-------------|-------------------------------|------|
+| `@Column` | `@TableField` | MP 原生字段注解 |
+| `@ColumnId` | `@TableId` | MP 原生主键注解 |
+| `@Table` | `@TableName` | MP 原生表注解 |
+| `@UniqueIndex` | `@TableField(exist=false)` | 手动管理索引 |
+
+### ✅ 保留的标准注解
+
+以下注解仍可使用（但建议使用 MP 原生）：
+- `@AutoColumn` - 仍可用于多数据库场景
+- `@Ignore` - 忽略字段
+- 所有 MySQL 专用注解（如 `@MysqlColumnUnsigned`）
 
 ## 💡 核心价值：零侵入式集成
 
@@ -19,29 +51,27 @@ AutoTable 适配器让您**无需引入任何 AutoTable 注解**即可享受自�
 <!-- 只加这一个 Starter 就够了 -->
 <dependency>
     <groupId>org.dromara.autotable</groupId>
-    <artifactId>auto-table-adapter-mybatis-flex-spring-boot-starter</artifactId>
+    <artifactId>auto-table-adapter-mybatis-plus-spring-boot-starter</artifactId>
     <version>{{version}}</version>
 </dependency>
 ```
 
-#### 第二步：定义实体（完全用 MF 原生注解）
+#### 第二步：定义实体（完全用 MP 原生注解）
 
 ```java
-import com.mybatisflex.annotation.Table;
-import com.mybatisflex.annotation.Column;
-import com.mybatisflex.annotation.PrimaryKey;
-import com.mybatisflex.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.*;
 
-@Table("sys_user")  // ← 只用 MF 的 @Table
+@Data
+@TableName("sys_user")  // ← 只用 MP 的 @TableName
 public class User {
     
-    @PrimaryKey(value = "id", type = IdType.AUTO)  // ← 只用 MF 的 @PrimaryKey
+    @TableId(value = "id", type = IdType.AUTO)  // ← 只用 MP 的 @TableId
     private Long id;
     
-    @Column("username")
+    @TableField("username")
     private String username;
     
-    @Column("email")
+    @TableField("email")
     private String email;
 }
 ```
@@ -49,11 +79,12 @@ public class User {
 #### 第三步：启动应用
 
 ```java
-import com.mybatisflex.spring.boot.autoconfigure.MybatisFlexAutoConfiguration;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@MapperScan("com.example.mapper")
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -62,8 +93,8 @@ public class Application {
 ```
 
 ✨ **完成！** 启动后 AutoTable 会自动：
-- 识别所有 `@Table` 标注的实体
-- 根据 `@PrimaryKey`、`@Column` 解析字段
+- 识别所有 `@TableName` 标注的实体
+- 根据 `@TableId`、`@TableField` 解析字段
 - 自动创建数据库表结构
 - 后续修改实体，表结构自动同步
 
@@ -73,15 +104,15 @@ public class Application {
 
 ### 工作原理
 
-AutoTable 通过**适配器机制**自动识别和转换 MF 注解：
+AutoTable 通过**适配器机制**自动识别和转换 MP 注解：
 
 ```mermaid
 flowchart LR
     subgraph entity["📝 Your Entity"]
-        E["@Table / @PrimaryKey / @Column"]
+        E["@TableName / @TableId / @TableField"]
     end
     
-    adapter[⚙️ MyBatis-Flex Adapter]
+    adapter[⚙️ MyBatis-Plus Adapter]
     
     db["💾 Database"]
     
@@ -90,56 +121,45 @@ flowchart LR
 ```
 
 **核心组件：**
-- `MybatisFlexAutoTableClassScanner`：自动扫描实体类上的 `@Table`
-- `MybatisFlexMetadataAdapter`：解析 `@PrimaryKey`、`@Column` 等注解
-- `MybatisFlexJavaTypeToDatabaseTypeConverter`：处理类型映射（枚举、Date 等）
-- `MybatisFlexRunBeforeCallback`：在 DDL 执行前屏蔽 MF 拦截器插件
+- `MybatisPlusAutoTableClassScanner`：自动扫描实体类上的 `@TableName`
+- `MybatisPlusMetadataAdapter`：解析 `@TableId`、`@TableField` 等注解
+- `MybatisPlusJavaTypeToDatabaseTypeConverter`：处理类型映射（枚举、Date 等）
+- `MybatisPlusRunBeforeCallback`：在 DDL 执行前屏蔽 MP 拦截器插件
 
-### 支持的 MF 注解
+### 支持的 MP 注解
 
-AutoTable 会智能识别所有标准 MF 注解：
+AutoTable 会智能识别所有标准 MP 注解：
 
-| MF 注解 | 作用 | AutoTable 支持 |
+| MP 注解 | 作用 | AutoTable 支持 |
 |--------|------|---------------|
-| `@Table` | 定义表名 | ✅ 自动识别 |
-| `@PrimaryKey` | 定义主键 | ✅ 支持所有 IdType |
-| `@Column` | 定义字段 | ✅ 支持 value、ignoreInsert、ignoreUpdate |
-| `@TableLogic` | 逻辑删除标记 | ✅ 自动识别 |
-| `@TableId` | 主键别名 | ✅ 兼容支持 |
+| `@TableName` | 定义表名 | ✅ 自动识别 |
+| `@TableId` | 定义主键 | ✅ 支持所有 IdType |
+| `@TableField` | 定义字段 | ✅ 支持 exist、value、typeHandler |
+| `@EnumValue` | 枚举值标记 | ✅ 自动提取 |
+| `@TableName.excludeProperty` | 排除字段 | ✅ 自动识别 |
 
-### 与 Mybatis-Flex-Ext 的关系
+### 与 MyBatis-Plus-Ext 的关系
 
-如果您使用 [Mybatis-Flex-Ext](https://gitee.com/tangzc/mybatis-flex-ext)（扩展版 MF），建议：
+如果您使用 [MyBatis-Plus-Ext](https://gitee.com/dromara/mybatis-plus-ext)（扩展版 MP），建议：
 
 ```xml
-<!-- 同时引入 MFE 和 AutoTable -->
+<!-- 同时引入 MPE 和 AutoTable -->
 <dependency>
-    <groupId>com.github.tangzc</groupId>
-    <artifactId>mybatis-flex-ext-spring-boot-starter</artifactId>
+    <groupId>org.dromara.mybatis-plus-ext</groupId>
+    <artifactId>mybatis-plus-ext-spring-boot-starter</artifactId>
     <version>X.X.X</version>
 </dependency>
 <dependency>
     <groupId>org.dromara.autotable</groupId>
-    <artifactId>auto-table-adapter-mybatis-flex-spring-boot-starter</artifactId>
+    <artifactId>auto-table-adapter-mybatis-plus-spring-boot-starter</artifactId>
     <version>{{version}}</version>
 </dependency>
 ```
 
 这样您可以同时享受：
-- MFE 的代码生成、数据自动填充等功能
+- MPE 的代码生成、代码预生成等功能
 - AutoTable 的自动建表功能
 - 两者完美结合，互不干扰
-
-## ⚠️ 关于 2.6.2 版本变更
-
-> ### 💡 重要提示
-> 
-> AutoTable 2.6.2 版本新增了 MyBatis-Flex 适配器，对 MP 适配器进行了重构（移除了扩展注解）。
-> 
-> #### 🎯 我的影响？
-> 
-> - **MyBatis-Flex 用户**：✅ 无影响！MF 适配器从一开始就使用原生注解
-> - **MyBatis-Plus 用户**：⚠️ 如有使用扩展注解，需要迁移到标准注解
 
 ## 配置项
 
@@ -174,16 +194,6 @@ auto-table:
   record-sql-type: DB  # 文件 (FILE) 或 数据库 (DB)
 ```
 
-### 表名前缀
-
-如果实体上有 `@Table(prefix = "sys_")`，AutoTable 会自动识别：
-
-```yaml
-# 也可以在全局配置表名前缀
-auto-table:
-  table-prefix: sys_  # 可选，优先使用注解
-```
-
 ## 高级特性
 
 ### 动态数据源支持
@@ -210,10 +220,10 @@ classpath:sql/slave/_init_.sql
 
 ### Schema 支持
 
-对于 PostgreSQL、Oracle、Doris 等多 Schema 数据库：
+对于 PostgreSQL、Oracle 等多 Schema 数据库：
 
 ```java
-@Table(schema = "public", value = "user")
+@TableName(schema = "public", value = "user")
 public class User {
     // ...
 }
@@ -221,22 +231,37 @@ public class User {
 
 AutoTable 会自动创建对应的 Schema 和表。
 
-### 忽略字段
+### 逻辑删除字段
 
-使用 `@Column(ignore = true)` 或 `@Table(excludeProperty = "field")` 标记的字段会被忽略，不会在数据库中创建。
+AutoTable 会自动识别 MP 的逻辑删除配置：
+
+```java
+@TableField("deleted")
+private Integer deleted;
+```
+
+配合全局配置：
+```yaml
+mp:
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+```
 
 ## 常见问题
 
 ### 表未创建？
 
 1. 检查是否引入了 starter 依赖
-2. 确认实体上有 `@Table` 注解
+2. 确认实体上有 `@TableName` 注解
 3. 查看日志是否有错误信息
 
 ### 字段未更新？
 
 1. 确认运行模式为 `update`
-2. 检查字段是否被 `@Column(ignore = true)` 标记
+2. 检查字段是否被 `@TableField(exist = false)` 标记
 3. 确认不是 `static` 或 `final` 字段
 
 ### Invalid value type 错误？
@@ -249,8 +274,8 @@ AutoTable 会自动创建对应的 Schema 和表。
 
 - [GitHub 仓库](https://github.com/dromara/auto-table)
 - [Gitee 仓库](https://gitee.com/tangzc/auto-table)
-- [MyBatis-Flex 官方文档](https://mybatis-flex.com/)
-- [MyBatis-Flex-Ext](https://gitee.com/tangzc/mybatis-flex-ext)
+- [MyBatis-Plus 官方文档](https://baomidou.com/)
+- [MyBatis-Plus-Ext](https://gitee.com/dromara/mybatis-plus-ext)
 - [更新日志](/更新日志)
 - [最佳实践](/最佳实践/生产环境部署)
 
