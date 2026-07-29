@@ -4,7 +4,7 @@ import lombok.Data;
 
 /**
  * MyBatis-Plus 适配器配置 POJO。
- * 由 starter 从 MP 原生 MybatisPlusProperties 提取值并注入。
+ * 由 starter 从 SqlSessionFactory 提取 MP 实际运行时配置并注入。
  * adapter 不依赖 Spring，通过此 POJO 承载配置值。
  *
  * @author auto-table

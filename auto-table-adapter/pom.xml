@@ -16,10 +16,8 @@
     <modules>
         <module>auto-table-adapter-mybatis-plus</module>
         <module>auto-table-adapter-mybatis-flex</module>
-        <module>auto-table-adapter-xbatis</module>
         <module>auto-table-adapter-mybatis-plus-spring-boot-starter</module>
         <module>auto-table-adapter-mybatis-flex-spring-boot-starter</module>
-        <module>auto-table-adapter-xbatis-spring-boot-starter</module>
     </modules>
 
     <build>

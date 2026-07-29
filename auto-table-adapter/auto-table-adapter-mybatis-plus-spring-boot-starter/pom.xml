@@ -11,7 +11,7 @@
 
     <name>auto-table-adapter-mybatis-plus-spring-boot-starter</name>
     <artifactId>auto-table-adapter-mybatis-plus-spring-boot-starter</artifactId>
-    <description>MyBatis-Plus 适配器 Spring Boot 集成（自定义注解 + Spring 装配 + 动态数据源）</description>
+    <description>MyBatis-Plus 适配器 Spring Boot 集成（MP 原生注解兼容 + 动态数据源）</description>
 
     <dependencies>
 
@@ -34,7 +34,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Spring Boot AutoConfiguration（含 spring-core: AnnotatedElementUtils / StringUtils） -->
+        <!-- Spring Boot AutoConfiguration（@Configuration / @Bean / @ConditionalOnClass 等） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>

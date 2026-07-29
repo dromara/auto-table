@@ -1,5 +1,8 @@
 package org.dromara.autotable.test.adapter.mybatisplus;
 
+import com.baomidou.mybatisplus.core.config.GlobalConfig;
+import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.dromara.autotable.springboot.EnableAutoTableTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * MP 适配器集成测试。
- * 验证 auto-table-adapter-mybatis-plus-spring-boot-starter 在 Spring Boot 环境下的完整集成。
+ * <p>
+ * 验证 auto-table-adapter-mybatis-plus-spring-boot-starter 在 Spring Boot 环境下的 MP 原生注解兼容能力。
+ * <p>
+ * 本测试只验证 MP 原生注解（{@code @TableName}/{@code @TableField}/{@code @TableId}）的支持，
+ * 自定义注解（{@code @Table}/{@code @Column}/{@code @ColumnId}）的测试属于 mybatis-plus-ext 项目。
  */
 @EnableAutoTableTest
 @SpringBootTest(classes = Application.class)
@@ -35,10 +42,8 @@ public class MybatisPlusAdapterTest {
     public void testAutoConfigurationLoaded() {
         assertTrue(context.containsBean("mybatisPlusAdapterConfig"),
                 "mybatisPlusAdapterConfig Bean 应被自动注册");
-        assertTrue(context.containsBean("mybatisPlusExtendedMetadataAdapter"),
-                "mybatisPlusExtendedMetadataAdapter Bean 应被自动注册");
-        assertTrue(context.containsBean("mybatisPlusExtendedClassScanner"),
-                "mybatisPlusExtendedClassScanner Bean 应被自动注册");
+        assertTrue(context.containsBean("mybatisPlusMetadataAdapter"),
+                "mybatisPlusMetadataAdapter Bean 应被自动注册");
         assertTrue(context.containsBean("mybatisPlusJavaTypeToDatabaseTypeConverter"),
                 "mybatisPlusJavaTypeToDatabaseTypeConverter Bean 应被自动注册");
         assertTrue(context.containsBean("mybatisPlusRunBeforeCallback"),
@@ -72,63 +77,17 @@ public class MybatisPlusAdapterTest {
                 "@TableField(exist=false) 的字段不应建列，实际列: " + columns);
     }
 
-    // ===== 自定义注解建表验证 =====
+    // ===== @Ignore 注解验证 =====
 
     @Test
-    public void testCustomOrderTableCreated() throws Exception {
-        String tableName = getExistingTableName("t_custom_order", "custom_order");
-        assertNotNull(tableName, "自定义 @Table('custom_order') 应生成表，实际表: " + getAllTables());
-    }
-
-    @Test
-    public void testCustomOrderColumns() throws Exception {
-        String tableName = getExistingTableName("T_CUSTOM_ORDER", "CUSTOM_ORDER");
-        assertNotNull(tableName, "应找到 custom_order 相关的表");
+    public void testIgnoreAnnotationOnMpField() throws Exception {
+        // MpNativeUser 的 ignoredField 标注了 @Ignore，不应建列
+        String tableName = getExistingTableName("MP_USER", "T_MP_USER");
+        assertNotNull(tableName, "mp_user 表应被创建");
 
         Set<String> columns = getTableColumns(tableName);
-        assertTrue(columns.contains("ID"), "应包含 ID 列（@ColumnId），实际列: " + columns);
-        assertTrue(columns.contains("ORDER_NO"), "应包含 ORDER_NO 列（@Column('order_no')），实际列: " + columns);
-        assertTrue(columns.contains("AMOUNT") || columns.contains("amount"),
-                "应包含 AMOUNT 列，实际列: " + columns);
-        assertTrue(columns.contains("STATUS") || columns.contains("status"),
-                "应包含 STATUS 列，实际列: " + columns);
-        assertFalse(columns.contains("TEMP_DATA"),
-                "@TableField(exist=false) 的字段不应建列，实际列: " + columns);
-    }
-
-    // ===== 表注释验证 =====
-
-    @Test
-    public void testTableComment() throws Exception {
-        // @Table(comment = "订单表") 通过 @AliasFor 合并到 @AutoTable.comment，
-        // 再由 CustomAnnotationFinder（Spring Boot 环境下）正确读取
-        String tableName = getExistingTableName("CUSTOM_ORDER", "T_CUSTOM_ORDER");
-        assertNotNull(tableName, "custom_order 表应被创建");
-
-        String comment = getTableComment(tableName);
-        // H2 2.x 中 COMMENT ON TABLE 后 REMARKS 可通过 INFORMATION_SCHEMA.TABLES 查询
-        assertNotNull(comment, "表注释不应为 null，@Table(comment) 应正确传播。"
-                + " 表名=" + tableName + ", 所有表=" + getAllTablesWithRemarks());
-        assertTrue(comment.contains("订单表"), "表注释应包含 '订单表'，实际: " + comment);
-    }
-
-    // ===== 唯一索引验证 =====
-
-    @Test
-    public void testUniqueIndex() throws Exception {
-        String tableName = getExistingTableName("unique_index_user", "t_unique_index_user");
-        assertNotNull(tableName, "UniqueIndexUser 表应被创建");
-
-        // 查询该表的唯一索引
-        Set<String> uniqueIndexes = getUniqueIndexNames(tableName);
-        assertFalse(uniqueIndexes.isEmpty(),
-                "应有唯一索引，实际索引: " + getAllIndexNames(tableName));
-        // 索引名可能是 UK_EMAIL 或包含 email 列的唯一索引
-        boolean hasEmailUniqueIndex = uniqueIndexes.stream()
-                .anyMatch(name -> name.toUpperCase().contains("UK_EMAIL")
-                        || name.toUpperCase().contains("EMAIL"));
-        assertTrue(hasEmailUniqueIndex,
-                "应有 email 列的唯一索引，实际: " + uniqueIndexes);
+        assertFalse(columns.contains("IGNORED_FIELD"),
+                "@Ignore 的字段不应建列，实际列: " + columns);
     }
 
     // ===== 逻辑删除默认值验证 =====
@@ -146,17 +105,68 @@ public class MybatisPlusAdapterTest {
                 "deleted 列默认值应包含 '0'，实际: " + defaultValue);
     }
 
-    // ===== 配置桥接验证 =====
+    // ===== 配置桥接验证（从 SqlSessionFactory 读取实际运行时配置）=====
 
     @Test
     public void testConfigBridging() {
         org.dromara.autotable.adapter.mybatisplus.MybatisPlusAdapterConfig config =
                 context.getBean(org.dromara.autotable.adapter.mybatisplus.MybatisPlusAdapterConfig.class);
 
-        assertEquals("t_", config.getTablePrefix(), "tablePrefix 应从 MP Properties 桥接");
-        assertTrue(config.isMapUnderscoreToCamelCase(), "mapUnderscoreToCamelCase 应为 true");
-        assertEquals("deleted", config.getLogicDeleteField(), "logicDeleteField 应从 MP Properties 桥接");
-        assertEquals("0", config.getLogicNotDeleteValue(), "logicNotDeleteValue 应从 MP Properties 桥接");
+        assertEquals("t_", config.getTablePrefix(), "tablePrefix 应从 SqlSessionFactory 桥接");
+        assertTrue(config.isMapUnderscoreToCamelCase(), "mapUnderscoreToCamelCase 应为 true（MP 内部默认值）");
+        assertEquals("deleted", config.getLogicDeleteField(), "logicDeleteField 应从 SqlSessionFactory 桥接");
+        assertEquals("0", config.getLogicNotDeleteValue(), "logicNotDeleteValue 应从 SqlSessionFactory 桥接");
+    }
+
+    /**
+     * 核心验证：adapter 配置与 SqlSessionFactory 实际运行时配置一致。
+     * <p>
+     * application.yml 中未显式配置 map-underscore-to-camel-case，
+     * MybatisPlusProperties 中该值可能是 MyBatis 原始默认值 false，
+     * 但 MP 内部在构建 SqlSessionFactory 时会将其改为 true。
+     * adapter 应读取 SqlSessionFactory 的实际值（true），而非 Properties 的原始值。
+     */
+    @Test
+    public void testConfigMatchesSqlSessionFactory() {
+        SqlSessionFactory sqlSessionFactory = context.getBean(SqlSessionFactory.class);
+        org.apache.ibatis.session.Configuration mpConfiguration = sqlSessionFactory.getConfiguration();
+        GlobalConfig globalConfig = GlobalConfigUtils.getGlobalConfig(mpConfiguration);
+        GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
+
+        org.dromara.autotable.adapter.mybatisplus.MybatisPlusAdapterConfig adapterConfig =
+                context.getBean(org.dromara.autotable.adapter.mybatisplus.MybatisPlusAdapterConfig.class);
+
+        // 验证 adapter 配置与 SqlSessionFactory 实际配置完全一致
+        assertEquals(mpConfiguration.isMapUnderscoreToCamelCase(), adapterConfig.isMapUnderscoreToCamelCase(),
+                "adapter 的 mapUnderscoreToCamelCase 应与 SqlSessionFactory 一致");
+        assertEquals(dbConfig.getTablePrefix(), adapterConfig.getTablePrefix(),
+                "adapter 的 tablePrefix 应与 SqlSessionFactory 一致");
+        assertEquals(dbConfig.isCapitalMode(), adapterConfig.isCapitalMode(),
+                "adapter 的 capitalMode 应与 SqlSessionFactory 一致");
+        assertEquals(dbConfig.getLogicDeleteField(), adapterConfig.getLogicDeleteField(),
+                "adapter 的 logicDeleteField 应与 SqlSessionFactory 一致");
+        assertEquals(dbConfig.getLogicNotDeleteValue(), adapterConfig.getLogicNotDeleteValue(),
+                "adapter 的 logicNotDeleteValue 应与 SqlSessionFactory 一致");
+    }
+
+    /**
+     * 验证 MP 内部默认值：即使 yml 未配置 map-underscore-to-camel-case，
+     * SqlSessionFactory 中该值也应为 true（MP 内部默认行为）。
+     */
+    @Test
+    public void testMpInternalDefaultMapUnderscoreToCamelCase() {
+        SqlSessionFactory sqlSessionFactory = context.getBean(SqlSessionFactory.class);
+        assertTrue(sqlSessionFactory.getConfiguration().isMapUnderscoreToCamelCase(),
+                "MP 内部默认 mapUnderscoreToCamelCase 应为 true（即使 yml 未显式配置）");
+    }
+
+    /**
+     * 验证 InitializeBeans 机制生效：mpSqlSessionFactoryInitializer Bean 存在。
+     */
+    @Test
+    public void testInitializeBeansRegistered() {
+        assertTrue(context.containsBean("mpSqlSessionFactoryInitializer"),
+                "mpSqlSessionFactoryInitializer Bean 应被注册（InitializeBeans 机制）");
     }
 
     // ===== 辅助方法 =====
@@ -201,47 +211,6 @@ public class MybatisPlusAdapterTest {
         return columns;
     }
 
-    private String getTableComment(String tableName) throws Exception {
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                     "SELECT REMARKS FROM INFORMATION_SCHEMA.TABLES WHERE UPPER(TABLE_NAME) = '"
-                             + tableName.toUpperCase() + "' AND TABLE_SCHEMA = 'PUBLIC'")) {
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-        }
-        return null;
-    }
-
-    private Set<String> getUniqueIndexNames(String tableName) throws Exception {
-        Set<String> indexes = new HashSet<>();
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                     "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES WHERE UPPER(TABLE_NAME) = '"
-                             + tableName.toUpperCase() + "' AND INDEX_TYPE_NAME = 'UNIQUE INDEX'")) {
-            while (rs.next()) {
-                indexes.add(rs.getString(1));
-            }
-        }
-        return indexes;
-    }
-
-    private Set<String> getAllIndexNames(String tableName) throws Exception {
-        Set<String> indexes = new HashSet<>();
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                     "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES WHERE UPPER(TABLE_NAME) = '"
-                             + tableName.toUpperCase() + "'")) {
-            while (rs.next()) {
-                indexes.add(rs.getString(1));
-            }
-        }
-        return indexes;
-    }
-
     private String getColumnDefault(String tableName, String columnName) throws Exception {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
@@ -271,16 +240,4 @@ public class MybatisPlusAdapterTest {
         return sb.toString();
     }
 
-    private String getAllTablesWithRemarks() throws Exception {
-        StringBuilder sb = new StringBuilder();
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                     "SELECT TABLE_NAME, REMARKS FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC'")) {
-            while (rs.next()) {
-                sb.append(String.format("[%s, remarks=%s] ", rs.getString(1), rs.getString(2)));
-            }
-        }
-        return sb.toString();
-    }
 }
