@@ -295,8 +295,6 @@ AutoTable 提供开箱即用的 ORM 框架适配模块，引入依赖即可让�
 | Mybatis-Plus | [mybatis-plus-ext](https://gitee.com/dromara/mybatis-plus-ext) | 自定义注解（`@Table`/`@Column`）、免手写 Mapper、数据填充、关联查询等 |
 | Mybatis-Flex | [mybatis-flex-ext](https://gitee.com/tangzc/mybatis-flex-ext) | 数据填充（类似 JPA 审计） |
 
-> mybatis-plus-ext 在 adapter 基础上扩展，定义一套自有注解同时被 AutoTable 和 MP 识别，详见 [迁移文档](MIGRATION-FROM-MYBATIS-PLUS-EXT.md)
-
 ## 📖 文档
 
 完整文档请访问：**[https://autotable.tangzc.com](https://autotable.tangzc.com)**
