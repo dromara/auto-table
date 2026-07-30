@@ -109,7 +109,6 @@ AutoTable 2.6.2 版本对 MyBatis-Plus 适配器进行了重大重构：
 
 详细迁移指南：
 - [MyBatis-Plus 升级说明](/ORM 适配/Mybatis-Plus)
-- [完整迁移指南](file:///Users/don/Code/个人/auto-table/MIGRATION-FROM-MYBATIS-PLUS-EXT.md)
 
 ## 🎁 额外特性
 

@@ -20,7 +20,6 @@ description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注
 > 
 > #### 📖 迁移资源
 > 
-> - [完整迁移指南](file:///Users/don/Code/个人/auto-table/MIGRATION-FROM-MYBATIS-PLUS-EXT.md) ← **强烈推荐阅读**
 > - [常见问题说明](/常见问题/说明#262-升级注意事项)
 
 ### ❌ 已移除的扩展注解
