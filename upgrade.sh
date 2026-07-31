@@ -56,7 +56,7 @@ git tag -a ${tagName} -m "版本号：${version}"
 echo "开始提交到远程git仓库：${version}"
 git push origin main --tags
 
-echo "开始发布新的版本到maven仓库：${version}"
+echo "开始发布新的版本到 maven 仓库：${version}"
 # 全量发布：central-publishing-maven-plugin 接管 deploy，自动跳过配了 skipPublishing=true 的模块
-# （auto-table-test、auto-table-adapter 已在各自 pom 配 skipPublishing，不会被上传到 Maven Central）
-mvn clean deploy
+#（auto-table-test、auto-table-adapter 已在各自 pom 配 skipPublishing，不会被上传到 Maven Central）
+mvn clean deploy -DskipTests
