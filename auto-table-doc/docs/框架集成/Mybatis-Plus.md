@@ -48,10 +48,28 @@ description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注
 
 ### ✅ 保留的标准注解
 
-以下注解仍可使用（但建议使用 MP 原生）：
-- `@AutoColumn` - 仍可用于多数据库场景
+以下注解**仍然可用并推荐使用**（特别是需要高级功能时）：
+- `@AutoColumn` - **支持多数据库配置**（MySQL、PostgreSQL、Oracle 等）
 - `@Ignore` - 忽略字段
-- 所有 MySQL 专用注解（如 `@MysqlColumnUnsigned`）
+- 所有 MySQL 专用注解（如 `@MysqlColumnUnsigned` - 无符号数字、`@MysqlColumnZerofill` - 补零显示）
+- PostgreSQL、Oracle、SQL Server 等专用注解
+
+> 💡 **如何选择注解？**
+> 
+> - **简单场景**（单数据库、基础功能）→ 使用 MP/MF 原生注解即可
+> - **复杂场景**（多数据库适配、特殊类型、高级特性）→ 建议使用 AutoTable 注解
+> 
+> **示例对比：**
+> 
+> ```java
+> // ❌ 仅用 MP 原生注解（只能定义普通 INT 类型）
+> @TableField("age")
+> private Integer age;
+> 
+> // ✅ 用 AutoTable 注解（支持 MySQL 的 UNSIGNED 类型）
+> @AutoColumn(columnType = "int UNSIGNED", dbType = DatabaseType.MYSQL)
+> private Integer age;
+> ```
 
 ## 💡 如何使用：两种选择
 
@@ -101,9 +119,15 @@ description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注
 
 ## 🚀 快速开始：零侵入式集成
 
-无论选择哪种方式，实际使用方法完全一样——**只用 MP 原生注解**！
+### 📌 核心设计理念
 
-### 🚀 极简演示
+**兼容 MP/MF 原生注解 + 支持 AutoTable 高级注解**
+
+AutoTable 适配器提供两层能力：
+1. ✅ **基础层** - 自动识别 MP/MF 原生注解（满足简单场景）
+2. ⭐ **增强层** - 支持 AutoTable 专属注解（多数据库、特殊类型等高级功能）
+
+### 🎯 使用方式
 
 #### 第一步：引入依赖
 
@@ -116,25 +140,54 @@ description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注
 </dependency>
 ```
 
-#### 第二步：定义实体（完全用 MP 原生注解）
+#### 第二步：定义实体
+
+**选择一：只使用 MP/MF 原生注解（适合简单场景）**
 
 ```java
 import com.baomidou.mybatisplus.annotation.*;
 
 @Data
-@TableName("sys_user")  // ← 只用 MP 的 @TableName
+@TableName("sys_user")  // ← MP 原生表注解
 public class User {
     
-    @TableId(value = "id", type = IdType.AUTO)  // ← 只用 MP 的 @TableId
+    @TableId(value = "id", type = IdType.AUTO)  // ← MP 原生主键注解
     private Long id;
     
-    @TableField("username")
+    @TableField("username")  // ← MP 原生字段注解
     private String username;
     
     @TableField("email")
     private String email;
 }
 ```
+
+**选择二：使用 AutoTable 高级注解（适合复杂场景）**
+
+```java
+import com.baomidou.mybatisplus.annotation.*;
+import org.dromara.autotable.annotation.*;
+import org.dromara.autotable.annotation.enums.DatabaseType;
+
+@Data
+@TableName("sys_user")  // ← MP 原生表注解
+public class User {
+    
+    @TableId(value = "id", type = IdType.AUTO)  // ← MP 原生主键注解
+    private Long id;
+    
+    @AutoColumn(value = "username", dbType = DatabaseType.MYSQL)  // ← AutoTable 字段注解
+    private String username;
+    
+    @AutoColumn(columnType = "int UNSIGNED", dbType = DatabaseType.MYSQL)  // ← 支持 MySQL 特有类型
+    private Integer age;
+    
+    @TableField("email")  // ← 混合使用 MP 原生注解也没问题
+    private String email;
+}
+```
+
+> 💡 **提示**：可以**混合使用** MP/MF 原生注解和 AutoTable 注解，AutoTable 会智能识别两者！
 
 #### 第三步：启动应用
 
@@ -154,7 +207,7 @@ public class Application {
 
 ✨ **完成！** 启动后 AutoTable 会自动：
 - 识别所有 `@TableName` 标注的实体
-- 根据 `@TableId`、`@TableField` 解析字段
+- 根据 `@TableId`、`@TableField`、`@AutoColumn` 解析字段
 - 自动创建数据库表结构
 - 后续修改实体，表结构自动同步
 
@@ -186,17 +239,24 @@ flowchart LR
 - `MybatisPlusJavaTypeToDatabaseTypeConverter`：处理类型映射（枚举、Date 等）
 - `MybatisPlusRunBeforeCallback`：在 DDL 执行前屏蔽 MP 拦截器插件
 
-### 支持的 MP 注解
+### 支持的 MP/MF 注解
 
-AutoTable 会智能识别所有标准 MP 注解：
+AutoTable 会智能识别 **MP/MF 原生注解** + **AutoTable 专属注解**：
 
-| MP 注解 | 作用 | AutoTable 支持 |
-|--------|------|---------------|
-| `@TableName` | 定义表名 | ✅ 自动识别 |
-| `@TableId` | 定义主键 | ✅ 支持所有 IdType |
-| `@TableField` | 定义字段 | ✅ 支持 exist、value、typeHandler |
-| `@EnumValue` | 枚举值标记 | ✅ 自动提取 |
-| `@TableName.excludeProperty` | 排除字段 | ✅ 自动识别 |
+| 注解类型 | 注解名称 | AutoTable 支持 |
+|----------|---------|---------------|
+| **MP/MF 原生注解** | `@TableName` | ✅ 自动识别 |
+| | `@TableId` | ✅ 支持所有 IdType |
+| | `@TableField` | ✅ 支持 exist、value、typeHandler |
+| | `@EnumValue` | ✅ 自动提取 |
+| | `@TableName.excludeProperty` | ✅ 自动识别 |
+| **AutoTable 高级注解** | `@AutoColumn` | ✅ 支持多数据库配置 |
+| | `@Ignore` | ✅ 忽略字段 |
+| | `@MysqlColumnUnsigned` | ✅ MySQL 无符号数字 |
+| | `@MysqlColumnZerofill` | ✅ MySQL 补零显示 |
+| | `@PgsqlColumn` | ✅ PostgreSQL 专用 |
+| | `@OracleColumn` | ✅ Oracle 专用 |
+| | ...更多数据库专用注解 | ✅ 见注解文档 |
 
 ### 使用 MyBatis-Plus-Ext
 
