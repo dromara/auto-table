@@ -107,7 +107,7 @@ AutoTable 2.6.2 版本对 MyBatis-Plus 适配器进行了重大重构：
 - ✅ **回归原生注解**（使用 MP 的 `@TableField`、`@TableName`）
 - ✅ **增强 MyBatis-Flex 支持**（新增适配器）
 
-详细迁移指南：[MyBatis-Plus 升级说明](/ORM 适配/Mybatis-Plus)
+详细迁移指南：[2.6.2 升级注意事项](/常见问题/说明#262-升级注意事项)
 
 ## 🎁 额外特性
 

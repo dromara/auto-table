@@ -11,25 +11,40 @@ description: 零配置集成 MyBatis-Plus，自动识别@TableField/@TableId 注
 
 > ### 🔴 **立即查看升级指南！**
 > 
-> AutoTable 2.6.2 版本移除了 MyBatis-Plus 适配器的扩展注解体系。
+> AutoTable 2.6.2 版本对 MyBatis-Plus 适配器进行了重大重构：**回归零侵入设计理念**。
 > 
 > #### 🎯 您需要做什么？
 > 
 > - **如果您从未使用过扩展注解**：无需任何操作，继续使用 MP 原生注解即可正常工作。
-> - **如果您使用了扩展注解**（如 `@Column`、`@Table`）**：** **必须迁移到标准注解**，否则将无法工作。
+> - **如果您使用了扩展注解（如 `@Column`、`@Table`）**：
+>   - ✅ **如果您使用的是 MPE/MFE**：这些注解仍然保留在 MPE 中，继续使用即可！
+>   - ❌ **如果您直接使用 AutoTable Starter**：必须迁移到 MP 原生注解，否则将无法工作。
 > 
 > #### 📖 迁移资源
 > 
 > - [常见问题说明](/常见问题/说明#262-升级注意事项)
 
-### ❌ 已移除的扩展注解
+### ❌ 从 MPE/MFE 迁移到 MP/MF 原生注解
 
-| 旧版扩展注解 | ✅ 新版标准注解（使用 MP 原生） | 说明 |
+如果您**直接使用 `auto-table-adapter-*` Starter**（不依赖 MPE），建议从 MPE 风格的注解迁移到 MP/MF 原生注解：
+
+| MPE 风格注解 | ✅ MP 原生注解 | 说明 |
 |-------------|-------------------------------|------|
 | `@Column` | `@TableField` | MP 原生字段注解 |
 | `@ColumnId` | `@TableId` | MP 原生主键注解 |
 | `@Table` | `@TableName` | MP 原生表注解 |
 | `@UniqueIndex` | `@TableField(exist=false)` | 手动管理索引 |
+
+> 💡 **重要说明**：
+> - **使用 MPE/MFE 的用户**：这些注解**仍然可用**，无需迁移！
+> - **直接使用 AutoTable Starter 的用户**：建议使用 MP/MF 原生注解，以获得更好的兼容性和一致性。
+
+> 📝 **为什么建议迁移？**
+> 
+> MPE/MFE 的注解本质上是 MP/MF 原生注解的封装或别名。直接使用原生注解的好处：
+> - ✅ 代码更清晰，不依赖于特定的扩展库
+> - ✅ 更容易在不同 ORM 框架之间迁移
+> - ✅ 符合 AutoTable 的零侵入设计理念
 
 ### ✅ 保留的标准注解
 
@@ -137,17 +152,39 @@ AutoTable 会智能识别所有标准 MP 注解：
 | `@EnumValue` | 枚举值标记 | ✅ 自动提取 |
 | `@TableName.excludeProperty` | 排除字段 | ✅ 自动识别 |
 
-### 与 MyBatis-Plus-Ext 的关系
+### 使用 MyBatis-Plus-Ext
 
-如果您使用 [MyBatis-Plus-Ext](https://gitee.com/dromara/mybatis-plus-ext)（扩展版 MP），建议：
+**AutoTable v2.6.2+ 已深度集成到 MPE 中**
+
+如果您已经在使用 [MyBatis-Plus-Ext](https://gitee.com/dromara/mybatis-plus-ext)（MPE），**只需引入 MPE 即可**：
 
 ```xml
-<!-- 同时引入 MPE 和 AutoTable -->
+<!-- 只加这一个 Starter -->
 <dependency>
     <groupId>org.dromara.mybatis-plus-ext</groupId>
     <artifactId>mybatis-plus-ext-spring-boot-starter</artifactId>
     <version>X.X.X</version>
 </dependency>
+```
+
+**MPE 会自动提供以下能力：**
+
+1. ✅ **AutoTable 自动建表** - 自动识别 MP 原生注解创建表结构
+2. ✅ **代码生成器** - 基于实体类生成 Mapper、Service、Controller
+3. ✅ **数据填充器** - 自动填充创建时间、更新人等字段
+4. ✅ **关联查询助手** - 简化多表关联查询
+5. ✅ **其他扩展功能** - 见 MPE 官方文档
+
+> 💡 **工作原理**：MPE 内部会读取您代码中的 `@TableName`、`@TableField` 等 MP 原生注解，通过 AutoTable 接口自动完成建表，对外完全透明。
+
+---
+
+### 只用 AutoTable（不依赖 MPE）
+
+如果您**只需要 AutoTable 的自动建表能力**，而不需要使用 MPE 的其他扩展功能，推荐直接使用独立的 AutoTable 适配器：
+
+```xml
+<!-- 仅引入 AutoTable MP 适配器 -->
 <dependency>
     <groupId>org.dromara.autotable</groupId>
     <artifactId>auto-table-adapter-mybatis-plus-spring-boot-starter</artifactId>
@@ -155,10 +192,11 @@ AutoTable 会智能识别所有标准 MP 注解：
 </dependency>
 ```
 
-这样您可以同时享受：
-- MPE 的代码生成、代码预生成等功能
-- AutoTable 的自动建表功能
-- 两者完美结合，互不干扰
+**优势：**
+
+- 🚀 **依赖更轻** - 不引入 MPE 额外的依赖包
+- 🎯 **职责单一** - 专注于自动建表能力
+- 🔧 **配置独立** - 不与 MPE 功能相互影响
 
 ## 配置项
 
