@@ -197,15 +197,17 @@ public class TableMetadataHandler {
             return autoIncrement.value();
         }
 
-        // 调用第三方实现（因为布尔值在注解中无法存在true和false以外的值，所以不知道用户是否填写了值还是默认值，所以，先获取第三方自定义值）
+        PrimaryKey primaryKey = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
+
+        // @PrimaryKey 显式声明自增（autoIncrement = true 只能是用户显式设置，不会被默认值意外触发），优先于第三方
+        if (primaryKey != null && primaryKey.autoIncrement()) {
+            return true;
+        }
+
+        // 调用第三方实现（因为布尔值在注解中无法存在true和false以外的值，无法区分用户显式设置false还是默认值，所以autoIncrement为false时，先获取第三方自定义值）
         Boolean isAutoIncrement = AutoTableGlobalConfig.instance().getAutoTableMetadataAdapter().isAutoIncrement(field, clazz);
         if (isAutoIncrement != null) {
             return isAutoIncrement;
-        }
-
-        PrimaryKey isPrimary = AutoTableGlobalConfig.instance().getAutoTableAnnotationFinder().find(field, PrimaryKey.class);
-        if (isPrimary != null) {
-            return isPrimary.autoIncrement();
         }
 
         return false;
