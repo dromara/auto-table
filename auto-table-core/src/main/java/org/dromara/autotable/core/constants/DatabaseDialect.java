@@ -14,6 +14,7 @@ public interface DatabaseDialect {
     String SQLite = "SQLite";
     String H2 = "H2";
     String Oracle = "Oracle";
+    String YashanDB = "YashanDB";
     String SQLServer = "Microsoft SQL Server"; // 对齐 mssql-jdbc getDatabaseProductName() 返回值
     String DB2 = "DB2";
 

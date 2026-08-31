@@ -47,6 +47,11 @@
         </dependency>
         <dependency>
             <groupId>org.dromara.autotable</groupId>
+            <artifactId>auto-table-strategy-yashandb</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dromara.autotable</groupId>
             <artifactId>auto-table-strategy-pgsql</artifactId>
             <version>${project.version}</version>
         </dependency>
