@@ -246,7 +246,7 @@ public class MyCallback implements CreateTableFinishCallback {
 | 索引管理 | ⚠️ 基础 | ✅ 完整 |
 | 字段顺序保持 | ❌ | ✅ MySQL |
 | Mybatis 生态 | ❌ | ✅ |
-| 多数据库支持 | ✅ | ✅ 10种 |
+| 多数据库支持 | ✅ | ✅ 11种 |
 | 多数据库适配 | ❌ | ✅ dialect |
 | 数据初始化 | ❌ | ✅ 3种方式 |
 | 生产模式（仅校验） | ❌ | ✅ |
