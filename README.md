@@ -28,7 +28,7 @@
 | | 特性 | 说明 |
 |:---:|------|------|
 | 🚀 | **开箱即用** | 一个 `@AutoTable` 注解激活，零配置启动 |
-| 🔌 | **10 种数据库** | MySQL、PostgreSQL、Oracle、SQL Server、达梦、人大金仓、H2、SQLite、Doris、MariaDB |
+| 🔌 | **11 种数据库** | MySQL、PostgreSQL、Oracle、SQL Server、达梦、人大金仓、H2、SQLite、Doris、MariaDB、YashanDB |
 | 🌐 | **多库适配** | 同一实体适配多种数据库，通过 `dialect` 属性自动切换字段配置 |
 | 🏗️ | **自动建库** | 连数据库都帮你建好，真正的开箱即用 |
 | 📦 | **数据初始化** | 建表后自动灌入初始数据，支持 SQL 文件和 Java 方法 |
@@ -246,7 +246,7 @@ public class MyCallback implements CreateTableFinishCallback {
 | 索引管理 | ⚠️ 基础 | ✅ 完整 |
 | 字段顺序保持 | ❌ | ✅ MySQL |
 | Mybatis 生态 | ❌ | ✅ |
-| 多数据库支持 | ✅ | ✅ 10种 |
+| 多数据库支持 | ✅ | ✅ 11种 |
 | 多数据库适配 | ❌ | ✅ dialect |
 | 数据初始化 | ❌ | ✅ 3种方式 |
 | 生产模式（仅校验） | ❌ | ✅ |
@@ -267,7 +267,7 @@ public class MyCallback implements CreateTableFinishCallback {
 | SQL Server | 2016+ | ✅ | |
 | 达梦 | dm8 | ✅ | [@minfc](https://gitee.com/minfc) |
 | 人大金仓 | V009R001C002B0014 | ✅ | [@minfc](https://gitee.com/minfc) |
-| YashanDB | 23.4.7.100 / JDBC 1.10.8 | ✅ | |
+| YashanDB | 23.4.7.100 / JDBC 1.10.8 | ✅ | [@Assassin-Q](https://gitee.com/qianguanshui) |
 
 > 🙌 其他数据库暂未支持，期待你的 PR！
 
