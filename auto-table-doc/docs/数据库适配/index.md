@@ -21,7 +21,6 @@ AutoTable 通过 **策略模式 + SPI 机制** 支持多种数据库，每种数
 | [H2](/数据库适配/H2) | `auto-table-strategy-h2` | 2.2.220 | ✅ 稳定 ||
 | [SQLite](/数据库适配/SQLite) | `auto-table-strategy-sqlite` | 3.35.5 | ✅ 稳定 ||
 | [Doris](/数据库适配/Doris) | `auto-table-strategy-doris` | 2.0 | ✅ 稳定 | [@lizhian](https://gitee.com/lizhian) |
-| [YashanDB](/数据库适配/YashanDB) | `auto-table-strategy-yashandb` | 23.4.7.100 / JDBC 1.10.8 | ✅ 稳定 ||
 
 ## 按需引入
 

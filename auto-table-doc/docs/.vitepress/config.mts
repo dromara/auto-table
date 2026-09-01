@@ -90,7 +90,7 @@ export default withMermaid(defineConfig({
         darkModeSwitchLabel: '主题',
         sidebarMenuLabel: '菜单',
         editLink: {
-            pattern: 'https://gitee.com/dromara/auto-table/edit/main/auto-table-doc/docs/:path',
+            pattern: 'https://gitee.com/tangzc/auto-table/edit/main/auto-table-doc/docs/:path',
             text: '在 Gitee 上编辑此页'
         },
         footer: {
@@ -116,7 +116,7 @@ export default withMermaid(defineConfig({
                 text: LATEST_VERSION,
                 items: [
                     {text: '更新日志', link: '/更新日志'},
-                    {text: 'Gitee', link: 'https://gitee.com/dromara/auto-table'},
+                    {text: 'Gitee', link: 'https://gitee.com/tangzc/auto-table'},
                     {text: 'GitHub', link: 'https://github.com/dromara/auto-table'}
                 ]
             }
@@ -145,7 +145,6 @@ export default withMermaid(defineConfig({
                         {text: 'H2', link: '/数据库适配/H2'},
                         {text: 'SQLite', link: '/数据库适配/SQLite'},
                         {text: 'Doris', link: '/数据库适配/Doris'},
-                        {text: 'YashanDB', link: '/数据库适配/YashanDB'},
                     ]
                 }
             ],
