@@ -43,8 +43,7 @@
         <dependency>
             <groupId>com.yashandb</groupId>
             <artifactId>yashandb-jdbc</artifactId>
-            <version>1.10.8</version>
-            <scope>test</scope>
+            <version>1.10.7</version>
         </dependency>
     </dependencies>
 </project>
