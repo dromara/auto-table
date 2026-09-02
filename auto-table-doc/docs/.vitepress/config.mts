@@ -145,6 +145,7 @@ export default withMermaid(defineConfig({
                         {text: 'H2', link: '/数据库适配/H2'},
                         {text: 'SQLite', link: '/数据库适配/SQLite'},
                         {text: 'Doris', link: '/数据库适配/Doris'},
+                        {text: 'YashanDB', link: '/数据库适配/YashanDB'},
                     ]
                 }
             ],
