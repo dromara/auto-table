@@ -31,6 +31,14 @@ public class OracleCompareTableInfo extends CompareTableInfo {
      * 是否存在自增主键序列
      */
     private boolean hasSequence;
+    /**
+     * 数据库中实际存在的表名
+     */
+    private String actualTableName;
+    /**
+     * 数据库中实际存在的自增主键序列名
+     */
+    private String actualSequenceName;
 
     /**
      * 更新表注释
@@ -81,7 +89,8 @@ public class OracleCompareTableInfo extends CompareTableInfo {
     }
 
     public boolean needModify() {
-        return tableComment != null
+        return needSequence != hasSequence
+                || tableComment != null
                 || deletePrimaryKey != null
                 || createPrimaryKey != null
                 || !createColumnList.isEmpty()
@@ -96,6 +105,9 @@ public class OracleCompareTableInfo extends CompareTableInfo {
 
     public String validateFailedMessage() {
         StringBuilder failedMessage = new StringBuilder();
+        if (needSequence != hasSequence) {
+            failedMessage.append(needSequence ? "缺少自增序列" : "存在多余自增序列").append("\n");
+        }
         if (tableComment != null) {
             failedMessage.append("表注释变更：").append(tableComment).append("\n");
         }

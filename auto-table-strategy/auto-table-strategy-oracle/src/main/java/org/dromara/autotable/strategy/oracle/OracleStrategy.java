@@ -20,7 +20,6 @@ import org.dromara.autotable.core.utils.StringUtils;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -143,6 +142,15 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         return TYPE_MAPPING;
     }
 
+    @Override
+    public boolean checkTableNotExist(String schema, String tableName) {
+        return resolveActualTableName(schema, tableName) == null;
+    }
+
+    private String resolveActualTableName(String schema, String tableName) {
+        return OracleIdentifierUtils.resolveExistingName(listAllTables(schema), tableName);
+    }
+
 
     /**
      * 生成删除指定表及其对应序列的PL/SQL代码
@@ -156,22 +164,38 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     @Override
     public String dropTable(String schema, String tableName) {
         String wrappedTableName = IStrategy.wrapIdentifiers(tableName);
-        String wrappedSeqName = IStrategy.wrapIdentifiers("auto_seq_" + tableName);
+        String legacyTableName = tableName.toUpperCase(Locale.ROOT);
+        String wrappedLegacyTableName = IStrategy.wrapIdentifiers(legacyTableName);
+        String sequenceName = OracleIdentifierUtils.sequenceName(tableName);
+        String legacySequenceName = sequenceName.toUpperCase(Locale.ROOT);
+        String wrappedSeqName = IStrategy.wrapIdentifiers(sequenceName);
+        String wrappedLegacySeqName = IStrategy.wrapIdentifiers(legacySequenceName);
         // 生成一段PL/SQL代码，用于检查并删除指定的表和序列
         // 首先声明两个变量，用于存储表和序列的数量
         return String.format("DECLARE " +
                         "    table_count INTEGER; " +
                         "    auto_seq_count   INTEGER; " +
                         "BEGIN " +
-                        "    SELECT COUNT(*) INTO table_count FROM user_tables WHERE upper(table_name) = upper('%s'); " +
+                        "    SELECT COUNT(*) INTO table_count FROM user_tables WHERE table_name = '%s'; " +
                         "    IF table_count > 0 THEN " +
                         "        EXECUTE IMMEDIATE 'DROP TABLE %s'; " +
+                        "    ELSE " +
+                        "        SELECT COUNT(*) INTO table_count FROM user_tables WHERE table_name = '%s'; " +
+                        "        IF table_count > 0 THEN " +
+                        "            EXECUTE IMMEDIATE 'DROP TABLE %s'; " +
+                        "        END IF; " +
                         "    END IF; " +
-                        "    SELECT COUNT(*) INTO auto_seq_count FROM user_sequences WHERE upper(sequence_name) = upper('auto_seq_%s'); " +
+                        "    SELECT COUNT(*) INTO auto_seq_count FROM user_sequences WHERE sequence_name = '%s'; " +
                         "    IF auto_seq_count > 0 THEN " +
                         "        EXECUTE IMMEDIATE 'DROP SEQUENCE %s'; " +
+                        "    ELSE " +
+                        "        SELECT COUNT(*) INTO auto_seq_count FROM user_sequences WHERE sequence_name = '%s'; " +
+                        "        IF auto_seq_count > 0 THEN " +
+                        "            EXECUTE IMMEDIATE 'DROP SEQUENCE %s'; " +
+                        "        END IF; " +
                         "    END IF;" +
-                        "END;", tableName, wrappedTableName, tableName, wrappedSeqName)
+                        "END;", tableName, wrappedTableName, legacyTableName, wrappedLegacyTableName,
+                sequenceName, wrappedSeqName, legacySequenceName, wrappedLegacySeqName)
                 .replaceAll("\\s+", " ");
     }
 
@@ -213,7 +237,8 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 构建主键自增序列
         if (primaryKey != null && primaryKey.isAutoIncrement()) {
-            result.add(String.format("CREATE SEQUENCE %s", IStrategy.wrapIdentifiers("auto_seq_" + tableName)));
+            result.add(String.format("CREATE SEQUENCE %s",
+                    IStrategy.wrapIdentifiers(OracleIdentifierUtils.sequenceName(tableName))));
         }
         // 建表语句
         List<String> columnSqlList = columnMetadataList.stream()
@@ -249,6 +274,9 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
     public @NonNull OracleCompareTableInfo compareTable(DefaultTableMetadata tableMetadata) {
         OracleCompareTableInfo compareTableInfo = new OracleCompareTableInfo(tableMetadata.getTableName(), tableMetadata.getSchema());
         String tableName = tableMetadata.getTableName();
+        String actualTableName = Optional.ofNullable(resolveActualTableName(tableMetadata.getSchema(), tableName))
+                .orElse(tableName);
+        compareTableInfo.setActualTableName(actualTableName);
         String newTableComment = Optional.ofNullable(tableMetadata.getComment()).orElse("");
 
         // 实体主键
@@ -260,41 +288,48 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 实体字段信息
         List<ColumnMetadata> newColumnList = tableMetadata.getColumnMetadataList();
-        Set<String> newColumnNameSet = newColumnList.stream()
-                .map(ColumnMetadata::getName)
-                .map(String::toLowerCase)
-                .collect(Collectors.toSet());
         // 实体索引信息
         List<IndexMetadata> newIndexList = tableMetadata.getIndexMetadataList();
-        Set<String> newIndexNameSet = newIndexList.stream()
-                .map(IndexMetadata::getName)
-                .map(String::toLowerCase)
-                .collect(Collectors.toSet());
         // 数据库字段信息
-        String oldTableComment = Optional.of(TabComment.search(tableName))
+        String oldTableComment = Optional.of(TabComment.search(actualTableName))
                 .map(TabComment::getComments)
                 .orElse("");
-        List<TabColumn> oldColumnList = TabColumn.search(tableName)
-                .stream()
-                .peek(it -> {
-                    String dataDefault = it.getData_default();
-                    String seqName = ".\"auto_seq_" + tableName + "\".\"nextval\"";
-                    if (StringUtils.hasText(dataDefault)
-                            && dataDefault.toLowerCase().endsWith(seqName.toLowerCase())) {
-                        it.setData_default("auto_seq_" + tableName + ".nextval".toLowerCase());
-                    }
-                })
-                .collect(Collectors.toList());
-        Map<String, TabColumn> oldColumnMap = oldColumnList
-                .stream()
-                .collect(Collectors.toMap(it -> it.getColumn_name().toLowerCase(), Function.identity()));
+        List<TabColumn> oldColumnList = TabColumn.search(actualTableName);
+        Map<ColumnMetadata, TabColumn> matchedColumns = new LinkedHashMap<>();
+        Set<TabColumn> matchedOldColumns = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (ColumnMetadata newColumn : newColumnList) {
+            TabColumn oldColumn = oldColumnList.stream()
+                    .filter(column -> !matchedOldColumns.contains(column))
+                    .filter(column -> newColumn.getName().equals(column.getColumn_name()))
+                    .findFirst()
+                    .orElse(null);
+            if (oldColumn != null) {
+                matchedColumns.put(newColumn, oldColumn);
+                matchedOldColumns.add(oldColumn);
+            }
+        }
+        for (ColumnMetadata newColumn : newColumnList) {
+            if (matchedColumns.containsKey(newColumn)) {
+                continue;
+            }
+            String legacyColumnName = newColumn.getName().toUpperCase(Locale.ROOT);
+            TabColumn oldColumn = oldColumnList.stream()
+                    .filter(column -> !matchedOldColumns.contains(column))
+                    .filter(column -> legacyColumnName.equals(column.getColumn_name()))
+                    .findFirst()
+                    .orElse(null);
+            if (oldColumn != null) {
+                matchedColumns.put(newColumn, oldColumn);
+                matchedOldColumns.add(oldColumn);
+            }
+        }
         // 数据库主键信息
         TabColumn oldPrimaryKey = oldColumnList.stream()
                 .filter(it -> "P".equals(it.getConstraint_type()))
                 .findAny()
                 .orElse(null);
         // 数据库索引信息
-        Map<String, List<TabIndex>> oldIndexMap = TabIndex.search(tableName)
+        Map<String, List<TabIndex>> oldIndexMap = TabIndex.search(actualTableName)
                 .stream()
                 .peek(it -> {
                     String columnExpression = it.getColumn_expression();
@@ -302,12 +337,13 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                         it.setColumn_name(columnExpression.substring(1, columnExpression.length() - 1));
                     }
                 })
-                .collect(Collectors.groupingBy(it -> it.getIndex_name().toLowerCase()));
+                .collect(Collectors.groupingBy(TabIndex::getIndex_name, LinkedHashMap::new, Collectors.toList()));
 
         // 记录序列信息
         compareTableInfo.setNeedSequence(newPrimaryKey != null && newPrimaryKey.isAutoIncrement());
         TabSequence oldSequence = TabSequence.search(tableName);
         compareTableInfo.setHasSequence(oldSequence != null);
+        compareTableInfo.setActualSequenceName(oldSequence == null ? null : oldSequence.getSequence_name());
 
         // 判断表注释
         if (!newTableComment.equals(oldTableComment)) {
@@ -316,19 +352,25 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 是否需要删除旧主键
         if (oldPrimaryKey != null) {
-            if (newPrimaryKey == null || !newPrimaryKey.getName().equalsIgnoreCase(oldPrimaryKey.getColumn_name())) {
+            TabColumn matchedPrimaryKey = matchedColumns.get(newPrimaryKey);
+            if (matchedPrimaryKey == null || !matchedPrimaryKey.getColumn_name().equals(oldPrimaryKey.getColumn_name())) {
                 compareTableInfo.setDeletePrimaryKey(oldPrimaryKey);
             }
         }
         // 是否需要新增主键
         if (newPrimaryKey != null) {
-            if (oldPrimaryKey == null || !newPrimaryKey.getName().equalsIgnoreCase(oldPrimaryKey.getColumn_name())) {
-                compareTableInfo.setCreatePrimaryKey(newPrimaryKey);
+            TabColumn matchedPrimaryKey = matchedColumns.get(newPrimaryKey);
+            if (oldPrimaryKey == null || matchedPrimaryKey == null
+                    || !matchedPrimaryKey.getColumn_name().equals(oldPrimaryKey.getColumn_name())) {
+                String primaryKeyName = matchedPrimaryKey == null
+                        ? newPrimaryKey.getName()
+                        : matchedPrimaryKey.getColumn_name();
+                compareTableInfo.setCreatePrimaryKey(copyColumnWithName(newPrimaryKey, primaryKeyName));
             }
         }
         // 新增字段
         List<ColumnMetadata> createColumnList = newColumnList.stream()
-                .filter(it -> !oldColumnMap.containsKey(it.getName().toLowerCase()))
+                .filter(it -> !matchedColumns.containsKey(it))
                 .collect(Collectors.toList());
         compareTableInfo.setCreateColumnList(createColumnList);
 
@@ -336,9 +378,8 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         String logicDropColumnPrefix = properties.getLogicDropColumnPrefix();
         List<String> deleteColumnList = oldColumnList.stream()
+                .filter(column -> !matchedOldColumns.contains(column))
                 .map(TabColumn::getColumn_name)
-                .map(String::toLowerCase)
-                .filter(columnName -> !newColumnNameSet.contains(columnName))
                 .filter(columnName -> !(StringUtils.hasText(logicDropColumnPrefix) && columnName.startsWith(logicDropColumnPrefix)))
                 .collect(Collectors.toList());
         compareTableInfo.setDeleteColumnList(deleteColumnList);
@@ -346,9 +387,8 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         // 重命名字段（逻辑删除）
         if (StringUtils.hasText(logicDropColumnPrefix)) {
             oldColumnList.stream()
+                    .filter(column -> !matchedOldColumns.contains(column))
                     .map(TabColumn::getColumn_name)
-                    .map(String::toLowerCase)
-                    .filter(columnName -> !newColumnNameSet.contains(columnName))
                     .filter(columnName -> !columnName.startsWith(logicDropColumnPrefix))
                     .forEach(columnName -> compareTableInfo.getRenameColumnMap().put(columnName, logicDropColumnPrefix + columnName));
         }
@@ -356,12 +396,15 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 记录需要修改的字段
         Set<String> updateColumnSet = new HashSet<>();
+        String effectiveSequenceName = oldSequence == null
+                ? OracleIdentifierUtils.sequenceName(tableName)
+                : oldSequence.getSequence_name();
         // 修改字段
         List<String> updateColumnList = newColumnList.stream()
-                .filter(it -> oldColumnMap.containsKey(it.getName().toLowerCase()))
+                .filter(matchedColumns::containsKey)
                 .map(newColumn -> {
-                    TabColumn oldColumn = oldColumnMap.get(newColumn.getName().toLowerCase());
-                    String newColumnSql = newColumn.getName();
+                    TabColumn oldColumn = matchedColumns.get(newColumn);
+                    String newColumnSql = IStrategy.wrapIdentifiers(oldColumn.getColumn_name());
                     boolean change = false;
 
                     // 类型是否修改
@@ -369,17 +412,20 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     String oldType = oldColumn.getFullType();
                     if (!isSameType(newType, oldType)) {
                         change = true;
-                        updateColumnSet.add(newColumn.getName().toLowerCase());
+                        updateColumnSet.add(oldColumn.getColumn_name());
                         newColumnSql += " " + newType;
                     }
 
 
                     // 默认值是否修改
-                    String newDefaultValue = OracleHelper.SQL.formatDefaultValue(tableName, newColumn);
+                    String newDefaultValue = OracleHelper.SQL.formatDefaultValue(tableName, newColumn, effectiveSequenceName);
                     String oldDefaultValue = String.valueOf(oldColumn.getData_default()).trim();
-                    if (!newDefaultValue.equalsIgnoreCase(oldDefaultValue)) {
+                    boolean sameDefaultValue = newColumn.isPrimary() && newColumn.isAutoIncrement()
+                            ? OracleIdentifierUtils.isSequenceNextVal(oldDefaultValue, effectiveSequenceName)
+                            : newDefaultValue.equalsIgnoreCase(oldDefaultValue);
+                    if (!sameDefaultValue) {
                         change = true;
-                        updateColumnSet.add(newColumn.getName().toLowerCase());
+                        updateColumnSet.add(oldColumn.getColumn_name());
                         newColumnSql += " DEFAULT " + newDefaultValue;
                     }
 
@@ -389,7 +435,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                     boolean oldNullAble = "Y".equals(oldColumn.getNullable());
                     if (newNullAble != oldNullAble) {
                         change = true;
-                        updateColumnSet.add(newColumn.getName().toLowerCase());
+                        updateColumnSet.add(oldColumn.getColumn_name());
                         if (newNullAble) {
                             newColumnSql += " NULL";
                         } else {
@@ -404,13 +450,14 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 字段注释是否修改
         List<ColumnMetadata> updateColumnCommentList = newColumnList.stream()
-                .filter(it -> oldColumnMap.containsKey(it.getName().toLowerCase()))
+                .filter(matchedColumns::containsKey)
                 .filter(newColumn -> {
-                    TabColumn oldColumn = oldColumnMap.get(newColumn.getName().toLowerCase());
+                    TabColumn oldColumn = matchedColumns.get(newColumn);
                     String newComment = Optional.ofNullable(newColumn.getComment()).orElse("");
                     String oldComment = Optional.ofNullable(oldColumn.getComments()).orElse("");
                     return !newComment.equals(oldComment);
                 })
+                .map(newColumn -> copyColumnWithName(newColumn, matchedColumns.get(newColumn).getColumn_name()))
                 .collect(Collectors.toList());
         compareTableInfo.setUpdateColumnCommentList(updateColumnCommentList);
 
@@ -418,46 +465,64 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         Set<String> deleteIndexList = new HashSet<>();
         // 新增索引列表
         List<IndexMetadata> createIndexList = new ArrayList<>();
+        Set<String> matchedOldIndexNames = new HashSet<>();
+        Map<IndexMetadata, String> matchedIndexNames = new IdentityHashMap<>();
+        for (IndexMetadata newIndex : newIndexList) {
+            if (oldIndexMap.containsKey(newIndex.getName())) {
+                matchedIndexNames.put(newIndex, newIndex.getName());
+                matchedOldIndexNames.add(newIndex.getName());
+            }
+        }
+        for (IndexMetadata newIndex : newIndexList) {
+            if (matchedIndexNames.containsKey(newIndex)) {
+                continue;
+            }
+            String legacyIndexName = newIndex.getName().toUpperCase(Locale.ROOT);
+            if (oldIndexMap.containsKey(legacyIndexName) && !matchedOldIndexNames.contains(legacyIndexName)) {
+                matchedIndexNames.put(newIndex, legacyIndexName);
+                matchedOldIndexNames.add(legacyIndexName);
+            }
+        }
 
         // 遍历实体索引
         for (IndexMetadata newIndex : newIndexList) {
-            // 索引名称
-            String indexName = newIndex.getName().toLowerCase();
+            String actualIndexName = matchedIndexNames.get(newIndex);
+            IndexMetadata indexForCreate = copyIndexWithActualColumnNames(newIndex, matchedColumns);
             List<IndexMetadata.IndexColumnParam> newIndexColumns = newIndex.getColumns();
-            List<String> newIndexColumnNames = newIndex.getColumns()
-                    .stream()
-                    .map(IndexMetadata.IndexColumnParam::getColumn)
-                    .map(String::toLowerCase)
-                    .collect(Collectors.toList());
             // 索引字段有更新操作,需要删除关联的索引+重建索引
-            if (updateColumnSet.stream().anyMatch(newIndexColumnNames::contains)) {
-                createIndexList.add(newIndex);
-                if (oldIndexMap.containsKey(indexName)) {
-                    deleteIndexList.add(indexName);
+            boolean relatedColumnChanged = newIndexColumns.stream()
+                    .map(IndexMetadata.IndexColumnParam::getColumn)
+                    .map(columnName -> resolveActualColumnName(columnName, matchedColumns))
+                    .anyMatch(updateColumnSet::contains);
+            if (relatedColumnChanged) {
+                createIndexList.add(indexForCreate);
+                if (actualIndexName != null) {
+                    deleteIndexList.add(actualIndexName);
                 }
                 continue;
             }
             // 新增索引
-            if (!oldIndexMap.containsKey(indexName)) {
-                createIndexList.add(newIndex);
+            if (actualIndexName == null) {
+                createIndexList.add(indexForCreate);
                 continue;
             }
             // 存在同名索引,判断是否需要修改索引
-            List<TabIndex> oldIndexColumns = oldIndexMap.get(newIndex.getName().toLowerCase());
+            List<TabIndex> oldIndexColumns = oldIndexMap.get(actualIndexName);
             // 数量不同,需要删除索引+重建索引
             if (newIndexColumns.size() != oldIndexColumns.size()) {
-                createIndexList.add(newIndex);
-                deleteIndexList.add(indexName);
+                createIndexList.add(indexForCreate);
+                deleteIndexList.add(actualIndexName);
                 continue;
             }
+            boolean needRebuild = false;
             for (int i = 0; i < newIndexColumns.size(); i++) {
                 IndexMetadata.IndexColumnParam newIndexColumn = newIndexColumns.get(i);
                 TabIndex oldIndexColumn = oldIndexColumns.get(i);
                 // 字段顺序不同,需要删除索引+重建索引
-                if (!newIndexColumn.getColumn().equalsIgnoreCase(oldIndexColumn.getColumn_name())) {
-                    createIndexList.add(newIndex);
-                    deleteIndexList.add(indexName);
-                    continue;
+                String actualColumnName = resolveActualColumnName(newIndexColumn.getColumn(), matchedColumns);
+                if (!actualColumnName.equals(oldIndexColumn.getColumn_name())) {
+                    needRebuild = true;
+                    break;
                 }
                 String newSort = Optional.ofNullable(newIndexColumn.getSort())
                         .orElse(IndexSortTypeEnum.ASC)
@@ -467,20 +532,60 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
                         .toLowerCase();
                 // 字段排序方式不同,需要删除索引+重建索引
                 if (!newSort.equals(oldSort)) {
-                    createIndexList.add(newIndex);
-                    deleteIndexList.add(indexName);
+                    needRebuild = true;
+                    break;
                 }
+            }
+            if (needRebuild) {
+                createIndexList.add(indexForCreate);
+                deleteIndexList.add(actualIndexName);
             }
         }
 
         // 不在定义中的旧索引,删除索引
         oldIndexMap.keySet()
                 .stream()
-                .filter(oldIndexName -> !newIndexNameSet.contains(oldIndexName.toLowerCase()))
+                .filter(oldIndexName -> !matchedOldIndexNames.contains(oldIndexName))
                 .forEach(deleteIndexList::add);
         compareTableInfo.setDeleteIndexList(deleteIndexList);
         compareTableInfo.setCreateIndexList(createIndexList);
         return compareTableInfo;
+    }
+
+    private static String resolveActualColumnName(String expectedColumnName,
+                                                  Map<ColumnMetadata, TabColumn> matchedColumns) {
+        ColumnMetadata columnMetadata = OracleIdentifierUtils.resolveExisting(
+                matchedColumns.keySet(), expectedColumnName, ColumnMetadata::getName);
+        if (columnMetadata == null) {
+            return expectedColumnName;
+        }
+        return matchedColumns.get(columnMetadata).getColumn_name();
+    }
+
+    private static ColumnMetadata copyColumnWithName(ColumnMetadata source, String name) {
+        return new ColumnMetadata()
+                .setName(name)
+                .setComment(source.getComment())
+                .setType(source.getType())
+                .setNotNull(source.isNotNull())
+                .setPrimary(source.isPrimary())
+                .setAutoIncrement(source.isAutoIncrement())
+                .setDefaultValueType(source.getDefaultValueType())
+                .setDefaultValue(source.getDefaultValue());
+    }
+
+    private static IndexMetadata copyIndexWithActualColumnNames(IndexMetadata source,
+                                                                 Map<ColumnMetadata, TabColumn> matchedColumns) {
+        List<IndexMetadata.IndexColumnParam> columns = source.getColumns().stream()
+                .map(column -> IndexMetadata.IndexColumnParam.newInstance(
+                        resolveActualColumnName(column.getColumn(), matchedColumns), column.getSort()))
+                .collect(Collectors.toList());
+        return new IndexMetadata()
+                .setName(source.getName())
+                .setColumns(columns)
+                .setType(source.getType())
+                .setMethod(source.getMethod())
+                .setComment(source.getComment());
     }
 
     private boolean isSameType(String newType, String oldType) {
@@ -498,13 +603,16 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         List<String> result = new ArrayList<>();
         PropertyConfig properties = AutoTableGlobalConfig.instance().getAutoTableProperties();
         String tableName = compareTableInfo.getName();
-        String wrappedTableName = IStrategy.wrapIdentifiers(tableName);
+        String actualTableName = Optional.ofNullable(compareTableInfo.getActualTableName()).orElse(tableName);
+        String wrappedTableName = IStrategy.wrapIdentifiers(actualTableName);
+        String effectiveSequenceName = Optional.ofNullable(compareTableInfo.getActualSequenceName())
+                .orElse(OracleIdentifierUtils.sequenceName(tableName));
         // 先删除需要删除的索引,方便后续修改字段
         if (properties.getAutoDropIndex()) {
-            String indexPrefix = properties.getIndexPrefix().toLowerCase();
+            String indexPrefix = properties.getIndexPrefix();
             Boolean dropCustomIndex = properties.getAutoDropCustomIndex();
             for (String indexName : compareTableInfo.getDeleteIndexList()) {
-                boolean isAutoIndex = indexName.startsWith(indexPrefix);
+                boolean isAutoIndex = indexName.regionMatches(true, 0, indexPrefix, 0, indexPrefix.length());
                 if (isAutoIndex || dropCustomIndex) {
                     result.add(String.format("DROP INDEX %s", IStrategy.wrapIdentifiers(indexName)));
                 }
@@ -512,7 +620,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
         }
         // 先新增序列,方便后续修改主键默认值
         if (compareTableInfo.isNeedSequence() && !compareTableInfo.isHasSequence()) {
-            result.add(String.format("CREATE SEQUENCE %s", IStrategy.wrapIdentifiers("auto_seq_" + tableName)));
+            result.add(String.format("CREATE SEQUENCE %s", IStrategy.wrapIdentifiers(effectiveSequenceName)));
         }
 
         // 删除字段
@@ -529,7 +637,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 新增字段
         for (ColumnMetadata columnMetadata : compareTableInfo.getCreateColumnList()) {
-            String columnSql = OracleHelper.SQL.toColumnSql(tableName, columnMetadata);
+            String columnSql = OracleHelper.SQL.toColumnSql(tableName, columnMetadata, effectiveSequenceName);
             result.add(String.format("ALTER TABLE %s ADD (%s)", wrappedTableName, columnSql));
         }
 
@@ -540,7 +648,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 删除序列
         if (!compareTableInfo.isNeedSequence() && compareTableInfo.isHasSequence()) {
-            result.add(String.format("DROP SEQUENCE %s", IStrategy.wrapIdentifiers("auto_seq_" + tableName)));
+            result.add(String.format("DROP SEQUENCE %s", IStrategy.wrapIdentifiers(effectiveSequenceName)));
         }
 
 
@@ -561,7 +669,7 @@ public class OracleStrategy implements IStrategy<DefaultTableMetadata, OracleCom
 
         // 新建/重建索引
         for (IndexMetadata indexMetadata : compareTableInfo.getCreateIndexList()) {
-            String indexSql = OracleHelper.SQL.toIndexSql(tableName, indexMetadata);
+            String indexSql = OracleHelper.SQL.toIndexSql(actualTableName, indexMetadata);
             result.add(indexSql);
         }
 

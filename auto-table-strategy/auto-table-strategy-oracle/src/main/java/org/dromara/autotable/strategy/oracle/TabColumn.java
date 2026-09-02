@@ -102,7 +102,7 @@ public class TabColumn {
                 "                                   LEFT JOIN user_constraints cons ON cons_col.constraint_name = cons.constraint_name " +
                 "                          WHERE cons.constraint_type = 'P') pk " +
                 "                         ON tc.table_name = pk.table_name AND tc.column_name = pk.column_name " +
-                "      WHERE UPPER(tc.table_name) = UPPER(':tableName') " +
+                "      WHERE tc.table_name = ':tableName' " +
                 "      ORDER BY tc.column_id";
 
         // 执行SQL查询，并将结果映射到TabColumn对象列表中
