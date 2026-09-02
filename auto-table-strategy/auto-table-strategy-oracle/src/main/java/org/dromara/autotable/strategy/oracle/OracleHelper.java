@@ -106,6 +106,10 @@ public class OracleHelper {
          * @return 返回构建好的列定义SQL语句片段
          */
         public static String toColumnSql(String tableName, ColumnMetadata columnMetadata) {
+            return toColumnSql(tableName, columnMetadata, OracleIdentifierUtils.sequenceName(tableName));
+        }
+
+        static String toColumnSql(String tableName, ColumnMetadata columnMetadata, String sequenceName) {
             // 使用StringConnectHelper构建列定义SQL语句，初始模板为"{column_name} {column_type}{default_value}{null}"
             return StringConnectHelper.newInstance("{column_name} {column_type}{default_value}{null}")
                     // 替换模板中的{column_name}为列的实际名称（使用双引号包裹）
@@ -116,7 +120,7 @@ public class OracleHelper {
                     // 根据列的默认值，替换模板中的{default_value}为" DEFAULT "加上默认值或空字符串
                     .replace("{default_value}", () -> {
                         // 使用OracleHelper.SQL格式化默认值
-                        String defaultValue = OracleHelper.SQL.formatDefaultValue(tableName, columnMetadata);
+                        String defaultValue = OracleHelper.SQL.formatDefaultValue(tableName, columnMetadata, sequenceName);
                         // 如果格式化后的默认值存在文本，则返回" DEFAULT "加上默认值
                         if (StringUtils.hasText(defaultValue)) {
                             return " DEFAULT " + defaultValue;
@@ -182,9 +186,13 @@ public class OracleHelper {
          * @return 格式化后的默认值字符串
          */
         public static String formatDefaultValue(String tableName, ColumnMetadata columnMetadata) {
+            return formatDefaultValue(tableName, columnMetadata, OracleIdentifierUtils.sequenceName(tableName));
+        }
+
+        static String formatDefaultValue(String tableName, ColumnMetadata columnMetadata, String sequenceName) {
             // 主键自增情况
             if (columnMetadata.isPrimary() && columnMetadata.isAutoIncrement()) {
-                return "auto_seq_" + tableName + ".nextval";
+                return OracleIdentifierUtils.sequenceNextVal(sequenceName);
             }
             // 获取列的默认值类型
             DefaultValueEnum type = columnMetadata.getDefaultValueType();

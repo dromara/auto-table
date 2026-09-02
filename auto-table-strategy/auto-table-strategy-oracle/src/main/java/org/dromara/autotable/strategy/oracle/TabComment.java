@@ -26,7 +26,7 @@ public class TabComment {
         // 初始化查询参数，将表名存储在参数映射中
         Map<String, Object> params = Collections.singletonMap("tableName", tableName);
         // 定义SQL查询语句，用于从user_tab_comments表中根据表名查询表注释信息
-        String sql = "SELECT * FROM user_tab_comments WHERE table_type = 'TABLE' AND upper(table_name) = upper(':tableName')";
+        String sql = "SELECT * FROM user_tab_comments WHERE table_type = 'TABLE' AND table_name = ':tableName'";
         // 执行查询，返回一个TabComment对象，如果查询不到则返回null
         TabComment tabComment = OracleHelper.DB.queryOne(sql, params, TabComment.class);
         // 检查查询结果是否为空，如果不为空则返回查询到的TabComment对象

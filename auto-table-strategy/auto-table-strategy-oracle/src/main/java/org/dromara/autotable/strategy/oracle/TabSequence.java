@@ -3,6 +3,7 @@ package org.dromara.autotable.strategy.oracle;
 import lombok.Data;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,8 +14,11 @@ public class TabSequence {
     private String sequence_name;
 
     public static TabSequence search(String tableName) {
-        Map<String, Object> params = Collections.singletonMap("tableName", tableName);
-        String sql = "SELECT * FROM user_sequences WHERE upper(sequence_name) = upper('auto_seq_:tableName')";
-        return OracleHelper.DB.queryOne(sql, params, TabSequence.class);
+        String expectedName = OracleIdentifierUtils.sequenceName(tableName);
+        Map<String, Object> params = Collections.singletonMap("sequenceName", expectedName);
+        String sql = "SELECT * FROM user_sequences " +
+                "WHERE sequence_name = ':sequenceName' OR sequence_name = upper(':sequenceName')";
+        List<TabSequence> sequences = OracleHelper.DB.queryList(sql, params, TabSequence.class);
+        return OracleIdentifierUtils.resolveExisting(sequences, expectedName, TabSequence::getSequence_name);
     }
 }

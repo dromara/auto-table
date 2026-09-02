@@ -49,7 +49,7 @@ public class TabIndex {
                 "WHERE idx.table_type = 'TABLE' " +
                 "  AND idx.generated = 'N' " +
                 "  AND uc.INDEX_NAME IS NULL " +
-                "  AND upper(idx.table_name) = upper(':tableName') " +
+                "  AND idx.table_name = ':tableName' " +
                 "ORDER BY idx.index_name, col.column_position";
 
         // 使用OracleHelper.DB.queryList方法执行SQL查询，并将结果映射为TabIndex对象列表
