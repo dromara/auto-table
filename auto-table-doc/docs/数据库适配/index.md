@@ -18,7 +18,7 @@ AutoTable 通过 **策略模式 + SPI 机制** 支持多种数据库，每种数
 | [SQL Server](/数据库适配/SQLServer) | `auto-table-strategy-sqlserver` | 2016+ | ✅ 稳定 ||
 | [达梦](/数据库适配/达梦) | `auto-table-strategy-dm` | dm8 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
 | [人大金仓](/数据库适配/人大金仓) | `auto-table-strategy-kingbase` | V009R001C002B0014 | ✅ 稳定 | [@minfc](https://gitee.com/minfc) |
-| [YashanDB](/数据库适配/YashanDB) | `auto-table-strategy-yashandb` | 23.4.7.100 / JDBC 1.10.8 | ✅ 稳定 | [@Assassin-Q](https://gitee.com/qianguanshui) |
+| [YashanDB](/数据库适配/YashanDB) | `auto-table-strategy-yashandb` | 23.4.7.100 / JDBC 1.10.7 | ✅ 稳定 | [@Assassin-Q](https://gitee.com/qianguanshui) |
 | [H2](/数据库适配/H2) | `auto-table-strategy-h2` | 2.2.220 | ✅ 稳定 ||
 | [SQLite](/数据库适配/SQLite) | `auto-table-strategy-sqlite` | 3.35.5 | ✅ 稳定 ||
 | [Doris](/数据库适配/Doris) | `auto-table-strategy-doris` | 2.0 | ✅ 稳定 | [@lizhian](https://gitee.com/lizhian) |
