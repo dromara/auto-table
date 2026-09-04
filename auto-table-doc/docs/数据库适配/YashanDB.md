@@ -23,22 +23,12 @@ AutoTable 提供 `auto-table-strategy-yashandb`，用于维护 YashanDB 23.4.7.1
 </dependency>
 ```
 
-应用运行时还需要放入 YashanDB JDBC 驱动：
-
-```xml
-<dependency>
-    <groupId>com.yashandb</groupId>
-    <artifactId>yashandb-jdbc</artifactId>
-    <version>1.10.8</version>
-</dependency>
-```
-
-如果驱动来自数据库厂商安装包而不是项目依赖仓库，请按项目的依赖管理方式提供同一版本的 `yashandb-jdbc`，并确保应用运行时可以加载 `com.yashandb.jdbc.Driver`。
+策略模块已传递引入 `com.yashandb:yashandb-jdbc:1.10.7`，通常不需要重复声明 JDBC 驱动。如果项目排除了传递依赖，或通过安装包手工管理驱动，请确保应用运行时可以加载 `com.yashandb.jdbc.Driver`。
 
 ## 测试基线
 
 - YashanDB：`23.4.7.100`
-- JDBC 驱动：`1.10.8`
+- JDBC 驱动：`1.10.7`
 - Driver：`com.yashandb.jdbc.Driver`
 - JDBC URL 前缀：`jdbc:yasdb:`
 

@@ -267,7 +267,7 @@ public class MyCallback implements CreateTableFinishCallback {
 | SQL Server | 2016+ | ✅ | |
 | 达梦 | dm8 | ✅ | [@minfc](https://gitee.com/minfc) |
 | 人大金仓 | V009R001C002B0014 | ✅ | [@minfc](https://gitee.com/minfc) |
-| YashanDB | 23.4.7.100 / JDBC 1.10.8 | ✅ | [@Assassin-Q](https://gitee.com/qianguanshui) |
+| YashanDB | 23.4.7.100 / JDBC 1.10.7 | ✅ | [@Assassin-Q](https://gitee.com/qianguanshui) |
 
 > 🙌 其他数据库暂未支持，期待你的 PR！
 
