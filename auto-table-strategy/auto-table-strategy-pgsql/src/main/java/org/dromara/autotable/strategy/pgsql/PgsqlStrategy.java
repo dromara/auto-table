@@ -314,7 +314,34 @@ public class PgsqlStrategy implements IStrategy<DefaultTableMetadata, PgsqlCompa
         if (dataTypeFormat.startsWith("int")) {
             return !dataTypeFormat.startsWith(fullType);
         }
-        return !Objects.equals(fullType, dataTypeFormat);
+        // 提取类型名（去掉括号内的长度/精度部分）
+        int fParen = fullType.indexOf('(');
+        int dParen = dataTypeFormat.indexOf('(');
+        String fBase = fParen < 0 ? fullType : fullType.substring(0, fParen);
+        String dBase = dParen < 0 ? dataTypeFormat : dataTypeFormat.substring(0, dParen);
+        // 类型名不同 → 必然变更
+        if (!fBase.equals(dBase)) {
+            return true;
+        }
+        // 类型名相同：
+        //  - 实体未指定长度/精度（无括号）→ 视为"使用数据库默认"，忽略 DB 侧精度差异，
+        //    避免实体 timestamp 与 DB timestamp(6) 反复误判触发无意义 ALTER
+        //  - 实体指定了长度/精度 → 严格比较括号内参数
+        if (fParen < 0) {
+            return false;
+        }
+        if (dParen < 0) {
+            // 实体有长度/精度但 DB 无 → 变更
+            return true;
+        }
+        String fArgs = fullType.substring(fParen + 1, fullType.length() - 1);
+        String dArgs = dataTypeFormat.substring(dParen + 1, dataTypeFormat.length() - 1);
+        // numeric：实体只给 precision 不给 scale（无逗号）时，只比较 precision，
+        // 避免实体 numeric(10) 与 DB numeric(10,0) 误判
+        if (fArgs.indexOf(',') < 0 && dArgs.indexOf(',') >= 0) {
+            return !fArgs.equals(dArgs.substring(0, dArgs.indexOf(',')));
+        }
+        return !fArgs.equals(dArgs);
     }
 
     private boolean isDefaultDiff(ColumnMetadata columnMetadata, PgsqlDbColumn pgsqlDbColumn) {

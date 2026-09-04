@@ -171,6 +171,16 @@ public class PgsqlDbColumn {
                 return this.udtName;
             case "bpchar":
                 return "char(" + this.characterMaximumLength + ")";
+            // 时间类型：小数秒精度存于 datetime_precision，输出以对齐实体 @AutoColumn(length=n)
+            // 例：timestamp(0)、timestamptz(6)、time(3)
+            case "timestamp":
+            case "timestamptz":
+            case "time":
+            case "timetz":
+                if (StringUtils.hasText(this.datetimePrecision)) {
+                    return this.udtName + "(" + this.datetimePrecision + ")";
+                }
+                return this.udtName;
             // 其他的没有长度
             default:
                 return this.udtName;
