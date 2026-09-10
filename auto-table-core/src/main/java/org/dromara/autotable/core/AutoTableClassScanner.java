@@ -57,7 +57,8 @@ public abstract class AutoTableClassScanner {
                 .map(basePackage -> {
                     try {
                         return getClasses(basePackage,
-                                clazz -> includeAnnotations.stream().anyMatch(anno -> autoTableAnnotationFinder.exist(clazz, anno)) &&
+                                clazz -> !clazz.isAnnotation() &&
+                                        includeAnnotations.stream().anyMatch(anno -> autoTableAnnotationFinder.exist(clazz, anno)) &&
                                         excludeAnnotations.stream().noneMatch(anno -> autoTableAnnotationFinder.exist(clazz, anno))
                         );
                     } catch (IOException | ClassNotFoundException e) {
