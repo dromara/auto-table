@@ -37,7 +37,20 @@ else
 fi
 
 echo "开始commit到本地仓库：${version}"
-git commit -am "版本升级：${version}"
+# 精确 add：仅版本升级涉及的文件，避免捎带工作区其他改动
+# 包括：Version.java、文档站 config.mts、更新日志.md（手写或 release.sh 生成）、所有 pom.xml
+git add \
+    "auto-table-core/src/main/java/org/dromara/autotable/core/constants/Version.java" \
+    "auto-table-doc/docs/.vitepress/config.mts" \
+    "auto-table-doc/docs/更新日志.md"
+# 所有已跟踪的 pom.xml（mvn versions:set 涉及）
+git ls-files -z "*pom.xml" | xargs -0 git add
+# 仅当存在 staged 改动时才 commit（容错：版本号已提前手动升级的幂等场景）
+if ! git diff --cached --quiet; then
+    git commit -m "版本升级：${version}"
+else
+    echo "版本号已为 ${version}，无需新建版本升级 commit（tag 将打在 HEAD）"
+fi
 
 tagName=v${version}
 echo "开始打tag：${tagName}"

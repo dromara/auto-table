@@ -37,9 +37,11 @@ echo "开始发布版本：${version}"
 echo "================================"
 
 # 检查变更日志中是否已存在该版本
+# 若已存在则视为用户手写，保留手写内容、跳过自动生成
+changelog_pre_written=false
 if grep -q "^## ${version}$" "${changelog_file}"; then
-    echo "错误：变更日志中已存在版本 ${version} 的记录"
-    exit 1
+    changelog_pre_written=true
+    echo "检测到手写的版本 ${version} 变更日志，将保留手写内容，跳过自动生成"
 fi
 
 # 检查是否有未提交的代码改动（允许存在，但提醒用户）
@@ -63,40 +65,44 @@ echo "上一个版本 tag：${last_tag}"
 
 # ---------- 生成变更日志 ----------
 
-# 获取自上一个 tag 以来的提交记录（排除合并和无关提交）
-commits=$(git log ${last_tag}..HEAD --oneline --no-merges | \
-    grep -v "版本升级" | \
-    grep -v "更新文档" | \
-    grep -vi "^[a-f0-9]* Merge" | \
-    grep -vi "^[a-f0-9]* !" || true)
-
-# 格式化提交记录
-if [ -n "$commits" ]; then
-    changelog_items=$(echo "$commits" | cut -d' ' -f2- | sed 's/^/* /')
+if [ "$changelog_pre_written" = true ]; then
+    echo "手写变更日志已就位，跳过自动生成（将由 upgrade.sh 与版本号一起提交）"
 else
-    changelog_items="* （无新增提交）"
+    # 获取自上一个 tag 以来的提交记录（排除合并和无关提交）
+    commits=$(git log ${last_tag}..HEAD --oneline --no-merges | \
+        grep -v "版本升级" | \
+        grep -v "更新文档" | \
+        grep -vi "^[a-f0-9]* Merge" | \
+        grep -vi "^[a-f0-9]* !" || true)
+
+    # 格式化提交记录
+    if [ -n "$commits" ]; then
+        changelog_items=$(echo "$commits" | cut -d' ' -f2- | sed 's/^/* /')
+    else
+        changelog_items="* （无新增提交）"
+    fi
+
+    # 将新条目写入临时文件，避免通过 awk -v 传递多行变量
+    changelog_temp=$(mktemp)
+    {
+        echo ""
+        echo "## ${version}"
+        echo "$changelog_items"
+    } > "$changelog_temp"
+
+    # 更新变更日志文件
+    awk '/^# 变更日志$/{print; while((getline line < "'$changelog_temp'") > 0) print line; next} {print}' "${changelog_file}" > temp_changelog.md
+
+    rm -f "$changelog_temp"
+
+    mv temp_changelog.md "${changelog_file}"
+
+    echo "变更日志已更新：${changelog_file}"
+
+    # 提交变更日志
+    git add "${changelog_file}"
+    git commit -m "docs(changelog): 更新版本 ${version} 的变更日志"
 fi
-
-# 将新条目写入临时文件，避免通过 awk -v 传递多行变量
-changelog_temp=$(mktemp)
-{
-    echo ""
-    echo "## ${version}"
-    echo "$changelog_items"
-} > "$changelog_temp"
-
-# 更新变更日志文件
-awk '/^# 变更日志$/{print; while((getline line < "'$changelog_temp'") > 0) print line; next} {print}' "${changelog_file}" > temp_changelog.md
-
-rm -f "$changelog_temp"
-
-mv temp_changelog.md "${changelog_file}"
-
-echo "变更日志已更新：${changelog_file}"
-
-# 提交变更日志
-git add "${changelog_file}"
-git commit -m "docs(changelog): 更新版本 ${version} 的变更日志"
 
 # ---------- 执行版本升级 ----------
 
