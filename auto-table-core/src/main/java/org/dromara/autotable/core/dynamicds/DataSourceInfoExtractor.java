@@ -49,7 +49,9 @@ public interface DataSourceInfoExtractor {
         // 逐层解包包装数据源，直到某一层能提供 JDBC URL；visited 防御自引用或循环包装导致的死循环
         Set<DataSource> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         DataSource current = dataSource;
-        while (current != null && visited.add(current)) {
+        int depth = 0;
+        final int MAX_UNWRAP_DEPTH = 10; // 限制最大解包深度，避免极端情况下的无限循环
+        while (current != null && visited.add(current) && depth < MAX_UNWRAP_DEPTH) {
             String url = tryGet(current, "getJdbcUrl", "getUrl", "getURL");
             if (StringUtils.hasText(url)) {
                 String username = tryGet(current, "getUsername", "getUser");
@@ -57,6 +59,10 @@ public interface DataSourceInfoExtractor {
                 return new DbInfo(url, username, password);
             }
             current = unwrapDataSource(current);
+            depth++;
+        }
+        if (depth >= MAX_UNWRAP_DEPTH) {
+            log.warn("达到最大解包深度限制 ({}): {}", MAX_UNWRAP_DEPTH, dataSource.getClass().getName());
         }
 
         log.warn("未能通过反射从 {} 获取到 JDBC URL, 若有建库需要可自行实现提取逻辑", dataSource.getClass().getName());
@@ -103,11 +109,11 @@ public interface DataSourceInfoExtractor {
                 }
             } catch (NoSuchMethodException ignored) {
             } catch (Exception e) {
-                System.out.println("调用方法 " + name + " 失败：" + e.getMessage());
+                log.trace("调用方法 {} 失败：{}", name, e.getMessage());
             }
         }
-
-        // 再尝试找字段（万一是public的或者通过getXxx取不到）
+    
+        // 再尝试找字段（万一是 public 的或者通过 getXxx 取不到）
         for (String name : methodNames) {
             String fieldName = name.replaceFirst("^get", "");
             if (!fieldName.isEmpty()) {
@@ -121,11 +127,11 @@ public interface DataSourceInfoExtractor {
                     }
                 } catch (NoSuchFieldException ignored) {
                 } catch (Exception e) {
-                    System.out.println("读取字段 " + fieldName + " 失败：" + e.getMessage());
+                    log.trace("读取字段 {} 失败：{}", fieldName, e.getMessage());
                 }
             }
         }
-
+    
         return null;
     }
 }
