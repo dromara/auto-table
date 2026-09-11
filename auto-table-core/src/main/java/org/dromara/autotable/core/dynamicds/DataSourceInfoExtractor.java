@@ -62,10 +62,15 @@ public interface DataSourceInfoExtractor {
             depth++;
         }
         if (depth >= MAX_UNWRAP_DEPTH) {
-            log.warn("达到最大解包深度限制 ({}): {}", MAX_UNWRAP_DEPTH, dataSource.getClass().getName());
+            log.warn(
+                "达到最大解包深度限制 ({}) - 数据源：{}" +
+                "如需更深层包装支持，可实现 DataSourceInfoExtractor 接口自定义提取器",
+                MAX_UNWRAP_DEPTH,
+                dataSource.getClass().getName()
+            );
         }
 
-        log.warn("未能通过反射从 {} 获取到 JDBC URL, 若有建库需要可自行实现提取逻辑", dataSource.getClass().getName());
+        log.warn("未能通过反射从 {} 获取到 JDBC URL，若有建库需求请自行实现 DataSourceInfoExtractor 接口定义提取逻辑", dataSource.getClass().getName());
         return null;
     }
 
