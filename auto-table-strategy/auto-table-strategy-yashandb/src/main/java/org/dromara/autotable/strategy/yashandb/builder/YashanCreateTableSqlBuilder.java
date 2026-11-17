@@ -21,18 +21,17 @@ public final class YashanCreateTableSqlBuilder {
     }
 
     /**
-     * Builds CREATE TABLE followed by indexes and comments as separate statements.
+     * Builds CREATE TABLE (with inline table and column comments) followed by index statements.
      */
     public static List<String> buildSql(DefaultTableMetadata table) {
         List<String> sql = new ArrayList<>();
         sql.add(buildCreateTable(table));
         List<IndexMetadata> indexes = table.getIndexMetadataList() == null
                 ? Collections.emptyList() : table.getIndexMetadataList();
-        // Indexes and comments are separate because YashanDB applies them after the table exists.
+        // Indexes are separate statements because YashanDB applies them after the table exists.
         for (IndexMetadata index : indexes) {
             sql.add(buildCreateIndex(table.getSchema(), table.getTableName(), index));
         }
-        sql.addAll(buildComments(table));
         return sql;
     }
 
@@ -50,8 +49,21 @@ public final class YashanCreateTableSqlBuilder {
         if (!primaryColumns.isEmpty()) {
             definitions.add("PRIMARY KEY (" + IStrategy.customConcatWrapIdentifiers(", ", primaryColumns) + ")");
         }
-        return "CREATE TABLE " + IStrategy.concatWrapIdentifiers(table.getSchema(), table.getTableName())
+        String sql = "CREATE TABLE " + IStrategy.concatWrapIdentifiers(table.getSchema(), table.getTableName())
                 + " (\n  " + String.join(",\n  ", definitions) + "\n)";
+        if (StringUtils.hasText(table.getComment())) {
+            sql += " COMMENT '" + escape(table.getComment()) + "'";
+        }
+        return sql;
+    }
+
+    /**
+     * Builds a statement that drops one index; MySQL compatibility mode requires the owning table
+     * ({@code DROP INDEX schema.index} fails with YAS-04256).
+     */
+    public static String buildDropIndex(String schema, String tableName, String indexName) {
+        return "DROP INDEX " + IStrategy.wrapIdentifiers(indexName)
+                + " ON " + IStrategy.concatWrapIdentifiers(schema, tableName);
     }
 
     /**
@@ -66,22 +78,6 @@ public final class YashanCreateTableSqlBuilder {
                 + "INDEX " + IStrategy.wrapIdentifiers(YashanIdentifierUtils.normalizeIndexName(index.getName()))
                 + " ON " + IStrategy.concatWrapIdentifiers(schema, tableName)
                 + " (" + columns + ")";
-    }
-
-    private static List<String> buildComments(DefaultTableMetadata table) {
-        List<String> comments = new ArrayList<>();
-        String qualifiedTable = IStrategy.concatWrapIdentifiers(table.getSchema(), table.getTableName());
-        // YashanDB stores table and column comments through COMMENT ON statements.
-        if (StringUtils.hasText(table.getComment())) {
-            comments.add("COMMENT ON TABLE " + qualifiedTable + " IS '" + escape(table.getComment()) + "'");
-        }
-        for (ColumnMetadata column : table.getColumnMetadataList()) {
-            if (StringUtils.hasText(column.getComment())) {
-                comments.add("COMMENT ON COLUMN " + qualifiedTable + "."
-                        + IStrategy.wrapIdentifiers(column.getName()) + " IS '" + escape(column.getComment()) + "'");
-            }
-        }
-        return comments;
     }
 
     /**

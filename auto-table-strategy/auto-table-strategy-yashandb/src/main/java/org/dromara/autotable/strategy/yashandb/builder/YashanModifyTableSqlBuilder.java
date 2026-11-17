@@ -6,9 +6,7 @@ import org.dromara.autotable.core.utils.StringUtils;
 import org.dromara.autotable.strategy.yashandb.data.YashanCompareTableInfo;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -19,7 +17,8 @@ public final class YashanModifyTableSqlBuilder {
     }
 
     /**
-     * Builds ALTER, index, and comment statements for the recorded schema differences.
+     * Builds ALTER and index statements for the recorded schema differences.
+     * Column comments travel inside MODIFY/ADD definitions; the table comment uses {@code ALTER TABLE ... COMMENT}.
      */
     public static List<String> buildSql(YashanCompareTableInfo changes) {
         List<String> sql = new ArrayList<>();
@@ -27,7 +26,7 @@ public final class YashanModifyTableSqlBuilder {
 
         // Apply destructive index/column changes before recreating the desired definitions.
         for (String index : changes.getDropIndexes()) {
-            sql.add("DROP INDEX " + IStrategy.concatWrapIdentifiers(changes.getSchema(), index));
+            sql.add(YashanCreateTableSqlBuilder.buildDropIndex(changes.getSchema(), changes.getName(), index));
         }
         for (ColumnMetadata column : changes.getModifyColumns()) {
             sql.add("ALTER TABLE " + table + " MODIFY " + YashanColumnSqlBuilder.buildSql(column));
@@ -56,18 +55,9 @@ public final class YashanModifyTableSqlBuilder {
         changes.getNewIndexes().forEach(index -> sql.add(
                 YashanCreateTableSqlBuilder.buildCreateIndex(changes.getSchema(), changes.getName(), index)));
         if (changes.isTableCommentChanged()) {
-            sql.add("COMMENT ON TABLE " + table + " IS '"
+            sql.add("ALTER TABLE " + table + " COMMENT '"
                     + YashanCreateTableSqlBuilder.escape(changes.getComment()) + "'");
         }
-        Map<String, String> comments = new LinkedHashMap<>();
-        // Merge comments from modified and newly added columns without duplicate statements.
-        changes.getModifyColumns().stream()
-                .filter(column -> StringUtils.hasText(column.getComment()))
-                .forEach(column -> comments.put(column.getName(), column.getComment()));
-        comments.putAll(changes.getColumnComments());
-        comments.forEach((column, comment) -> sql.add(
-                "COMMENT ON COLUMN " + table + "." + IStrategy.wrapIdentifiers(column) + " IS '"
-                        + YashanCreateTableSqlBuilder.escape(comment) + "'"));
         return sql;
     }
 }
