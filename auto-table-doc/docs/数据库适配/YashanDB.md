@@ -80,7 +80,7 @@ public class User {
 | `Float` / `float` | `FLOAT` |
 | `Double` / `double` | `DOUBLE` |
 | `BigDecimal` | `DECIMAL(19,4)` |
-| `Date` / `LocalDateTime` | `TIMESTAMP` |
+| `Date` / `Timestamp` / `LocalDateTime` | `DATETIME` |
 | `java.sql.Date` / `LocalDate` | `DATE` |
 | `java.sql.Time` / `LocalTime` | `TIME` |
 | `byte[]` / `Blob` | `BLOB` |
@@ -93,12 +93,31 @@ public class User {
 | MySQL 类型 | YashanDB DDL 类型 |
 |------------|-------------------|
 | `INT`、`MEDIUMINT`、`YEAR` | `INTEGER` |
-| `DATETIME` | `TIMESTAMP` |
+| `DATETIME` | `DATETIME`（系统视图中显示为 `TIMESTAMP(n)`，比较时视为相同） |
+| `BIT(1)`、`BOOL`、`BOOLEAN` | `TINYINT`（`BIT(n)`，n>1 保留为 `BIT(n)`） |
 | `TEXT`、`TINYTEXT`、`MEDIUMTEXT`、`LONGTEXT`、`JSON` | `CLOB` |
 | `TINYBLOB`、`MEDIUMBLOB`、`LONGBLOB` | `BLOB` |
 | `DECIMAL`、`NUMERIC` | `NUMBER`（比较时归一化） |
 
-未列出的类型会按 YashanDB 类型名原样规范化；使用数据库不支持的类型前，应先确认目标版本的兼容性。
+未列出的类型会按 YashanDB 类型名原样规范化；使用数据库不支持的类型前，应先确认目标版本的兼容性。比较现有结构时，目录中的 `UNSIGNED`/`ZEROFILL` 修饰不视为差异。
+
+### 默认值
+
+与 MySQL 策略一致：字符类型的字面量默认值自动加单引号（如 `defaultValue = "EXA"` 生成 `DEFAULT 'EXA'`），日期时间字面量加单引号，`CURRENT_TIMESTAMP` 等函数保持原样；布尔类型的 `true`/`false` 和 MySQL 位字面量 `b'0'`/`b'1'` 转为 `0`/`1`。
+
+## MySQL 兼容模式下的 DDL 约定
+
+本策略面向以 `--mode mysql` 安装的 YashanDB 实例（默认兼容模式不支持 `AUTO_INCREMENT`）。在该模式下实测的约束与策略对应处理：
+
+| 现象 | 策略处理 |
+|------|----------|
+| `TIMESTAMP NOT NULL` 无默认值时会被隐式加上 `DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`，同表第二个此类列报 YAS-09402 | 时间类型生成 `DATETIME`（保留小数秒精度，如 `DATETIME(3)`） |
+| 应用用户通常按 MySQL 方式授权（`GRANT ... ON db.*`），不是库的属主，`COMMENT ON` 报 YAS-02213 | 表注释、字段注释内联在 `CREATE TABLE`/`ADD`/`MODIFY` 中；表注释变更用 `ALTER TABLE ... COMMENT '...'`；仅注释变化的字段用 `MODIFY` 完整定义 |
+| `DROP INDEX schema.index` 报 YAS-04256 | 生成 `DROP INDEX index ON schema.table` |
+| 字符列上的索引在 `ALL_IND_COLUMNS` 中显示为隐藏列（如 `$20001`，实际是 `__MY_COLLATE_SORT(col, n)` 函数索引） | 索引元数据改从 `information_schema.statistics` 读取 |
+| 同一列组合不允许建第二个索引（YAS-02043），从 MySQL 迁移的库常已有同列不同名的索引 | 期望索引按名字找不到时，若存在列、顺序、唯一性都相同的索引则直接复用，不再新建 |
+
+另需注意：YashanDB 对含 NULL 的复合唯一索引也判重（MySQL 允许多个 NULL）。依赖“NULL 可重复”的唯一索引需由业务方评估改为普通索引。
 
 ## 标识符和大小写
 
@@ -120,7 +139,7 @@ auto-table:
 - `create`：删除并重建实体表，会清空数据，只应在测试环境使用。
 - `none`：停用 AutoTable 结构维护。
 
-默认情况下，`update` 不删除数据库中多余字段；是否删除字段和索引仍由 AutoTable 的通用 `auto-drop-*` 配置控制。表注释和字段注释使用 YashanDB 的 `COMMENT ON` 语句维护。
+默认情况下，`update` 不删除数据库中多余字段；是否删除字段和索引仍由 AutoTable 的通用 `auto-drop-*` 配置控制。
 
 ## 元数据读取
 
@@ -130,7 +149,7 @@ auto-table:
 - `ALL_TAB_COLUMNS`、`ALL_COL_COMMENTS`：字段类型、长度、精度、可空、默认值、自增标记和字段注释
 - `ALL_TAB_COMMENTS`：表注释
 - `ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`：主键及其列顺序
-- `ALL_INDEXES`、`ALL_IND_COLUMNS`：索引唯一性、列顺序和排序方向
+- `information_schema.statistics`：索引唯一性、列顺序和排序方向（MySQL 兼容模式下字符列索引在 `ALL_IND_COLUMNS` 中显示为隐藏列，不能直接使用）
 
 未指定实体 schema 时，策略使用当前 JDBC 会话 schema；指定 schema 后会对目录查询进行不区分大小写匹配。
 

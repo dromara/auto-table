@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Reads table metadata from YashanDB catalog views for the MySQL-compatible
- * AutoTable strategy.
+ * Reads table metadata from YashanDB catalog views (and, for indexes, {@code information_schema})
+ * for the MySQL-compatible AutoTable strategy.
  */
 public class YashanTablesMapper {
     /**
@@ -162,23 +162,20 @@ public class YashanTablesMapper {
 
     /**
      * Reads non-primary indexes, including uniqueness, columns, and sort direction.
+     *
+     * <p>Uses {@code information_schema.statistics} rather than {@code ALL_IND_COLUMNS}: in MySQL compatibility
+     * mode an index on a character column is stored as a function-based index over
+     * {@code __MY_COLLATE_SORT(col, n)}, and {@code ALL_IND_COLUMNS} reports a hidden column such as
+     * {@code $20001} instead of the real column name.</p>
      */
     public List<YashanDbIndex> selectIndexes(String schema, String tableName) {
         return DataSourceManager.useConnection(connection -> {
             String owner = resolveSchema(connection, schema);
-            // Exclude LOB/system indexes and primary-key backing indexes from AutoTable indexes.
-            String sql = "SELECT DISTINCT indexes.INDEX_NAME, indexes.UNIQUENESS, columns.COLUMN_NAME, "
-                    + "columns.COLUMN_POSITION, columns.DESCEND "
-                    + "FROM ALL_INDEXES indexes JOIN ALL_IND_COLUMNS columns "
-                    + "ON columns.INDEX_OWNER = indexes.OWNER AND columns.TABLE_OWNER = indexes.TABLE_OWNER "
-                    + "AND columns.TABLE_NAME = indexes.TABLE_NAME "
-                    + "AND columns.INDEX_NAME = indexes.INDEX_NAME "
-                    + "WHERE UPPER(indexes.TABLE_OWNER) = UPPER(?) AND UPPER(indexes.TABLE_NAME) = UPPER(?) "
-                    + "AND indexes.INDEX_TYPE <> 'LOB' AND indexes.INDEX_NAME NOT LIKE 'SYS_IL%' "
-                    + "AND NOT EXISTS (SELECT 1 FROM ALL_CONSTRAINTS pk "
-                    + "WHERE pk.OWNER = indexes.OWNER AND pk.TABLE_NAME = indexes.TABLE_NAME "
-                    + "AND pk.INDEX_NAME = indexes.INDEX_NAME AND pk.CONSTRAINT_TYPE = 'P') "
-                    + "ORDER BY indexes.INDEX_NAME, columns.COLUMN_POSITION";
+            String sql = "SELECT INDEX_NAME, NON_UNIQUE, COLUMN_NAME, SEQ_IN_INDEX, COLLATION "
+                    + "FROM information_schema.statistics "
+                    + "WHERE UPPER(TABLE_SCHEMA) = UPPER(?) AND UPPER(TABLE_NAME) = UPPER(?) "
+                    + "AND UPPER(INDEX_NAME) <> 'PRIMARY' "
+                    + "ORDER BY INDEX_NAME, SEQ_IN_INDEX";
             Map<String, YashanDbIndex> indexes = new LinkedHashMap<>();
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, owner);
@@ -191,12 +188,11 @@ public class YashanTablesMapper {
                         if (index == null) {
                             index = new YashanDbIndex();
                             index.setName(name);
-                            String uniqueness = resultSet.getString("UNIQUENESS");
-                            index.setUnique("UNIQUE".equalsIgnoreCase(uniqueness) || "Y".equalsIgnoreCase(uniqueness));
+                            index.setUnique("0".equals(String.valueOf(resultSet.getObject("NON_UNIQUE")).trim()));
                             indexes.put(name, index);
                         }
                         index.getColumns().add(resultSet.getString("COLUMN_NAME"));
-                        index.getSorts().add(resultSet.getString("DESCEND"));
+                        index.getSorts().add("D".equalsIgnoreCase(resultSet.getString("COLLATION")) ? "DESC" : "ASC");
                     }
                 }
                 return new ArrayList<>(indexes.values());

@@ -26,7 +26,6 @@ public class YashanCompareTableInfo extends CompareTableInfo {
     private boolean tableCommentChanged;
     private String dropPrimaryKeyName;
     private final List<ColumnMetadata> newPrimaries = new ArrayList<>();
-    private final Map<String, String> columnComments = new LinkedHashMap<>();
     private final List<String> dropColumns = new ArrayList<>();
     private final Map<String, String> renameColumns = new LinkedHashMap<>();
     private final List<ColumnMetadata> modifyColumns = new ArrayList<>();
@@ -46,7 +45,6 @@ public class YashanCompareTableInfo extends CompareTableInfo {
         return tableCommentChanged
                 || StringUtils.hasText(dropPrimaryKeyName)
                 || !newPrimaries.isEmpty()
-                || !columnComments.isEmpty()
                 || !dropColumns.isEmpty()
                 || !renameColumns.isEmpty()
                 || !modifyColumns.isEmpty()
@@ -67,9 +65,6 @@ public class YashanCompareTableInfo extends CompareTableInfo {
         }
         if (StringUtils.hasText(dropPrimaryKeyName) || !newPrimaries.isEmpty()) {
             changes.add("primary key");
-        }
-        if (!columnComments.isEmpty()) {
-            changes.add("column comments: " + String.join(",", columnComments.keySet()));
         }
         if (!dropColumns.isEmpty()) {
             changes.add("drop columns: " + String.join(",", dropColumns));

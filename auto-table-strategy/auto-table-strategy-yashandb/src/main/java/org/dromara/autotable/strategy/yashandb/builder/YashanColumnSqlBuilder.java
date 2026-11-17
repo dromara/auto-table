@@ -19,12 +19,18 @@ public final class YashanColumnSqlBuilder {
             "CHAR", "VARCHAR", "VARCHAR2", "BINARY", "VARBINARY"));
     private static final Set<String> PRECISION_TYPES = new HashSet<>(Arrays.asList(
             "NUMBER", "NUMERIC", "DECIMAL"));
+    private static final Set<String> FRACTIONAL_SECOND_TYPES = new HashSet<>(Arrays.asList(
+            "TIMESTAMP", "DATETIME", "TIME"));
 
     private YashanColumnSqlBuilder() {
     }
 
     /**
-     * Builds one YashanDB column definition, including identity and default clauses.
+     * Builds one YashanDB column definition, including identity, default and inline comment clauses.
+     *
+     * <p>The comment is written inline (MySQL syntax) instead of {@code COMMENT ON}: in MySQL compatibility
+     * mode an application user usually holds privileges on the database ({@code GRANT ... ON db.*}) but does
+     * not own its schema, and {@code COMMENT ON} on another owner's table fails with YAS-02213.</p>
      */
     public static String buildSql(ColumnMetadata column) {
         if (column.isAutoIncrement() && !column.isPrimary()) {
@@ -47,19 +53,29 @@ public final class YashanColumnSqlBuilder {
         if (StringUtils.hasText(defaultClause)) {
             sql.append(' ').append(defaultClause);
         }
+        if (StringUtils.hasText(column.getComment())) {
+            sql.append(" COMMENT '").append(YashanCreateTableSqlBuilder.escape(column.getComment())).append('\'');
+        }
         return sql.toString();
     }
 
     /**
      * Converts a model type and optional length/precision into a YashanDB type expression.
      */
-    static String buildType(DatabaseTypeAndLength type) {
+    public static String buildType(DatabaseTypeAndLength type) {
         if (type == null || !StringUtils.hasText(type.getType())) {
             throw new IllegalArgumentException("YashanDB column type must not be empty");
         }
         String typeName = YashanTypeHelper.toDdlType(type.getType());
         Integer length = type.getLength();
         Integer scale = type.getDecimalLength();
+        // Only BIT(1) is a boolean; wider MySQL bit fields keep YashanDB's native BIT(n).
+        if ("BIT".equalsIgnoreCase(type.getType().trim()) && length != null && length > 1) {
+            return "BIT(" + length + ")";
+        }
+        if (FRACTIONAL_SECOND_TYPES.contains(typeName) && length != null && length > 0) {
+            return typeName + "(" + length + ")";
+        }
         // Precision types use (precision, scale); character types use a single length.
         if (PRECISION_TYPES.contains(typeName) && length != null) {
             return scale == null ? typeName + "(" + length + ")" : typeName + "(" + length + "," + scale + ")";
@@ -85,7 +101,7 @@ public final class YashanColumnSqlBuilder {
         }
         if (DefaultValueEnum.isCustom(column.getDefaultValueType())
                 && StringUtils.hasText(column.getDefaultValue())) {
-            return "DEFAULT " + column.getDefaultValue();
+            return "DEFAULT " + YashanTypeHelper.normalizeBitLiteral(column.getDefaultValue());
         }
         return "";
     }

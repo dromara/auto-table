@@ -21,6 +21,11 @@ public enum YashanDefaultTypeEnum implements DefaultTypeEnumInterface {
     DATE("DATE", null, null),
     TIME("TIME", null, null),
     TIMESTAMP("TIMESTAMP", null, null),
+    /**
+     * MySQL-mode DATETIME: unlike TIMESTAMP it gets no implicit
+     * {@code DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP}.
+     */
+    DATETIME("DATETIME", null, null),
     BLOB("BLOB", null, null),
     CLOB("CLOB", null, null);
 

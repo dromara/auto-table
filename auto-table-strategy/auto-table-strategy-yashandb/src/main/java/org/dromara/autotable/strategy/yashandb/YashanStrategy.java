@@ -178,18 +178,14 @@ public class YashanStrategy implements IStrategy<DefaultTableMetadata, YashanCom
         for (ColumnMetadata expected : table.getColumnMetadataList()) {
             YashanDbColumn actual = existing.remove(expected.getName());
             if (actual == null) {
-                // A model column missing in the database is created and its comment is applied later.
+                // A model column missing in the database is created with its inline comment.
                 changes.getNewColumns().add(expected);
-                if (StringUtils.hasText(expected.getComment())) {
-                    changes.getColumnComments().put(expected.getName(), expected.getComment());
-                }
                 continue;
             }
-            if (columnDefinitionChanged(expected, actual)) {
+            // A comment-only change is also applied through MODIFY, which carries the full definition and comment.
+            if (columnDefinitionChanged(expected, actual)
+                    || !Objects.equals(emptyToNull(expected.getComment()), emptyToNull(actual.getComment()))) {
                 changes.getModifyColumns().add(expected);
-            }
-            if (!Objects.equals(emptyToNull(expected.getComment()), emptyToNull(actual.getComment()))) {
-                changes.getColumnComments().put(expected.getName(), expected.getComment());
             }
         }
 
@@ -243,6 +239,7 @@ public class YashanStrategy implements IStrategy<DefaultTableMetadata, YashanCom
         List<IndexMetadata> expectedIndexes = table.getIndexMetadataList() == null
                 ? Collections.emptyList() : table.getIndexMetadataList();
         // Match generated names first, then fall back to the original name for existing deployments.
+        List<IndexMetadata> unmatched = new ArrayList<>();
         for (IndexMetadata expected : expectedIndexes) {
             String expectedName = YashanIdentifierUtils.normalizeIndexName(expected.getName());
             YashanDbIndex actual = existing.remove(expectedName);
@@ -250,9 +247,23 @@ public class YashanStrategy implements IStrategy<DefaultTableMetadata, YashanCom
                 actual = existing.remove(expected.getName());
             }
             if (actual == null) {
-                changes.getNewIndexes().add(expected);
+                unmatched.add(expected);
             } else if (!sameIndex(expected, actual)) {
                 changes.addModifyIndex(expected);
+            }
+        }
+        // YashanDB rejects a second index on an identical column list (YAS-02043). Schemas migrated from MySQL
+        // may already carry an equivalent index under another name; reuse it instead of creating a duplicate.
+        for (IndexMetadata expected : unmatched) {
+            String equivalent = existing.entrySet().stream()
+                    .filter(entry -> sameIndex(expected, entry.getValue()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+            if (equivalent != null) {
+                existing.remove(equivalent);
+            } else {
+                changes.getNewIndexes().add(expected);
             }
         }
 
@@ -341,7 +352,7 @@ public class YashanStrategy implements IStrategy<DefaultTableMetadata, YashanCom
             return null;
         }
         if (column.getDefaultValueType() == org.dromara.autotable.annotation.enums.DefaultValueEnum.EMPTY_STRING) {
-            return "";
+            return "''";
         }
         return column.getDefaultValue();
     }
@@ -350,16 +361,18 @@ public class YashanStrategy implements IStrategy<DefaultTableMetadata, YashanCom
      * Normalizes catalog and model defaults before comparing them.
      */
     private static String normalizeDefault(String value) {
-        value = emptyToNull(value);
-        if (value == null || "NULL".equalsIgnoreCase(value)) {
+        if (value == null) {
             return null;
         }
         value = value.trim();
-        // Catalog defaults may be quoted while model defaults are not.
+        if (value.isEmpty() || "NULL".equalsIgnoreCase(value)) {
+            return null;
+        }
+        // Catalog defaults may be quoted while model defaults are not; an empty string literal stays distinct from NULL.
         if (value.length() >= 2 && value.startsWith("'") && value.endsWith("'")) {
             value = value.substring(1, value.length() - 1).replace("''", "'");
         }
-        return value.toUpperCase(Locale.ROOT);
+        return YashanTypeHelper.normalizeBitLiteral(value).toUpperCase(Locale.ROOT);
     }
 
     /**
@@ -415,9 +428,11 @@ public class YashanStrategy implements IStrategy<DefaultTableMetadata, YashanCom
         mapping.put(Double.class, YashanDefaultTypeEnum.DOUBLE);
         mapping.put(double.class, YashanDefaultTypeEnum.DOUBLE);
         mapping.put(BigDecimal.class, YashanDefaultTypeEnum.DECIMAL);
-        mapping.put(Date.class, YashanDefaultTypeEnum.TIMESTAMP);
-        mapping.put(java.sql.Timestamp.class, YashanDefaultTypeEnum.TIMESTAMP);
-        mapping.put(LocalDateTime.class, YashanDefaultTypeEnum.TIMESTAMP);
+        // DATETIME rather than TIMESTAMP: a MySQL-mode TIMESTAMP NOT NULL column silently gets
+        // DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP (or fails with YAS-09402 for the second one).
+        mapping.put(Date.class, YashanDefaultTypeEnum.DATETIME);
+        mapping.put(java.sql.Timestamp.class, YashanDefaultTypeEnum.DATETIME);
+        mapping.put(LocalDateTime.class, YashanDefaultTypeEnum.DATETIME);
         mapping.put(java.sql.Date.class, YashanDefaultTypeEnum.DATE);
         mapping.put(LocalDate.class, YashanDefaultTypeEnum.DATE);
         mapping.put(java.sql.Time.class, YashanDefaultTypeEnum.TIME);

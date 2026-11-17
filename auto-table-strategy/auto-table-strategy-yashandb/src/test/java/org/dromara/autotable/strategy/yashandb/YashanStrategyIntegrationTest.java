@@ -73,10 +73,26 @@ class YashanStrategyIntegrationTest {
             assertFalse(unchanged.needModify(), unchanged.validateFailedMessage());
 
             DefaultTableMetadata updated = metadata(schema, tableName, 128, "Yashan AutoTable updated");
-            ColumnMetadata enabled = column("enabled", "TINYINT", null, null).setDefaultValue("0");
+            ColumnMetadata enabled = column("enabled", "TINYINT", null, null).setDefaultValue("0")
+                    .setComment("enabled flag");
+            ColumnMetadata mysqlBit = column("mysql_bit", "bit", 1, null).setNotNull(true).setDefaultValue("b'1'");
             updated.getColumnMetadataList().add(enabled);
+            updated.getColumnMetadataList().add(mysqlBit);
+            // Changing uniqueness forces DROP INDEX ... ON + CREATE INDEX on a character column index.
+            updated.getIndexMetadataList().get(0).setType(IndexTypeEnum.NORMAL);
+            updated.getColumnMetadataList().stream().filter(c -> "amount".equals(c.getName()))
+                    .forEach(c -> c.setComment("amount comment"));
+            // A migrated schema may already hold an equivalent index under a legacy name.
+            try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+                statement.execute("CREATE INDEX legacy_" + tableName + "_amt ON " + schema + "." + tableName + " (amount)");
+            }
+            updated.getIndexMetadataList().add(new IndexMetadata().setName("auto_idx_" + tableName + "_amount")
+                    .setType(IndexTypeEnum.NORMAL)
+                    .setColumns(Collections.singletonList(IndexMetadata.IndexColumnParam.newInstance("amount", null))));
             YashanCompareTableInfo changes = strategy.compareTable(updated);
             assertTrue(changes.needModify());
+            assertTrue(changes.getNewIndexes().stream().noneMatch(index -> index.getName().endsWith("_amount")),
+                    "An equivalent legacy index must be reused instead of duplicated");
             strategy.executeSql(updated, strategy.modifyTable(changes));
             assertFalse(strategy.compareTable(updated).needModify(),
                     strategy.compareTable(updated).validateFailedMessage());
@@ -113,7 +129,7 @@ class YashanStrategyIntegrationTest {
                 .setType(IndexTypeEnum.UNIQUE)
                 .setColumns(Collections.singletonList(
                         IndexMetadata.IndexColumnParam.newInstance("case_code", IndexSortTypeEnum.ASC)));
-        table.setIndexMetadataList(Collections.singletonList(index));
+        table.setIndexMetadataList(new java.util.ArrayList<>(Collections.singletonList(index)));
         return table;
     }
 
